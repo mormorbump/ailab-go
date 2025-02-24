@@ -1,0 +1,257 @@
+# AI Coding with Deno: ベストプラクティス
+
+これは Deno と AI を駆使してコードを書く際の使い方についてまとめた資料。人間が読む以外に、コーディングエージェントがプロンプトとして読むことを想定する。
+
+本プロジェクトでは、スクリプトモードとモジュールモードの2つのモードを想定する。以下に解説する。
+
+## コーディングポリシー
+
+- 最初に型と、それを処理する関数のインターフェースを考える
+- コードのコメントとして、そのファイルがどういう仕様化を可能な限り明記する
+- 実装が内部状態を持たないとき、 class による実装を避けて関数を優先する
+- 副作用を抽象するために、アダプタパターンで外部依存を抽象し、テストではインメモリなアダプタで処理する
+
+### 型定義の方針
+
+- 可能な限り具体的な型を使用し、any の使用を避ける
+- 共通の型パターンには Utility Types を活用する
+- 型エイリアスは意味のある名前をつけ、型の意図を明確にする
+
+```ts
+// 良い例
+type UserId = string;
+type UserData = {
+  id: UserId;
+  createdAt: Date;
+};
+
+// 避けるべき例
+type Data = any;
+```
+
+## テストの書き方
+
+`@std/expect` と `@std/testing/bdd` を使う。
+とくに実装上の理由がない限り、 `describe` による入れ子はしない。
+
+```ts
+import { expect } from "@std/expect";
+import { test } from "@std/testing/bdd";
+
+test("2+3=5", () => {
+  expect(add(2, 3)).toBe(5);
+});
+```
+
+## 実装モード: スクリプトモード
+
+- 外部依存を可能な限り減らして、一つのファイルに完結してすべてを記述する
+- テストコードも同じファイルに記述してください
+- スクリプトモードは `@script` がコード中に含まれる場合、あるいは `scripts/*` や `script/*` 以下のファイルが該当します。
+
+スクリプトモードの例
+
+```ts
+/* @script */
+/**
+ * 足し算を行うモジュール
+ */
+function add(a: number, b: number): number {
+  return a + b;
+}
+
+// deno run add.ts で動作確認するエントリポイント
+if (import.meta.main) {
+  console.log(add(1, 2));
+}
+
+/// test
+import { expect } from "@std/expect";
+import { test } from "@std/testing/bdd";
+
+test("add(1, 2) = 3", () => {
+  expect(add(1, 2)).toBe(3);
+});
+```
+
+CLINE/Rooのようなコーディングエージェントは、まず `deno run add.ts` で実行して、要求に応じて `deno test -A <filename>` で実行可能なようにテストを増やしていく。
+
+スクリプトモードでは曖昧なバージョンの import を許可する。
+
+優先順
+
+- `jsr:` のバージョン固定
+- `jsr:`
+- `npm:`
+
+
+`https://deno.land/x/*` は代替がない限りは推奨しない。
+
+
+```ts
+// OK
+import $ from "jsr:@david/dax@0.42.0";
+import $ from "jsr:@david/dax";
+import { z } from "npm:zod";
+
+// Not Recommended
+import * as cbor from "https://deno.land/x/cbor"
+```
+
+最初にスクリプトモードで検証し、モジュールモードに移行していく。
+
+## 実装モード: モジュールモード
+
+モジュールモードはディレクトリの下で複数のファイルで構成される。
+
+例
+
+```
+xxx/
+  mod.ts    - 外部向けのエクスポート（re-export のみ）
+  deps.ts   - 他のモジュールの mod.ts を import し、モジュール内で使用する機能を re-export
+  lib.ts    - 実装（deps.ts からの import を使用）
+  types.ts  - 型定義
+  mod.test.ts
+  lib.test.ts
+yyy/
+  mod.ts    - 外部向けのエクスポート（re-export のみ）
+  deps.ts   - 他のモジュールの mod.ts を import し、モジュール内で使用する機能を re-export
+  lib.ts    - 実装（deps.ts からの import を使用）
+  types.ts  - 型定義
+  mod.test.ts
+  lib.test.ts
+```
+
+### モジュールファイルの役割とコンテキスト境界
+
+モジュールのコンテキスト（文脈）は、mod.ts と deps.ts の2つのファイルによって完全に定義されます：
+
+- mod.ts: モジュールのパブリックインターフェース
+  - 外側に向けて実装を export する
+  - 他のモジュールでは、ここ以外から直接 import することを禁止する
+  - re-export のみを行い、実装を含まない
+  - このファイルを見るだけで、モジュールが提供する機能を理解できる
+
+- deps.ts: モジュールの依存関係定義
+  - 他のモジュールの mod.ts を import する
+  - モジュール内で使用する機能を re-export する
+  - 外部依存をここで一元管理する
+  - このファイルを見るだけで、モジュールの依存関係を理解できる
+
+その他のファイル：
+
+- types.ts: モジュール内の型定義を集約する
+- lib.ts: 実装を担当
+  - コード量が少ない(150行未満)とき、 lib.ts の下で実装してもよい
+  - 量が多い時は複数のファイルに分割する
+  - 実装内では deps.ts からの import を使用する
+  - モジュール外からは直接参照されない
+- *.test.ts: テストファイル
+  - 実装ファイルと同じディレクトリに配置する
+  - 実装ファイルと1:1で対応するテストファイルを作成する
+
+この構造により：
+- モジュールの依存関係が透明になる
+- コードの変更影響範囲が予測しやすくなる
+- モジュール間の結合度を低く保てる
+- リファクタリングが容易になる
+
+モジュールモードではスクリプトモードと違って、ライブラリの参照に `jsr:` や `npm:` を推奨しない。モジュールを参照する場合、 `deno add jsr:@david/dax@0.42.0` のようにして、 `deno.json` に依存を追加する。
+
+```ts
+// OK
+import $ from "@david/dax";
+
+// NG
+import $ from "jsr:@david/dax@0.42.0";
+```
+
+## スクリプトモードからモジュールモードへの変換
+
+スクリプトからモジュールへのリファクタを指示されたとき、モジュールモードの仕様に従って、複数のファイルに分割する。
+
+```ts
+/// lib.ts
+export function add(a: number, b: number): number {
+  return a + b;
+}
+
+/// deps.ts
+export { PI } from "../constants/mod.ts";
+
+/// mod.ts
+/**
+ * 足し算を行うモジュール
+ */
+export { add } from "./lib.ts";
+
+/// mod.test.ts
+import { expect } from "@std/expect";
+import { test } from "@std/testing/bdd";
+test("add(1, 2) = 3", () => {
+  expect(add(1, 2)).toBe(3);
+});
+```
+
+## モジュール間の依存関係
+
+### import ルール
+
+- モジュール間の参照は必ず mod.ts を経由する
+- 他のモジュールのファイルを直接参照してはいけない
+- 同一モジュール内のファイルは相対パスで参照する
+- モジュール内の実装は deps.ts からの re-export を参照する
+
+### 依存関係の検証
+
+依存関係の検証には2つの方法があります：
+
+1. コマンドラインでの検証
+```bash
+deno task check:deps
+```
+
+このコマンドは以下をチェックします：
+- モジュール間の import が mod.ts を経由しているか
+- 他のモジュールのファイルを直接参照していないか
+
+2. リントプラグインによる検証
+```bash
+deno lint
+```
+
+mod-import リントルールが以下をチェックします：
+- モジュール間の import が mod.ts を経由しているか
+- 違反している場合、修正のヒントを提示
+
+リントプラグインは IDE と統合することで、コーディング時にリアルタイムでフィードバックを得ることができます。
+
+## コード品質の監視
+
+### カバレッジ
+
+カバレッジの取得には `deno task test:cov` を使用します。これは以下のコマンドのエイリアスです：
+
+```bash
+deno test --coverage=coverage && deno coverage coverage
+```
+
+カバレッジの目標値：
+- 新規実装時は80%以上のカバレッジを目標とする
+- 重要なビジネスロジックは90%以上を目指す
+
+実行コードと純粋な関数を分離することで、高いカバレッジを維持します：
+- 実装（lib.ts）: ロジックを純粋な関数として実装
+- エクスポート（mod.ts）: 外部向けインターフェースの定義
+- 実行（cli.ts）: エントリーポイントとデバッグコード
+
+### デッドコード解析
+
+- TSR (TypeScript Runtime) を使用してデッドコードを検出
+- 未使用のエクスポートや関数を定期的に確認し削除
+
+### 型定義による仕様抽出
+
+- dts を使用して型定義から自動的にドキュメントを生成
+- 型シグネチャに仕様を記述し、dts として抽出する
