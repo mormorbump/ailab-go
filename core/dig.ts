@@ -20,6 +20,8 @@
  * digUntyped(obj, ["a", "$keys"]) // => ["x", "y"]
  * digUntyped(obj, ["a", "$values"]) // => [1, 2]
  * digUntyped(obj, ["arr", "$flat"]) // => [1, 2, 3]
+ * digUntyped(obj, ["a", "$pick{x,y}"]) // => { x: 1, y: 2 }
+ * digUntyped(obj, ["a", "$exclude{x,y}"]) // => { z: 3 }
  * ```
  */
 
@@ -69,6 +71,22 @@ type ObjectQuery = {
 };
 type UntypedArrayQuery = ReadonlyArray<string | RegExp | ObjectQuery>;
 type UntypedQuery = StringQuery | UntypedArrayQuery;
+
+/**
+ * 特殊クエリのパース
+ */
+function parseSpecialQuery(
+  query: string
+): { type: string; args: string[] } | null {
+  const match = query.match(/^\$(\w+)\{([^}]*)\}$/);
+  if (!match) return null;
+  const [, type, argsStr] = match;
+  const args = argsStr
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return { type, args };
+}
 
 /**
  * オブジェクトの値を再帰的に変換する
@@ -139,6 +157,36 @@ export function digUntyped(obj: unknown, query: UntypedQuery): unknown {
       continue;
     }
 
+    if (typeof part === "string") {
+      const specialQuery = parseSpecialQuery(part);
+      if (specialQuery) {
+        if (typeof current !== "object" || current === null) return undefined;
+
+        const result: Record<string, unknown> = {};
+        const currentObj = current as Record<string, unknown>;
+
+        if (specialQuery.type === "pick") {
+          for (const key of specialQuery.args) {
+            if (key in currentObj) {
+              result[key] = currentObj[key];
+            }
+          }
+          current = result;
+          continue;
+        }
+
+        if (specialQuery.type === "exclude") {
+          for (const key in currentObj) {
+            if (!specialQuery.args.includes(key)) {
+              result[key] = currentObj[key];
+            }
+          }
+          current = result;
+          continue;
+        }
+      }
+    }
+
     if (part instanceof RegExp) {
       if (typeof current !== "object") return undefined;
 
@@ -200,6 +248,8 @@ if (import.meta.main) {
   console.log(digUntyped(testObj, ["a", "$keys"])); // ["b", "c", "d"]
   console.log(digUntyped(testObj, ["a", "$values"])); // [1, "hello", true]
   console.log(digUntyped(testObj, ["arr", "$flat"])); // [1, 2, 3, 4, 5, [6]]
+  console.log(digUntyped(testObj, ["a", "$pick{b,c}"])); // { b: 1, c: "hello" }
+  console.log(digUntyped(testObj, ["a", "$exclude{b}"])); // { c: "hello", d: true }
 }
 
 // Unit Tests
@@ -450,6 +500,80 @@ test("digUntyped - $flat query", () => {
 
   // 存在しないパスの場合
   expect(digUntyped(obj, ["nonexistent", "$flat"])).toBe(undefined);
+});
+
+test("digUntyped - $pick query", () => {
+  const obj = {
+    user: {
+      id: "user1",
+      name: "Alice",
+      age: 20,
+      email: "alice@example.com",
+    },
+    settings: {
+      theme: "dark",
+      notifications: true,
+      language: "ja",
+    },
+  };
+
+  // 単純なピック
+  expect(digUntyped(obj, ["user", "$pick{id,name}"])).toEqual({
+    id: "user1",
+    name: "Alice",
+  });
+
+  // 存在しないキーを含むピック
+  expect(digUntyped(obj, ["user", "$pick{id,nonexistent}"])).toEqual({
+    id: "user1",
+  });
+
+  // 空のピック
+  expect(digUntyped(obj, ["user", "$pick{}"])).toEqual({});
+
+  // プリミティブ値に対するピック
+  expect(digUntyped(obj, ["user", "id", "$pick{a,b}"])).toBe(undefined);
+});
+
+test("digUntyped - $exclude query", () => {
+  const obj = {
+    user: {
+      id: "user1",
+      name: "Alice",
+      age: 20,
+      email: "alice@example.com",
+    },
+    settings: {
+      theme: "dark",
+      notifications: true,
+      language: "ja",
+    },
+  };
+
+  // 単純な除外
+  expect(digUntyped(obj, ["user", "$exclude{age,email}"])).toEqual({
+    id: "user1",
+    name: "Alice",
+  });
+
+  // 存在しないキーを含む除外
+  expect(digUntyped(obj, ["user", "$exclude{nonexistent}"])).toEqual({
+    id: "user1",
+    name: "Alice",
+    age: 20,
+    email: "alice@example.com",
+  });
+
+  // 空の除外
+  expect(digUntyped(obj, ["user", "$exclude{}"])).toEqual({
+    id: "user1",
+    name: "Alice",
+    age: 20,
+    email: "alice@example.com",
+  });
+
+  // プリミティブ値に対する除外
+  expect(digUntyped(obj, ["user", "id", "$exclude{a,b}"])).toBe(undefined);
 });
 
 test("digUntyped - combined special queries", () => {
