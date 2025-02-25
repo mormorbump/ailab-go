@@ -19,6 +19,6 @@
   },
   "test": {
     "include": ["scripts/*.ts"],
-    "exclude": ["type-predictor", "cmd"]
+    "exclude": ["type-predictor"]
   }
 }
