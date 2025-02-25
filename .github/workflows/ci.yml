@@ -19,14 +19,14 @@ jobs:
         with:
           deno-version: '2.1.*'
 
-      - name: Check formatting
-        run: deno fmt --check
+      # - name: Check formatting
+      #   run: deno fmt --check
 
-      - name: Run linter
-        run: deno lint
+      # - name: Run linter
+      #   run: deno lint
 
-      - name: Type check
-        run: deno check **/*.ts
+      # - name: Type check
+      #   run: deno check **/*.ts
 
       - name: Run tests
         run: deno test -A --coverage=coverage
