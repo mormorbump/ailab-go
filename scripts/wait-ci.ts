@@ -6,12 +6,7 @@ type WaitCiError =
   | { type: "workflow_not_found"; message: string }
   | { type: "workflow_failed"; message: string };
 
-/**
- * GitHub Actions のワークフローの完了を待機する
- * @param workflowFile ワークフローファイル名 (デフォルト: ci.yml)
- * @param waitSeconds 待機秒数 (デフォルト: 10)
- */
-export async function waitForCI(): Promise<Result<void, WaitCiError>> {
+export async function pushWithWaitCI(): Promise<Result<void, WaitCiError>> {
   // console.log("ワークフロー:", workflowFile);
 
   const prevRunId =
@@ -76,7 +71,7 @@ if (import.meta.main) {
   // const workflowFile = args[0] || "ci.yml";
   // const waitSeconds = args[1] ? parseInt(args[1], 10) : 10;
 
-  const result = await waitForCI();
+  const result = await pushWithWaitCI();
   result.match(
     () => Deno.exit(0),
     (error) => {
@@ -91,11 +86,11 @@ import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
 
 test("引数のバリデーションが正しく動作すること", async () => {
-  const result = await waitForCI();
+  const result = await pushWithWaitCI();
   expect(result.isOk() || result.isErr()).toBe(true);
 });
 
 test("デフォルト引数で動作すること", async () => {
-  const result = await waitForCI();
+  const result = await pushWithWaitCI();
   expect(result.isOk() || result.isErr()).toBe(true);
 });

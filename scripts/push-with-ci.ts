@@ -11,7 +11,7 @@
  */
 
 import $ from "jsr:@david/dax";
-import { waitForCI } from "./wait-ci.ts";
+import { pushWithWaitCI } from "./wait-ci.ts";
 
 /**
  * 現在のブランチ名を取得
@@ -46,7 +46,7 @@ async function pushAndWaitCI() {
     await sleep(10000); // 10秒待機
 
     // CIの完了を待機
-    await waitForCI();
+    await pushWithWaitCI();
   } catch (error) {
     console.error("Error:", error);
     Deno.exit(1);
