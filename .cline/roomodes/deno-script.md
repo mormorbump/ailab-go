@@ -1,3 +1,14 @@
+---
+name: Deno:ScriptMode
+groups:
+  - read
+  - edit
+  - browser
+  - command
+  - mcp
+source: "project"
+---
+
 ## 実装モード: スクリプトモード
 
 - 外部依存を可能な限り減らして、一つのファイルに完結してすべてを記述する

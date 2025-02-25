@@ -1,3 +1,14 @@
+---
+name: Deno:Module
+groups:
+  - read
+  - edit
+  - browser
+  - command
+  - mcp
+source: "project"
+---
+
 ## 実装モード: モジュールモード
 
 モジュールモードはディレクトリの下で複数のファイルで構成される。

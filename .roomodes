@@ -1,9 +1,7 @@
 {
   "customModes": [
     {
-      "slug": "deno-scriptmode",
       "name": "Deno:ScriptMode",
-      "roleDefinition": "You are a deno expert programmar\n\n- 外部依存を可能な限り減らして、一つのファイルに完結してすべてを記述する\n- テストコードも同じファイルに記述してください\n- スクリプトモードは `@script` がコード中に含まれる場合、あるいは `scripts/*` や `script/*` 以下のファイルが該当します。\n\nスクリプトモードの例\n\n```ts\n/* @script */\n/**\n * 足し算を行うモジュール\n */\nfunction add(a: number, b: number): number {\n  return a + b;\n}\n\n// deno run add.ts で動作確認するエントリポイント\nif (import.meta.main) {\n  console.log(add(1, 2));\n}\n\n/// test\nimport { expect } from \"@std/expect\";\nimport { test } from \"@std/testing/bdd\";\n\ntest(\"add(1, 2) = 3\", () => {\n  expect(add(1, 2)).toBe(3);\n});\n```\n\nCLINE/Rooのようなコーディングエージェントは、まず `deno run add.ts` で実行して、要求に応じて `deno test -A <filename>` で実行可能なようにテストを増やしていく。\n\nスクリプトモードでは曖昧なバージョンの import を許可する。\n\n優先順\n\n- `jsr:` のバージョン固定\n- `jsr:`\n- `npm:`\n\n\n`https://deno.land/x/*` は代替がない限りは推奨しない。\n\n\n```ts\n// OK\nimport $ from \"jsr:@david/dax@0.42.0\";\nimport $ from \"jsr:@david/dax\";\nimport { z } from \"npm:zod\";\n\n// Not Recommended\nimport * as cbor from \"https://deno.land/x/cbor\"\n```\n\n最初にスクリプトモードで検証し、モジュールモードに移行していく。",
       "groups": [
         "read",
         "edit",
@@ -11,12 +9,13 @@
         "command",
         "mcp"
       ],
-      "source": "project"
+      "source": "project",
+      "slug": "deno-script",
+      "roleDefinition": "\n## 実装モード: スクリプトモード\n\n- 外部依存を可能な限り減らして、一つのファイルに完結してすべてを記述する\n- テストコードも同じファイルに記述する\n- スクリプトモードは `@script` がコード中に含まれる場合、あるいは `scripts/*` や `script/*` 以下のファイルが該当する\n\nスクリプトモードの例\n\n```ts\n/* @script */\n/**\n * 足し算を行うモジュール\n */\nfunction add(a: number, b: number): number {\n  return a + b;\n}\n\n// deno run add.ts で動作確認するエントリポイント\nif (import.meta.main) {\n  console.log(add(1, 2));\n}\n\n/// test\nimport { expect } from \"@std/expect\";\nimport { test } from \"@std/testing/bdd\";\n\ntest(\"add(1, 2) = 3\", () => {\n  expect(add(1, 2), \"sum 1 + 2\").toBe(3);\n});\n```\n\nCLINE/Rooのようなコーディングエージェントは、まず `deno run add.ts` で実行して、要求に応じて `deno test -A <filename>` で実行可能なようにテストを増やしていく。\n\nスクリプトモードでは曖昧なバージョンの import を許可する。\n\n優先順\n\n- `jsr:` のバージョン固定\n- `jsr:`\n- `npm:`\n\n\n`https://deno.land/x/*` は代替がない限りは推奨しない。\n\n\n```ts\n// OK\nimport $ from \"jsr:@david/dax@0.42.0\";\nimport $ from \"jsr:@david/dax\";\nimport { z } from \"npm:zod\";\n\n// Not Recommended\nimport * as cbor from \"https://deno.land/x/cbor\"\n```\n\n最初にスクリプトモードで検証し、モジュールモードに移行していく。",
+      "__filename": "/home/mizchi/lab/.cline/roomodes/deno-script.md"
     },
     {
-      "slug": "deno",
-      "name": "Deno:ModuleMode",
-      "roleDefinition": "モジュールモードはディレクトリの下で複数のファイルで構成される。\n\n例\n\n```\nxxx/\n  mod.ts    - 外部向けのエクスポート（re-export のみ）\n  deps.ts   - 他のモジュールの mod.ts を import し、モジュール内で使用する機能を re-export\n  lib.ts    - 実装（deps.ts からの import を使用）\n  types.ts  - 型定義\n  mod.test.ts\n  lib.test.ts\nyyy/\n  mod.ts    - 外部向けのエクスポート（re-export のみ）\n  deps.ts   - 他のモジュールの mod.ts を import し、モジュール内で使用する機能を re-export\n  lib.ts    - 実装（deps.ts からの import を使用）\n  types.ts  - 型定義\n  mod.test.ts\n  lib.test.ts\n```\n\n### モジュールファイルの役割とコンテキスト境界\n\nモジュールのコンテキスト（文脈）は、mod.ts と deps.ts の2つのファイルによって完全に定義されます：\n\n- mod.ts: モジュールのパブリックインターフェース\n  - 外側に向けて実装を export する\n  - 他のモジュールでは、ここ以外から直接 import することを禁止する\n  - re-export のみを行い、実装を含まない\n  - このファイルを見るだけで、モジュールが提供する機能を理解できる\n\n- deps.ts: モジュールの依存関係定義\n  - 他のモジュールの mod.ts を import する\n  - モジュール内で使用する機能を re-export する\n  - 外部依存をここで一元管理する\n  - このファイルを見るだけで、モジュールの依存関係を理解できる\n\nその他のファイル：\n\n- types.ts: モジュール内の型定義を集約する\n- lib.ts: 実装を担当\n  - コード量が少ない(150行未満)とき、 lib.ts の下で実装してもよい\n  - 量が多い時は複数のファイルに分割する\n  - 実装内では deps.ts からの import を使用する\n  - モジュール外からは直接参照されない\n- *.test.ts: テストファイル\n  - 実装ファイルと同じディレクトリに配置する\n  - 実装ファイルと1:1で対応するテストファイルを作成する\n\nこの構造により：\n- モジュールの依存関係が透明になる\n- コードの変更影響範囲が予測しやすくなる\n- モジュール間の結合度を低く保てる\n- リファクタリングが容易になる\n\nモジュールモードではスクリプトモードと違って、ライブラリの参照に `jsr:` や `npm:` を推奨しない。モジュールを参照する場合、 `deno add jsr:@david/dax@0.42.0` のようにして、 `deno.json` に依存を追加する。\n\n```ts\n// OK\nimport $ from \"@david/dax\";\n\n// NG\nimport $ from \"jsr:@david/dax@0.42.0\";\n```\n\n## スクリプトモードからモジュールモードへの変換\n\nスクリプトからモジュールへのリファクタを指示されたとき、モジュールモードの仕様に従って、複数のファイルに分割する。\n\n```ts\n/// lib.ts\nexport function add(a: number, b: number): number {\n  return a + b;\n}\n\n/// deps.ts\nexport { PI } from \"../constants/mod.ts\";\n\n/// mod.ts\n/**\n * 足し算を行うモジュール\n */\nexport { add } from \"./lib.ts\";\n\n/// mod.test.ts\nimport { expect } from \"@std/expect\";\nimport { test } from \"@std/testing/bdd\";\ntest(\"add(1, 2) = 3\", () => {\n  expect(add(1, 2)).toBe(3);\n});\n```\n\n## モジュール間の依存関係\n\n### import ルール\n\n- モジュール間の参照は必ず mod.ts を経由する\n- 他のモジュールのファイルを直接参照してはいけない\n- 同一モジュール内のファイルは相対パスで参照する\n- モジュール内の実装は deps.ts からの re-export を参照する",
+      "name": "Deno:Module",
       "groups": [
         "read",
         "edit",
@@ -24,7 +23,24 @@
         "command",
         "mcp"
       ],
-      "source": "project"
+      "source": "project",
+      "slug": "deno-module",
+      "roleDefinition": "\n## 実装モード: モジュールモード\n\nモジュールモードはディレクトリの下で複数のファイルで構成される。\n\n例\n\n```\nxxx/\n  mod.ts    - 外部向けのエクスポート（re-export のみ）\n  deps.ts   - 他のモジュールの mod.ts を import し、モジュール内で使用する機能を re-export\n  lib.ts    - 実装（deps.ts からの import を使用）\n  types.ts  - 型定義\n  mod.test.ts\n  lib.test.ts\nyyy/\n  mod.ts    - 外部向けのエクスポート（re-export のみ）\n  deps.ts   - 他のモジュールの mod.ts を import し、モジュール内で使用する機能を re-export\n  lib.ts    - 実装（deps.ts からの import を使用）\n  types.ts  - 型定義\n  mod.test.ts\n  lib.test.ts\n```\n\nモジュールをテストする時は、 `deno test -A <module-name>/*.test.ts` で実行する。\n\nテストが落ちた時は、次の手順を踏む。\n\n機能追加の場合\n\n1. 機能追加の場合、まず `deno test -A` で全体のテストが通過しているかを確認する\n2. 修正後、対象のスクリプト or モジュールをテストする\n\n修正の場合\n\n1. `deno test -A <module-name>/**.test.ts` でモジュールのテストを実行する\n2. 落ちたモジュールのテストを確認し、実装を参照する。\n  - テストは一つずつ実行する `deno test -A <module-name>/foo.test.ts`\n3. 落ちた理由をステップバイステップで考える(闇雲に修正しない!)\n3. 実装を修正する。必要な場合、実行時の過程を確認するためのプリントデバッグを挿入する。\n4. モジュールのテスト実行結果を確認\n  - 修正出来た場合、プリントデバッグを削除する\n  - 集できない場合、3 に戻る。\n5. モジュール以外の全体テストを確認\n\nテストが落ちた場合、落ちたテストを修正するまで次のモジュールに進まない。\n\n### モジュールファイルの役割とコンテキスト境界\n\nモジュールのコンテキスト（文脈）は、mod.ts と deps.ts の2つのファイルによって完全に定義される：\n\n- mod.ts: モジュールのパブリックインターフェース\n  - 外側に向けて実装を export する\n  - 他のモジュールでは、ここ以外から直接 import することを禁止する\n  - re-export のみを行い、実装を含まない\n  - このファイルを見るだけで、モジュールが提供する機能を理解できる\n\n- deps.ts: モジュールの依存関係定義\n  - 他のモジュールの mod.ts を import する\n  - モジュール内で使用する機能を re-export する\n  - 外部依存をここで一元管理する\n  - このファイルを見るだけで、モジュールの依存関係を理解できる\n\nその他のファイル：\n\n- types.ts: モジュール内の型定義を集約する\n- lib.ts: 実装を担当\n  - コード量が少ない(150行未満)とき、 lib.ts の下で実装してもよい\n  - 量が多い時は複数のファイルに分割する\n  - 実装内では deps.ts からの import を使用する\n  - モジュール外からは直接参照されない\n- *.test.ts: テストファイル\n  - 実装ファイルと同じディレクトリに配置する\n  - 実装ファイルと1:1で対応するテストファイルを作成する\n\nこの構造により：\n- モジュールの依存関係が透明になる\n- コードの変更影響範囲が予測しやすくなる\n- モジュール間の結合度を低く保てる\n- リファクタリングが容易になる\n\nモジュールモードではスクリプトモードと違って、ライブラリの参照に `jsr:` や `npm:` を推奨しない。モジュールを参照する場合、 `deno add jsr:@david/dax@0.42.0` のようにして、 `deno.json` に依存を追加する。\n\n```ts\n// OK\nimport $ from \"@david/dax\";\n\n// NG\nimport $ from \"jsr:@david/dax@0.42.0\";",
+      "__filename": "/home/mizchi/lab/.cline/roomodes/deno-module.md"
+    },
+    {
+      "name": "Deno:TestFirstMode",
+      "groups": [
+        "read",
+        "edit",
+        "browser",
+        "command",
+        "mcp"
+      ],
+      "source": "project",
+      "slug": "deno-tdd",
+      "roleDefinition": "\n## 実装モード: テストファーストモード\n\nテストファーストモードは、実装の型シグネチャとテストコードを先に書き、それをユーザーに確認を取りながら実装を行う。\n\nファイル冒頭に `@tdd` を含む場合、それはテストファーストモードである。\n\n### テストの命名規約\n\nテスト名は以下の形式で記述する：\n\n```\n「{状況}の場合に{操作}をすると{結果}になること」\n```\n\n例：\n- 「有効なトークンの場合にユーザー情報を取得すると成功すること」\n- 「無効なトークンの場合にユーザー情報を取得するとエラーになること」\n\n### テストの実装順序\n\nテストコードは以下の順序で **実装** する：\n\n1. 期待する結果（アサーション）を最初に書く\n2. アサーションの妥当性をユーザーに確認\n3. 確認が取れたら、操作（Act）のコードを書く\n4. 最後に、準備（Arrange）のコードを書く\n\nこれは実行順序（Arrange → Act → Assert）とは異なる。実装を結果から始めることで、目的を明確にしてから実装を進められる。\n\n実装例：\n\n```ts\n// @script @tdd\nimport { Result, ok, err } from \"npm:neverthrow\";\n\n// 型定義\nexport interface User {\n  id: string;\n  name: string;\n}\n\nexport type ApiError = \n  | { type: \"unauthorized\"; message: string }\n  | { type: \"network\"; message: string };\n\n// インターフェース定義\ndeclare function getUser(token: string, id: string): Promise<Result<User, ApiError>>;\n\nimport { expect } from \"@std/expect\";\nimport { test } from \"@std/testing/bdd\";\n\ntest(\"有効なトークンの場合にユーザー情報を取得すると成功すること\", async () => {\n  // 1. まず期待する結果を書く\n  const expectedUser: User = {\n    id: \"1\",\n    name: \"Test User\"\n  };\n\n  // 2. ここでユーザーに結果の妥当性を確認\n\n  // 3. 次に操作を書く\n  const result = await getUser(\"valid-token\", \"1\");\n\n  // 4. 最後に準備を書く（この例では不要）\n\n  // アサーション\n  expect(result.isOk()).toBe(true);\n  result.map(user => {\n    expect(user).toEqual(expectedUser);\n  });\n});\n\ntest(\"無効なトークンの場合にユーザー情報を取得するとエラーになること\", async () => {\n  // 1. まず期待する結果を書く\n  const expectedError: ApiError = {\n    type: \"unauthorized\",\n    message: \"Invalid token\"\n  };\n\n  // 2. ユーザーに結果の妥当性を確認\n\n  // 3. 次に操作を書く\n  const result = await getUser(\"invalid-token\", \"1\");\n\n  // アサーション\n  expect(result.isErr()).toBe(true);\n  result.mapErr(error => {\n    expect(error).toEqual(expectedError);\n  });\n});\n```\n\n### 開発手順の詳細\n\n1. 型シグネチャの定義\n   ```ts\n   declare function getUser(token: string, id: string): Promise<Result<User, ApiError>>;\n   ```\n\n2. テストケースごとに：\n\n   a. 期待する結果を定義\n   ```ts\n   const expectedUser: User = {\n     id: \"1\",\n     name: \"Test User\"\n   };\n   ```\n\n   b. **ユーザーと結果の確認**\n   - この時点で期待する結果が適切か確認\n   - 仕様の見直しや追加が必要な場合は、ここで修正\n\n   c. 操作コードの実装\n   ```ts\n   const result = await getUser(\"valid-token\", \"1\");\n   ```\n\n   d. 必要な準備コードの実装\n   ```ts\n   // 必要な場合のみ\n   const mockApi = new MockApi();\n   mockApi.setup();\n   ```\n\n3. テストを一つずつ `skip` を外しながら実装\n\nテストファーストモードは他のモードと両立する。",
+      "__filename": "/home/mizchi/lab/.cline/roomodes/deno-tdd.md"
     }
   ]
 }

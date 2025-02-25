@@ -1,172 +1,162 @@
-# Deno + AI Experimental Code Generation
+# .cline ディレクトリの説明
 
-[![CI](https://github.com/mizchi/type-predictor/actions/workflows/ci.yml/badge.svg)](https://github.com/mizchi/type-predictor/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/mizchi/type-predictor/branch/main/graph/badge.svg)](https://codecov.io/gh/mizchi/type-predictor)
+このリポジトリの `.cline` ディレクトリは、Deno プロジェクトにおけるコーディングルールとモードを定義するための設定ファイルを管理しています。このドキュメントでは、`.cline` ディレクトリの構造と各ファイルの役割、および生成されるファイルについて説明します。
 
-このプロジェクトは、Denoとコーディングエージェント（AI）を組み合わせた実験的なコード生成プロジェクトです。
+## ディレクトリ構造
 
-## 概要
-
-このプロジェクトでは、以下のような実験的な取り組みを行っています：
-
-- TypeScriptコードの型推論と構造解析
-- AIによるコード生成とリファクタリング
-- スクリプトモードからモジュールモードへの段階的な開発手法
-
-## 開発モード
-
-### 1. スクリプトモード
-
-単一ファイルで完結する実験的な実装モードです。
-
-特徴：
-- `@script` タグによるモード指定
-- 外部依存を最小限に抑える
-- テストコードを同一ファイル内に記述
-- 即座に実行可能な形式
-
-例（`scripts/math.ts`）:
-```ts
-/* @script */
-/**
- * 数値計算を行うモジュール
- */
-function add(a: number, b: number): number {
-  return a + b;
-}
-
-// エントリーポイント
-if (import.meta.main) {
-  console.log(add(1, 2));
-}
-
-// テストコード
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
-
-test("add(1, 2) = 3", () => {
-  expect(add(1, 2), "sum 1 + 2").toBe(3);
-});
+```
+.cline/
+├── build.ts        - プロンプトファイルを結合して .clinerules と .roomodes を生成するスクリプト
+├── rules/          - コーディングルールを定義するマークダウンファイル
+│   ├── 01_basic.md       - 基本的なルールと AI Coding with Deno の概要
+│   ├── deno_rules.md     - Deno に関するルール（テスト、モジュール依存関係など）
+│   ├── git_workflow.md   - Git ワークフローに関するルール
+│   └── ts_bestpractice.md - TypeScript のコーディングベストプラクティス
+└── roomodes/       - 実装モードを定義するマークダウンファイル
+    ├── deno-script.md    - スクリプトモードの定義
+    ├── deno-module.md    - モジュールモードの定義
+    └── deno-tdd.md       - テストファーストモードの定義
 ```
 
-実行方法：
+## 生成されるファイル
+
+`.cline/build.ts` スクリプトを実行すると、以下のファイルが生成されます：
+
+1. `.clinerules` - `rules` ディレクトリ内のマークダウンファイルを結合したファイル
+2. `.roomodes` - `roomodes` ディレクトリ内のマークダウンファイルから生成された JSON ファイル
+
+## 各ファイルの役割
+
+### build.ts
+
+`build.ts` は、`rules` ディレクトリ内のマークダウンファイルを結合して `.clinerules` ファイルを生成し、`roomodes` ディレクトリ内のマークダウンファイルから `.roomodes` ファイルを生成するスクリプトです。
+
 ```bash
-# 実行
-deno run scripts/math.ts
-
-# テスト
-deno test scripts/math.ts
+# スクリプトの実行方法
+deno run --allow-read --allow-write .cline/build.ts
 ```
 
-### 2. テストファーストモード（TDD）
+### rules ディレクトリ
 
-型シグネチャとテストを先に書き、実装を後から行うモードです。
+`rules` ディレクトリには、プロジェクトのコーディングルールを定義するマークダウンファイルが含まれています。
 
-特徴：
-- `@tdd` タグによるモード指定
-- 型シグネチャを先に定義
-- テストケースを事前に記述
-- 実装の方向性を事前に確認
+#### 01_basic.md
 
-例（`scripts/tdd-mode.ts`）:
+基本的なルールと AI Coding with Deno のベストプラクティスの概要が記載されています。
+
+主な内容：
+- コーディングの基本方針
+- 型と関数インターフェースの設計
+- コードコメントの書き方
+- 実装パターンの選択基準
+- プロジェクトで想定されるモード（スクリプト、テストファースト、モジュール）
+
+#### deno_rules.md
+
+Deno に関するルールが記載されています。
+
+主な内容：
+- テストの書き方（`@std/expect` と `@std/testing/bdd` の使用）
+- モジュール間の依存関係（import ルール）
+- 依存関係の検証方法
+- コード品質の監視（カバレッジ、デッドコード解析、型定義による仕様抽出）
+
+#### git_workflow.md
+
+Git ワークフローに関するルールが記載されています。
+
+主な内容：
+- コミットの作成手順
+- プルリクエストの作成手順
+- 重要な注意事項
+- コミットメッセージの例
+- プルリクエストの例
+
+#### ts_bestpractice.md
+
+TypeScript のコーディングベストプラクティスが記載されています。
+
+主な内容：
+- 型の使用方針
+- エラー処理（Result 型の使用）
+- 実装パターン（関数ベース、class ベース、Adapter パターン）
+- 実装の選択基準
+- 一般的なルール（依存性の注入、インターフェースの設計、テスト容易性、コードの分割）
+
+### roomodes ディレクトリ
+
+`roomodes` ディレクトリには、プロジェクトの実装モードを定義するマークダウンファイルが含まれています。
+
+#### deno-script.md
+
+スクリプトモードの定義が記載されています。
+
+主な特徴：
+- 外部依存を可能な限り減らして、一つのファイルに完結
+- テストコードも同じファイルに記述
+- `@script` がコード中に含まれる場合、あるいは `scripts/*` や `script/*` 以下のファイルが該当
+- 曖昧なバージョンの import を許可（優先順: `jsr:` のバージョン固定 > `jsr:` > `npm:`）
+
+#### deno-module.md
+
+モジュールモードの定義が記載されています。
+
+主な特徴：
+- ディレクトリの下で複数のファイルで構成
+- モジュール構造（mod.ts, deps.ts, lib.ts, types.ts, *.test.ts）
+- モジュールのテスト方法
+- テストが落ちた時の対応手順
+- モジュールファイルの役割とコンテキスト境界
+- ライブラリの参照方法（`deno.json` に依存を追加）
+
+#### deno-tdd.md
+
+テストファーストモードの定義が記載されています。
+
+主な特徴：
+- 実装の型シグネチャとテストコードを先に書き、ユーザーに確認を取りながら実装
+- ファイル冒頭に `@tdd` を含む場合に適用
+- テストの命名規約（「{状況}の場合に{操作}をすると{結果}になること」）
+- テストの実装順序（期待する結果 → 操作 → 準備）
+- 開発手順の詳細
+
+## 使用方法
+
+1. `.cline/rules` ディレクトリにコーディングルールを定義するマークダウンファイルを追加または編集します。
+2. `.cline/roomodes` ディレクトリに実装モードを定義するマークダウンファイルを追加または編集します。
+3. `.cline/build.ts` スクリプトを実行して、`.clinerules` と `.roomodes` ファイルを生成します。
+
+```bash
+deno run --allow-read --allow-write .cline/build.ts
+```
+
+4. 生成された `.clinerules` と `.roomodes` ファイルは、AI コーディングアシスタント（CLINE/Roo など）によって読み込まれ、プロジェクトのルールとモードが適用されます。
+
+## モードの切り替え方法
+
+プロジェクトで定義されているモードは以下の通りです：
+
+- `deno-script` (Deno:ScriptMode) - スクリプトモード
+- `deno-module` (Deno:Module) - モジュールモード
+- `deno-tdd` (Deno:TestFirstMode) - テストファーストモード
+
+モードを切り替えるには、AI コーディングアシスタントに対して以下のように指示します：
+
+```
+モードを deno-script に切り替えてください。
+```
+
+または、ファイルの冒頭に特定のマーカーを含めることでモードを指定することもできます：
+
+- スクリプトモード: `@script`
+- テストファーストモード: `@tdd`
+
+例：
 ```ts
 // @script @tdd
-/**
- * 数値の配列から最大値を求める関数
- */
-declare function findMax(numbers: number[]): number;
-
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
-
-test("findMax", () => {
-  expect(findMax([1, 2, 3])).toBe(3);
-  expect(findMax([-1, -2, -3])).toBe(-1);
-});
+// このファイルはスクリプトモードとテストファーストモードの両方で実装されます
 ```
 
-### 3. モジュールモード
+## まとめ
 
-複数のファイルで構成される本番向けの実装モードです。
-
-特徴：
-- 明確なモジュール境界
-- 依存関係の一元管理
-- テストの分離
-- 型定義の集約
-
-例（`type-predictor/`）:
-```
-type-predictor/
-  ├── mod.ts           # Public API
-  ├── deps.ts          # Dependencies
-  ├── predict.ts       # Core implementation
-  ├── schema.ts        # Type definitions
-  ├── types.ts         # Common types
-  └── predict.test.ts  # Tests
-```
-
-モジュールの実装例：
-```ts
-// mod.ts - Public API
-export { predict } from "./predict.ts";
-export type { PredictResult } from "./types.ts";
-
-// deps.ts - Dependencies
-export { z } from "npm:zod";
-
-// predict.ts - Implementation
-import { z } from "./deps.ts";
-import type { PredictResult } from "./types.ts";
-
-export function predict(input: unknown): PredictResult {
-  // 実装
-}
-```
-
-テスト実行：
-```bash
-# モジュール全体のテスト
-deno test type-predictor/
-
-# 特定のテストファイル
-deno test type-predictor/predict.test.ts
-```
-
-## プロジェクト構造
-
-```
-.
-├── scripts/          # 実験的なスクリプト
-│   ├── math.ts
-│   ├── tdd-mode.ts
-│   └── ...
-├── type-predictor/   # 型推論モジュール
-│   ├── mod.ts
-│   ├── deps.ts
-│   └── ...
-├── docs/            # ドキュメント
-└── prompts/         # AIプロンプトルール
-```
-
-## 開発フロー
-
-1. スクリプトモードでプロトタイプ開発
-   - アイデアの素早い検証
-   - 単一ファイルでの実装
-   - インラインテストによる動作確認
-
-2. テストファーストモードでの設計
-   - 型シグネチャの定義
-   - テストケースの作成
-   - 実装方針の確認
-
-3. モジュールへのリファクタリング
-   - 責務の分割
-   - テストの分離
-   - 型定義の整理
-   - 依存関係の管理
-
-## ライセンス
-
-MIT
+`.cline` ディレクトリは、Deno プロジェクトにおけるコーディングルールとモードを定義するための設定ファイルを管理しています。`build.ts` スクリプトを実行することで、`.clinerules` と `.roomodes` ファイルが生成され、AI コーディングアシスタントによってプロジェクトのルールとモードが適用されます。

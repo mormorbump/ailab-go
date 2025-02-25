@@ -27,191 +27,6 @@
 
 複数のモードを想定する。以下に解説する。
 
-## コーディングベストプラクティス
-
-TypeScriptでのコーディングにおける一般的なベストプラクティスをまとめます。
-
-### 型の使用方針
-
-1. 具体的な型を使用
-   - any の使用を避ける
-   - unknown を使用してから型を絞り込む
-   - Utility Types を活用する
-
-2. 型エイリアスの命名
-   - 意味のある名前をつける
-   - 型の意図を明確にする
-   ```ts
-   // Good
-   type UserId = string;
-   type UserData = {
-     id: UserId;
-     createdAt: Date;
-   };
-
-   // Bad
-   type Data = any;
-   ```
-
-### エラー処理
-
-1. Result型の使用
-   ```ts
-   import { Result, ok, err } from "npm:neverthrow";
-
-   type ApiError = 
-     | { type: "network"; message: string }
-     | { type: "notFound"; message: string }
-     | { type: "unauthorized"; message: string };
-
-   async function fetchUser(id: string): Promise<Result<User, ApiError>> {
-     try {
-       const response = await fetch(`/api/users/${id}`);
-       if (!response.ok) {
-         switch (response.status) {
-           case 404:
-             return err({ type: "notFound", message: "User not found" });
-           case 401:
-             return err({ type: "unauthorized", message: "Unauthorized" });
-           default:
-             return err({ type: "network", message: `HTTP error: ${response.status}` });
-         }
-       }
-       return ok(await response.json());
-     } catch (error) {
-       return err({ type: "network", message: error instanceof Error ? error.message : "Unknown error" });
-     }
-   }
-   ```
-
-2. エラー型の定義
-   - 具体的なケースを列挙
-   - エラーメッセージを含める
-   - 型の網羅性チェックを活用
-
-### 実装パターン
-
-1. 関数ベース（状態を持たない場合）
-   ```ts
-   // インターフェース
-   interface Logger {
-     log(message: string): void;
-   }
-
-   // 実装
-   function createLogger(): Logger {
-     return {
-       log(message: string): void {
-         console.log(`[${new Date().toISOString()}] ${message}`);
-       }
-     };
-   }
-   ```
-
-2. classベース（状態を持つ場合）
-   ```ts
-   interface Cache<T> {
-     get(key: string): T | undefined;
-     set(key: string, value: T): void;
-   }
-
-   class TimeBasedCache<T> implements Cache<T> {
-     private items = new Map<string, { value: T; expireAt: number; }>();
-     
-     constructor(private ttlMs: number) {}
-     
-     get(key: string): T | undefined {
-       const item = this.items.get(key);
-       if (!item || Date.now() > item.expireAt) {
-         return undefined;
-       }
-       return item.value;
-     }
-     
-     set(key: string, value: T): void {
-       this.items.set(key, {
-         value,
-         expireAt: Date.now() + this.ttlMs
-       });
-     }
-   }
-   ```
-
-3. Adapterパターン（外部依存の抽象化）
-   ```ts
-   // 抽象化
-   type Fetcher = <T>(path: string) => Promise<Result<T, ApiError>>;
-
-   // 実装
-   function createFetcher(headers: Record<string, string>): Fetcher {
-     return async <T>(path: string) => {
-       try {
-         const response = await fetch(path, { headers });
-         if (!response.ok) {
-           return err({ type: "network", message: `HTTP error: ${response.status}` });
-         }
-         return ok(await response.json());
-       } catch (error) {
-         return err({ type: "network", message: error instanceof Error ? error.message : "Unknown error" });
-       }
-     };
-   }
-
-   // 利用
-   class ApiClient {
-     constructor(
-       private readonly getData: Fetcher,
-       private readonly baseUrl: string
-     ) {}
-
-     async getUser(id: string): Promise<Result<User, ApiError>> {
-       return await this.getData(`${this.baseUrl}/users/${id}`);
-     }
-   }
-   ```
-
-### 実装の選択基準
-
-1. 関数を選ぶ場合
-   - 単純な操作のみ
-   - 内部状態が不要
-   - 依存が少ない
-   - テストが容易
-
-2. classを選ぶ場合
-   - 内部状態の管理が必要
-   - 設定やリソースの保持が必要
-   - メソッド間で状態を共有
-   - ライフサイクル管理が必要
-
-3. Adapterを選ぶ場合
-   - 外部依存の抽象化
-   - テスト時のモック化が必要
-   - 実装の詳細を隠蔽したい
-   - 差し替え可能性を確保したい
-
-### 一般的なルール
-
-1. 依存性の注入
-   - 外部依存はコンストラクタで注入
-   - テスト時にモックに置き換え可能に
-   - グローバルな状態を避ける
-
-2. インターフェースの設計
-   - 必要最小限のメソッドを定義
-   - 実装の詳細を含めない
-   - プラットフォーム固有の型を避ける
-
-3. テスト容易性
-   - モックの実装を簡潔に
-   - エッジケースのテストを含める
-   - テストヘルパーを適切に分離
-
-4. コードの分割
-   - 単一責任の原則に従う
-   - 適切な粒度でモジュール化
-   - 循環参照を避ける
-
 ## テストの書き方
 
 `@std/expect` と `@std/testing/bdd` を使う。
@@ -229,281 +44,6 @@ test("2+3=5", () => {
 アサーションの書き方
 
 - `expect(result, "<expected behavior>").toBe("result")` で可能な限り期待する動作を書く
-
-## 実装モード: スクリプトモード
-
-- 外部依存を可能な限り減らして、一つのファイルに完結してすべてを記述する
-- テストコードも同じファイルに記述する
-- スクリプトモードは `@script` がコード中に含まれる場合、あるいは `scripts/*` や `script/*` 以下のファイルが該当する
-
-スクリプトモードの例
-
-```ts
-/* @script */
-/**
- * 足し算を行うモジュール
- */
-function add(a: number, b: number): number {
-  return a + b;
-}
-
-// deno run add.ts で動作確認するエントリポイント
-if (import.meta.main) {
-  console.log(add(1, 2));
-}
-
-/// test
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
-
-test("add(1, 2) = 3", () => {
-  expect(add(1, 2), "sum 1 + 2").toBe(3);
-});
-```
-
-CLINE/Rooのようなコーディングエージェントは、まず `deno run add.ts` で実行して、要求に応じて `deno test -A <filename>` で実行可能なようにテストを増やしていく。
-
-スクリプトモードでは曖昧なバージョンの import を許可する。
-
-優先順
-
-- `jsr:` のバージョン固定
-- `jsr:`
-- `npm:`
-
-
-`https://deno.land/x/*` は代替がない限りは推奨しない。
-
-
-```ts
-// OK
-import $ from "jsr:@david/dax@0.42.0";
-import $ from "jsr:@david/dax";
-import { z } from "npm:zod";
-
-// Not Recommended
-import * as cbor from "https://deno.land/x/cbor"
-```
-
-最初にスクリプトモードで検証し、モジュールモードに移行していく。
-
-## 実装モード: テストファーストモード
-
-テストファーストモードは、実装の型シグネチャとテストコードを先に書き、それをユーザーに確認を取りながら実装を行う。
-
-ファイル冒頭に `@tdd` を含む場合、それはテストファーストモードである。
-
-### テストの命名規約
-
-テスト名は以下の形式で記述する：
-
-```
-「{状況}の場合に{操作}をすると{結果}になること」
-```
-
-例：
-- 「有効なトークンの場合にユーザー情報を取得すると成功すること」
-- 「無効なトークンの場合にユーザー情報を取得するとエラーになること」
-
-### テストの実装順序
-
-テストコードは以下の順序で **実装** する：
-
-1. 期待する結果（アサーション）を最初に書く
-2. アサーションの妥当性をユーザーに確認
-3. 確認が取れたら、操作（Act）のコードを書く
-4. 最後に、準備（Arrange）のコードを書く
-
-これは実行順序（Arrange → Act → Assert）とは異なる。実装を結果から始めることで、目的を明確にしてから実装を進められる。
-
-実装例：
-
-```ts
-// @script @tdd
-import { Result, ok, err } from "npm:neverthrow";
-
-// 型定義
-export interface User {
-  id: string;
-  name: string;
-}
-
-export type ApiError = 
-  | { type: "unauthorized"; message: string }
-  | { type: "network"; message: string };
-
-// インターフェース定義
-declare function getUser(token: string, id: string): Promise<Result<User, ApiError>>;
-
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
-
-test("有効なトークンの場合にユーザー情報を取得すると成功すること", async () => {
-  // 1. まず期待する結果を書く
-  const expectedUser: User = {
-    id: "1",
-    name: "Test User"
-  };
-
-  // 2. ここでユーザーに結果の妥当性を確認
-
-  // 3. 次に操作を書く
-  const result = await getUser("valid-token", "1");
-
-  // 4. 最後に準備を書く（この例では不要）
-
-  // アサーション
-  expect(result.isOk()).toBe(true);
-  result.map(user => {
-    expect(user).toEqual(expectedUser);
-  });
-});
-
-test("無効なトークンの場合にユーザー情報を取得するとエラーになること", async () => {
-  // 1. まず期待する結果を書く
-  const expectedError: ApiError = {
-    type: "unauthorized",
-    message: "Invalid token"
-  };
-
-  // 2. ユーザーに結果の妥当性を確認
-
-  // 3. 次に操作を書く
-  const result = await getUser("invalid-token", "1");
-
-  // アサーション
-  expect(result.isErr()).toBe(true);
-  result.mapErr(error => {
-    expect(error).toEqual(expectedError);
-  });
-});
-```
-
-### 開発手順の詳細
-
-1. 型シグネチャの定義
-   ```ts
-   declare function getUser(token: string, id: string): Promise<Result<User, ApiError>>;
-   ```
-
-2. テストケースごとに：
-
-   a. 期待する結果を定義
-   ```ts
-   const expectedUser: User = {
-     id: "1",
-     name: "Test User"
-   };
-   ```
-
-   b. **ユーザーと結果の確認**
-   - この時点で期待する結果が適切か確認
-   - 仕様の見直しや追加が必要な場合は、ここで修正
-
-   c. 操作コードの実装
-   ```ts
-   const result = await getUser("valid-token", "1");
-   ```
-
-   d. 必要な準備コードの実装
-   ```ts
-   // 必要な場合のみ
-   const mockApi = new MockApi();
-   mockApi.setup();
-   ```
-
-3. テストを一つずつ `skip` を外しながら実装
-
-テストファーストモードは他のモードと両立する。
-
-## 実装モード: モジュールモード
-
-モジュールモードはディレクトリの下で複数のファイルで構成される。
-
-例
-
-```
-xxx/
-  mod.ts    - 外部向けのエクスポート（re-export のみ）
-  deps.ts   - 他のモジュールの mod.ts を import し、モジュール内で使用する機能を re-export
-  lib.ts    - 実装（deps.ts からの import を使用）
-  types.ts  - 型定義
-  mod.test.ts
-  lib.test.ts
-yyy/
-  mod.ts    - 外部向けのエクスポート（re-export のみ）
-  deps.ts   - 他のモジュールの mod.ts を import し、モジュール内で使用する機能を re-export
-  lib.ts    - 実装（deps.ts からの import を使用）
-  types.ts  - 型定義
-  mod.test.ts
-  lib.test.ts
-```
-
-モジュールをテストする時は、 `deno test -A <module-name>/*.test.ts` で実行する。
-
-テストが落ちた時は、次の手順を踏む。
-
-機能追加の場合
-
-1. 機能追加の場合、まず `deno test -A` で全体のテストが通過しているかを確認する
-2. 修正後、対象のスクリプト or モジュールをテストする
-
-修正の場合
-
-1. `deno test -A <module-name>/**.test.ts` でモジュールのテストを実行する
-2. 落ちたモジュールのテストを確認し、実装を参照する。
-  - テストは一つずつ実行する `deno test -A <module-name>/foo.test.ts`
-3. 落ちた理由をステップバイステップで考える(闇雲に修正しない!)
-3. 実装を修正する。必要な場合、実行時の過程を確認するためのプリントデバッグを挿入する。
-4. モジュールのテスト実行結果を確認
-  - 修正出来た場合、プリントデバッグを削除する
-  - 集できない場合、3 に戻る。
-5. モジュール以外の全体テストを確認
-
-テストが落ちた場合、落ちたテストを修正するまで次のモジュールに進まない。
-
-### モジュールファイルの役割とコンテキスト境界
-
-モジュールのコンテキスト（文脈）は、mod.ts と deps.ts の2つのファイルによって完全に定義される：
-
-- mod.ts: モジュールのパブリックインターフェース
-  - 外側に向けて実装を export する
-  - 他のモジュールでは、ここ以外から直接 import することを禁止する
-  - re-export のみを行い、実装を含まない
-  - このファイルを見るだけで、モジュールが提供する機能を理解できる
-
-- deps.ts: モジュールの依存関係定義
-  - 他のモジュールの mod.ts を import する
-  - モジュール内で使用する機能を re-export する
-  - 外部依存をここで一元管理する
-  - このファイルを見るだけで、モジュールの依存関係を理解できる
-
-その他のファイル：
-
-- types.ts: モジュール内の型定義を集約する
-- lib.ts: 実装を担当
-  - コード量が少ない(150行未満)とき、 lib.ts の下で実装してもよい
-  - 量が多い時は複数のファイルに分割する
-  - 実装内では deps.ts からの import を使用する
-  - モジュール外からは直接参照されない
-- *.test.ts: テストファイル
-  - 実装ファイルと同じディレクトリに配置する
-  - 実装ファイルと1:1で対応するテストファイルを作成する
-
-この構造により：
-- モジュールの依存関係が透明になる
-- コードの変更影響範囲が予測しやすくなる
-- モジュール間の結合度を低く保てる
-- リファクタリングが容易になる
-
-モジュールモードではスクリプトモードと違って、ライブラリの参照に `jsr:` や `npm:` を推奨しない。モジュールを参照する場合、 `deno add jsr:@david/dax@0.42.0` のようにして、 `deno.json` に依存を追加する。
-
-```ts
-// OK
-import $ from "@david/dax";
-
-// NG
-import $ from "jsr:@david/dax@0.42.0";
 
 ## モジュール間の依存関係
 
@@ -733,3 +273,191 @@ TypeScriptのエラー処理をより型安全にするため、Result型を導�
 - Result型の使用方法が適切か
 - エラーケースの網羅性
 - テストの十分性
+
+## コーディングベストプラクティス
+
+TypeScriptでのコーディングにおける一般的なベストプラクティスをまとめます。
+
+### 型の使用方針
+
+1. 具体的な型を使用
+   - any の使用を避ける
+   - unknown を使用してから型を絞り込む
+   - Utility Types を活用する
+
+2. 型エイリアスの命名
+   - 意味のある名前をつける
+   - 型の意図を明確にする
+   ```ts
+   // Good
+   type UserId = string;
+   type UserData = {
+     id: UserId;
+     createdAt: Date;
+   };
+
+   // Bad
+   type Data = any;
+   ```
+
+### エラー処理
+
+1. Result型の使用
+   ```ts
+   import { Result, ok, err } from "npm:neverthrow";
+
+   type ApiError = 
+     | { type: "network"; message: string }
+     | { type: "notFound"; message: string }
+     | { type: "unauthorized"; message: string };
+
+   async function fetchUser(id: string): Promise<Result<User, ApiError>> {
+     try {
+       const response = await fetch(`/api/users/${id}`);
+       if (!response.ok) {
+         switch (response.status) {
+           case 404:
+             return err({ type: "notFound", message: "User not found" });
+           case 401:
+             return err({ type: "unauthorized", message: "Unauthorized" });
+           default:
+             return err({ type: "network", message: `HTTP error: ${response.status}` });
+         }
+       }
+       return ok(await response.json());
+     } catch (error) {
+       return err({ type: "network", message: error instanceof Error ? error.message : "Unknown error" });
+     }
+   }
+   ```
+
+2. エラー型の定義
+   - 具体的なケースを列挙
+   - エラーメッセージを含める
+   - 型の網羅性チェックを活用
+
+### 実装パターン
+
+1. 関数ベース（状態を持たない場合）
+   ```ts
+   // インターフェース
+   interface Logger {
+     log(message: string): void;
+   }
+
+   // 実装
+   function createLogger(): Logger {
+     return {
+       log(message: string): void {
+         console.log(`[${new Date().toISOString()}] ${message}`);
+       }
+     };
+   }
+   ```
+
+2. classベース（状態を持つ場合）
+   ```ts
+   interface Cache<T> {
+     get(key: string): T | undefined;
+     set(key: string, value: T): void;
+   }
+
+   class TimeBasedCache<T> implements Cache<T> {
+     private items = new Map<string, { value: T; expireAt: number; }>();
+     
+     constructor(private ttlMs: number) {}
+     
+     get(key: string): T | undefined {
+       const item = this.items.get(key);
+       if (!item || Date.now() > item.expireAt) {
+         return undefined;
+       }
+       return item.value;
+     }
+     
+     set(key: string, value: T): void {
+       this.items.set(key, {
+         value,
+         expireAt: Date.now() + this.ttlMs
+       });
+     }
+   }
+   ```
+
+3. Adapterパターン（外部依存の抽象化）
+   ```ts
+   // 抽象化
+   type Fetcher = <T>(path: string) => Promise<Result<T, ApiError>>;
+
+   // 実装
+   function createFetcher(headers: Record<string, string>): Fetcher {
+     return async <T>(path: string) => {
+       try {
+         const response = await fetch(path, { headers });
+         if (!response.ok) {
+           return err({ type: "network", message: `HTTP error: ${response.status}` });
+         }
+         return ok(await response.json());
+       } catch (error) {
+         return err({ type: "network", message: error instanceof Error ? error.message : "Unknown error" });
+       }
+     };
+   }
+
+   // 利用
+   class ApiClient {
+     constructor(
+       private readonly getData: Fetcher,
+       private readonly baseUrl: string
+     ) {}
+
+     async getUser(id: string): Promise<Result<User, ApiError>> {
+       return await this.getData(`${this.baseUrl}/users/${id}`);
+     }
+   }
+   ```
+
+### 実装の選択基準
+
+1. 関数を選ぶ場合
+   - 単純な操作のみ
+   - 内部状態が不要
+   - 依存が少ない
+   - テストが容易
+
+2. classを選ぶ場合
+   - 内部状態の管理が必要
+   - 設定やリソースの保持が必要
+   - メソッド間で状態を共有
+   - ライフサイクル管理が必要
+
+3. Adapterを選ぶ場合
+   - 外部依存の抽象化
+   - テスト時のモック化が必要
+   - 実装の詳細を隠蔽したい
+   - 差し替え可能性を確保したい
+
+### 一般的なルール
+
+1. 依存性の注入
+   - 外部依存はコンストラクタで注入
+   - テスト時にモックに置き換え可能に
+   - グローバルな状態を避ける
+
+2. インターフェースの設計
+   - 必要最小限のメソッドを定義
+   - 実装の詳細を含めない
+   - プラットフォーム固有の型を避ける
+
+3. テスト容易性
+   - モックの実装を簡潔に
+   - エッジケースのテストを含める
+   - テストヘルパーを適切に分離
+
+4. コードの分割
+   - 単一責任の原則に従う
+   - 適切な粒度でモジュール化
+   - 循環参照を避けるこのプロジェクトには以下のモードが定義されています:
+- deno-script Deno:ScriptMode at .cline/roomodes/deno-script.md
+- deno-module Deno:Module at .cline/roomodes/deno-module.md
+- deno-tdd Deno:TestFirstMode at .cline/roomodes/deno-tdd.md

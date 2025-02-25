@@ -1,3 +1,14 @@
+---
+name: Deno:TestFirstMode
+groups:
+  - read
+  - edit
+  - browser
+  - command
+  - mcp
+source: "project"
+---
+
 ## 実装モード: テストファーストモード
 
 テストファーストモードは、実装の型シグネチャとテストコードを先に書き、それをユーザーに確認を取りながら実装を行う。
