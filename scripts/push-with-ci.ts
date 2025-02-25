@@ -39,6 +39,7 @@ import { parseArgs } from "node:util";
 const parsed = parseArgs({
   args: Deno.args,
   options: {
+    workflow: { type: "string", short: "w" },
     branch: { type: "string", short: "b" },
   },
 });
@@ -48,8 +49,12 @@ type WaitCiError =
   | { type: "workflow_failed"; message: string };
 
 export async function pushWithWaitCI(): Promise<Result<void, WaitCiError>> {
-  let prevRunId =
-    await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId'`.text();
+  // check status
+  await $`git status --porcelain`;
+
+  let prevRunId = parsed.values.workflow
+    ? await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId' --workflow "${parsed.values.workflow}"`.text()
+    : await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId'`.text();
   if (!prevRunId.trim()) {
     console.log("Previous run not found.");
     prevRunId = "<not-found>";
