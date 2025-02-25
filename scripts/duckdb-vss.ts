@@ -410,73 +410,75 @@ export function createVectorSearchClient(
 // 使用例
 if (import.meta.main) {
   // メイン関数を定義
-  async function main() {
-    // DuckDBClientを作成
-    const client = createDuckDBClient();
+  // async function main() {
+  // DuckDBClientを作成
+  const client = createDuckDBClient();
 
-    try {
-      // 接続
-      client.connect();
+  try {
+    // 接続
+    client.connect();
 
-      // テーブルを作成
-      client.exec("CREATE TABLE test (id INTEGER, name VARCHAR);");
+    // テーブルを作成
+    client.exec("CREATE TABLE test (id INTEGER, name VARCHAR);");
 
-      // データを挿入
-      client.exec(
-        "INSERT INTO test VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie');"
-      );
+    // データを挿入
+    client.exec(
+      "INSERT INTO test VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie');"
+    );
 
-      // クエリを実行
-      const results = await client.query("SELECT * FROM test;");
-      console.log("クエリ結果:", results);
+    // クエリを実行
+    const results = await client.query("SELECT * FROM test;");
+    console.log("クエリ結果:", results);
 
-      // パラメータ化されたクエリを実行
-      const paramResults = await client.queryWithParams(
-        "SELECT * FROM test WHERE id > ? AND name LIKE ?;",
-        [1, "%a%"]
-      );
-      console.log("パラメータ化されたクエリ結果:", paramResults);
+    // パラメータ化されたクエリを実行
+    const paramResults = await client.queryWithParams(
+      "SELECT * FROM test WHERE id > ? AND name LIKE ?;",
+      [1, "%a%"]
+    );
+    console.log("パラメータ化されたクエリ結果:", paramResults);
 
-      // ストリーミングクエリを実行
-      console.log("ストリーミングクエリ結果:");
-      await client.stream("SELECT * FROM test;", (row) => {
-        console.log(" -", row);
-      });
+    // ストリーミングクエリを実行
+    console.log("ストリーミングクエリ結果:");
+    await client.stream("SELECT * FROM test;", (row) => {
+      console.log(" -", row);
+    });
 
-      // VSS拡張機能を使用した例（コメントアウト）
-      /*
-      // VectorSearchClientを作成
-      const vectorClient = createVectorSearchClient(client);
-      
-      // ベクトル埋め込みを格納するテーブルを作成
-      vectorClient.createEmbeddingsTable("embeddings", 3, "id INTEGER, description VARCHAR");
-      
-      // データを挿入
-      client.exec(`
+    // VSS拡張機能を使用した例
+    // VectorSearchClientを作成
+    const vectorClient = createVectorSearchClient(client);
+
+    // ベクトル埋め込みを格納するテーブルを作成
+    vectorClient.createEmbeddingsTable(
+      "embeddings",
+      3,
+      "id INTEGER, description VARCHAR"
+    );
+
+    // データを挿入
+    client.exec(`
         INSERT INTO embeddings VALUES
           (1, '赤色のベクトル', [1.0, 0.1, 0.1]),
           (2, '緑色のベクトル', [0.1, 1.0, 0.1]),
           (3, '青色のベクトル', [0.1, 0.1, 1.0]);
       `);
-      
-      // HNSWインデックスを作成
-      vectorClient.createHNSWIndex("embeddings", "emb_idx");
-      
-      // ユークリッド距離を使用して類似ベクトルを検索
-      const queryVector = [0.9, 0.2, 0.2];
-      const similarVectors = await vectorClient.searchByEuclideanDistance("embeddings", queryVector, 2);
-      console.log("類似ベクトル:", similarVectors);
-      */
-    } catch (error) {
-      console.error("エラーが発生しました:", error);
-    } finally {
-      // 接続を閉じる
-      client.close();
-    }
-  }
 
-  // メイン関数を実行
-  main().catch(console.error);
+    // HNSWインデックスを作成
+    vectorClient.createHNSWIndex("embeddings", "emb_idx");
+
+    // ユークリッド距離を使用して類似ベクトルを検索
+    const queryVector = [0.9, 0.2, 0.2];
+    const similarVectors = await vectorClient.searchByEuclideanDistance(
+      "embeddings",
+      queryVector,
+      2
+    );
+    console.log("類似ベクトル:", similarVectors);
+  } catch (error) {
+    console.error("エラーが発生しました:", error);
+  } finally {
+    // 接続を閉じる
+    client.close();
+  }
 }
 
 /// test
@@ -604,6 +606,218 @@ test("DuckDBClientのストリーミングクエリが正常に動作するこ�
       expect(rows[2].id, "3行目のIDが3であること").toBe(3);
       expect(rows[2].name, "3行目の名前がCharlieであること").toBe("Charlie");
     }
+  } finally {
+    client.close();
+  }
+});
+
+// VSS機能のテスト
+test("VectorSearchClientが正常に作成できること", () => {
+  const client = createDuckDBClient();
+  client.connect();
+
+  try {
+    const vectorClient = createVectorSearchClient(client);
+    expect(vectorClient).toBeDefined();
+    expect(vectorClient instanceof VectorSearchClient).toBe(true);
+  } finally {
+    client.close();
+  }
+});
+
+test("ベクトル埋め込みテーブルが正常に作成できること", () => {
+  const client = createDuckDBClient();
+  client.connect();
+
+  try {
+    const vectorClient = createVectorSearchClient(client);
+
+    // ベクトル埋め込みテーブルを作成
+    vectorClient.createEmbeddingsTable(
+      "test_embeddings",
+      3,
+      "id INTEGER, description VARCHAR"
+    );
+
+    // テーブルが存在することを確認
+    const results = client.query("SELECT * FROM test_embeddings LIMIT 0;");
+    expect(results).toBeDefined();
+  } finally {
+    client.close();
+  }
+});
+
+test("ユークリッド距離を使用した類似ベクトル検索が正常に動作すること", async () => {
+  const client = createDuckDBClient();
+  client.connect();
+
+  try {
+    const vectorClient = createVectorSearchClient(client);
+
+    // ベクトル埋め込みテーブルを作成
+    vectorClient.createEmbeddingsTable(
+      "test_euclidean",
+      3,
+      "id INTEGER, description VARCHAR"
+    );
+
+    // データを挿入
+    client.exec(`
+      INSERT INTO test_euclidean VALUES
+        (1, '赤色のベクトル', [1.0, 0.1, 0.1]),
+        (2, '緑色のベクトル', [0.1, 1.0, 0.1]),
+        (3, '青色のベクトル', [0.1, 0.1, 1.0]);
+    `);
+
+    // ユークリッド距離を使用して類似ベクトルを検索
+    const queryVector = [0.9, 0.2, 0.2];
+    const similarVectors = await vectorClient.searchByEuclideanDistance(
+      "test_euclidean",
+      queryVector,
+      2
+    );
+
+    // 結果の検証
+    expect(similarVectors).toBeDefined();
+    expect(Array.isArray(similarVectors), "結果が配列であること").toBe(true);
+    expect(similarVectors.length, "2行のデータが取得できること").toBe(2);
+
+    // 最も近いベクトルが赤色のベクトルであることを確認
+    if (similarVectors.length >= 1) {
+      expect(similarVectors[0].id, "最も近いベクトルのIDが1であること").toBe(1);
+      expect(
+        similarVectors[0].description,
+        "最も近いベクトルの説明が赤色のベクトルであること"
+      ).toBe("赤色のベクトル");
+    }
+  } finally {
+    client.close();
+  }
+});
+
+test("コサイン距離を使用した類似ベクトル検索が正常に動作すること", async () => {
+  const client = createDuckDBClient();
+  client.connect();
+
+  try {
+    const vectorClient = createVectorSearchClient(client);
+
+    // ベクトル埋め込みテーブルを作成
+    vectorClient.createEmbeddingsTable(
+      "test_cosine",
+      3,
+      "id INTEGER, description VARCHAR"
+    );
+
+    // データを挿入
+    client.exec(`
+      INSERT INTO test_cosine VALUES
+        (1, '赤色のベクトル', [1.0, 0.1, 0.1]),
+        (2, '緑色のベクトル', [0.1, 1.0, 0.1]),
+        (3, '青色のベクトル', [0.1, 0.1, 1.0]);
+    `);
+
+    // コサイン距離を使用して類似ベクトルを検索
+    const queryVector = [0.9, 0.2, 0.2];
+    const similarVectors = await vectorClient.searchByCosineDistance(
+      "test_cosine",
+      queryVector,
+      2
+    );
+
+    // 結果の検証
+    expect(similarVectors).toBeDefined();
+    expect(Array.isArray(similarVectors), "結果が配列であること").toBe(true);
+    expect(similarVectors.length, "2行のデータが取得できること").toBe(2);
+
+    // 最も近いベクトルが赤色のベクトルであることを確認
+    if (similarVectors.length >= 1) {
+      expect(similarVectors[0].id, "最も近いベクトルのIDが1であること").toBe(1);
+      expect(
+        similarVectors[0].description,
+        "最も近いベクトルの説明が赤色のベクトルであること"
+      ).toBe("赤色のベクトル");
+    }
+  } finally {
+    client.close();
+  }
+});
+
+test("内積を使用した類似ベクトル検索が正常に動作すること", async () => {
+  const client = createDuckDBClient();
+  client.connect();
+
+  try {
+    const vectorClient = createVectorSearchClient(client);
+
+    // ベクトル埋め込みテーブルを作成
+    vectorClient.createEmbeddingsTable(
+      "test_inner_product",
+      3,
+      "id INTEGER, description VARCHAR"
+    );
+
+    // データを挿入
+    client.exec(`
+      INSERT INTO test_inner_product VALUES
+        (1, '赤色のベクトル', [1.0, 0.1, 0.1]),
+        (2, '緑色のベクトル', [0.1, 1.0, 0.1]),
+        (3, '青色のベクトル', [0.1, 0.1, 1.0]);
+    `);
+
+    // 内積を使用して類似ベクトルを検索
+    const queryVector = [0.9, 0.2, 0.2];
+    const similarVectors = await vectorClient.searchByInnerProduct(
+      "test_inner_product",
+      queryVector,
+      2
+    );
+
+    // 結果の検証
+    expect(similarVectors).toBeDefined();
+    expect(Array.isArray(similarVectors), "結果が配列であること").toBe(true);
+    expect(similarVectors.length, "2行のデータが取得できること").toBe(2);
+
+    // 最も近いベクトルが赤色のベクトルであることを確認
+    if (similarVectors.length >= 1) {
+      expect(similarVectors[0].id, "最も近いベクトルのIDが1であること").toBe(1);
+      expect(
+        similarVectors[0].description,
+        "最も近いベクトルの説明が赤色のベクトルであること"
+      ).toBe("赤色のベクトル");
+    }
+  } finally {
+    client.close();
+  }
+});
+
+test("HNSWインデックスが正常に作成できること", () => {
+  const client = createDuckDBClient();
+  client.connect();
+
+  try {
+    const vectorClient = createVectorSearchClient(client);
+
+    // ベクトル埋め込みテーブルを作成
+    vectorClient.createEmbeddingsTable(
+      "test_hnsw",
+      3,
+      "id INTEGER, description VARCHAR"
+    );
+
+    // データを挿入
+    client.exec(`
+      INSERT INTO test_hnsw VALUES
+        (1, '赤色のベクトル', [1.0, 0.1, 0.1]),
+        (2, '緑色のベクトル', [0.1, 1.0, 0.1]),
+        (3, '青色のベクトル', [0.1, 0.1, 1.0]);
+    `);
+
+    // HNSWインデックスを作成
+    vectorClient.createHNSWIndex("test_hnsw", "test_hnsw_idx");
+
+    // インデックスが存在することを確認（エラーが発生しなければOK）
+    expect(true).toBe(true);
   } finally {
     client.close();
   }
