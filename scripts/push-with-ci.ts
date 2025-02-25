@@ -1,6 +1,47 @@
-/* @script */
+/* @script
+
+# Usage
+$ git add foo.ts
+$ git commit -m "add foo.ts"
+
+# push and wait ci
+
+$ deno run -A scripts/push-with-ci.ts
+Enumerating objects: 7, done.
+Counting objects: 100% (7/7), done.
+Delta compression using up to 16 threads
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (4/4), 475 bytes | 475.00 KiB/s, done.
+Total 4 (delta 3), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (3/3), completed with 3 local objects.
+To https://github.com/mizchi/ailab.git
+   a7321b1..4b10d22  main -> main
+✓ main CI · 13516856449
+Triggered via push less than a minute ago
+
+JOBS
+✓ test in 11s (ID 37767182173)
+  ✓ Set up job
+  ✓ Checkout repository
+  ✓ Setup Deno
+  ✓ Run deno check scripts/*.ts
+  ✓ Run tests
+  ✓ Post Checkout repository
+  ✓ Complete job
+
+✓ Run CI (13516856449) completed with 'success'
+*/
 import $ from "jsr:@david/dax";
 import { Result, ok, err } from "npm:neverthrow";
+
+import { parseArgs } from "node:util";
+
+const parsed = parseArgs({
+  args: Deno.args,
+  options: {
+    branch: { type: "string", short: "b" },
+  },
+});
 
 type WaitCiError =
   | { type: "workflow_not_found"; message: string }
@@ -15,7 +56,7 @@ export async function pushWithWaitCI(): Promise<Result<void, WaitCiError>> {
   }
 
   const branchName = await $`git symbolic-ref --short HEAD`.text();
-  await $`git push origin ${branchName}`;
+  await $`git push origin ${parsed.values.branch ?? branchName}`;
   // wait 10 seconds
 
   const p = $.progress("Waiting for CI to be triggered...");
