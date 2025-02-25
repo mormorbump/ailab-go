@@ -5,7 +5,7 @@
     }
   },
   "tasks": {
-    "dev": "deno run --watch main.ts",
+    "test": "deno test -A --coverage=coverage && deno coverage coverage",
     "test:cov": "deno test --coverage=coverage && deno coverage coverage",
     "check:deps": "deno run scripts/check-deps.ts"
   },

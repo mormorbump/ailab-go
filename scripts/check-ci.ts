@@ -31,7 +31,7 @@ async function checkLatestCI() {
     await $`gh run view ${runs[0].databaseId} --exit-status`;
   } catch (_error) {
     console.log("---- CI Log ----");
-    await $`gh run view ${runs[0].databaseId} --log-faild`.noThrow();
+    await $`gh run view ${runs[0].databaseId} --log-failed`.noThrow();
   }
 }
 
