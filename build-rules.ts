@@ -3,7 +3,7 @@
  * プロンプトファイルを結合して .clinerules を生成するスクリプト
  */
 
-const PROMPTS_DIR = "./prompts";
+const PROMPTS_DIR = ".cline/rules";
 const OUTPUT_FILE = ".clinerules";
 
 async function main() {

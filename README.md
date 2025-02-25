@@ -1,5 +1,8 @@
 # Deno + AI Experimental Code Generation
 
+[![CI](https://github.com/mizchi/type-predictor/actions/workflows/ci.yml/badge.svg)](https://github.com/mizchi/type-predictor/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/mizchi/type-predictor/branch/main/graph/badge.svg)](https://codecov.io/gh/mizchi/type-predictor)
+
 このプロジェクトは、Denoとコーディングエージェント（AI）を組み合わせた実験的なコード生成プロジェクトです。
 
 ## 概要
