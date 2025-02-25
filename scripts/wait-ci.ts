@@ -17,28 +17,30 @@ export async function waitForCI(): Promise<Result<void, WaitCiError>> {
   const prevRunId =
     await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId'`.text();
   if (!prevRunId.trim()) {
-    return err({
-      type: "workflow_not_found",
-      message: "ワークフロー実行が見つかりませんでした。",
-    });
+    console.log("Previous run not found.");
+    // return err({
+    //   type: "workflow_not_found",
+    //   message: "ワークフロー実行が見つかりませんでした。",
+    // });
   }
 
   const branchName = await $`git symbolic-ref --short HEAD`.text();
-
   await $`git push origin ${branchName}`;
   // wait 10 seconds
+
+  const p = $.progress("Updating Database");
   await new Promise((resolve) => setTimeout(resolve, 10000));
 
   let runId: string | undefined = undefined;
   let maxRetry = 5;
   while (maxRetry-- > 0) {
-    const afterPushDatabaseId =
+    const currentId =
       await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId'`.text();
-    if (prevRunId !== afterPushDatabaseId) {
-      runId = afterPushDatabaseId;
+    if (prevRunId !== currentId) {
+      runId = currentId;
       break;
     }
-    // console.");
+    p.increment();
     await new Promise((resolve) => setTimeout(resolve, 5000));
   }
   if (!runId) {
@@ -47,30 +49,20 @@ export async function waitForCI(): Promise<Result<void, WaitCiError>> {
       message: "ワークフロー実行が見つかりませんでした。",
     });
   }
+  p.finish();
 
-  // 最新のワークフロー実行を取得
-  // console.log("最新のワークフロー実行を検索しています...");
-
-  // const runIdResult =
-  //   await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId'`.text();
-  // if (!runIdResult.trim()) {
-  //   return err({
-  //     type: "workflow_not_found",
-  //     message: "ワークフロー実行が見つかりませんでした。",
-  //   });
-  // }
-  // const runId = runIdResult.trim();
-
-  console.log(`ワークフロー実行 ID: ${runId} の完了を待機しています...`);
   await $`gh run watch ${runId}`;
 
   const status =
     await $`gh run view ${runId} --json conclusion --jq '.conclusion'`.text();
-  console.log("ワークフロー実行結果:", status.trim());
+  console.log(status.trim());
 
   if (status.trim() === "success") {
     return ok(undefined);
   } else {
+    console.log("---- CI Log ----");
+    await $`gh run view ${runId} --log-failed`.noThrow();
+
     return err({
       type: "workflow_failed",
       message: `ワークフローが失敗しました: ${status}`,
