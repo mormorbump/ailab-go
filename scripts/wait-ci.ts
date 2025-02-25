@@ -38,7 +38,7 @@ async function getLatestRun(): Promise<RunListItem | null> {
 /**
  * CIの完了を待機して結果を表示
  */
-async function waitForCI() {
+export async function waitForCI() {
   try {
     const run = await getLatestRun();
     if (!run) {
