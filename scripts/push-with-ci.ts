@@ -7,27 +7,22 @@ type WaitCiError =
   | { type: "workflow_failed"; message: string };
 
 export async function pushWithWaitCI(): Promise<Result<void, WaitCiError>> {
-  // console.log("ワークフロー:", workflowFile);
-
-  const prevRunId =
+  let prevRunId =
     await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId'`.text();
   if (!prevRunId.trim()) {
     console.log("Previous run not found.");
-    // return err({
-    //   type: "workflow_not_found",
-    //   message: "ワークフロー実行が見つかりませんでした。",
-    // });
+    prevRunId = "<not-found>";
   }
 
   const branchName = await $`git symbolic-ref --short HEAD`.text();
   await $`git push origin ${branchName}`;
   // wait 10 seconds
 
-  const p = $.progress("Updating Database");
-  await new Promise((resolve) => setTimeout(resolve, 10000));
+  const p = $.progress("Waiting for CI to be triggered...");
 
+  await new Promise((resolve) => setTimeout(resolve, 5000));
   let runId: string | undefined = undefined;
-  let maxRetry = 5;
+  let maxRetry = 3;
   while (maxRetry-- > 0) {
     const currentId =
       await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId'`.text();
@@ -50,7 +45,7 @@ export async function pushWithWaitCI(): Promise<Result<void, WaitCiError>> {
 
   const status =
     await $`gh run view ${runId} --json conclusion --jq '.conclusion'`.text();
-  console.log(status.trim());
+  // console.log(status.trim());
 
   if (status.trim() === "success") {
     return ok(undefined);
@@ -65,12 +60,7 @@ export async function pushWithWaitCI(): Promise<Result<void, WaitCiError>> {
   }
 }
 
-// CLI エントリーポイント
 if (import.meta.main) {
-  // const args = Deno.args;
-  // const workflowFile = args[0] || "ci.yml";
-  // const waitSeconds = args[1] ? parseInt(args[1], 10) : 10;
-
   const result = await pushWithWaitCI();
   result.match(
     () => Deno.exit(0),
@@ -80,17 +70,3 @@ if (import.meta.main) {
     }
   );
 }
-
-// テスト
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
-
-test("引数のバリデーションが正しく動作すること", async () => {
-  const result = await pushWithWaitCI();
-  expect(result.isOk() || result.isErr()).toBe(true);
-});
-
-test("デフォルト引数で動作すること", async () => {
-  const result = await pushWithWaitCI();
-  expect(result.isOk() || result.isErr()).toBe(true);
-});
