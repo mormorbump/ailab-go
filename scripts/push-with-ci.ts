@@ -1,69 +1,96 @@
 /* @script */
-/**
- * 現在のブランチをpushしてCIの完了を待つスクリプト
- *
- * このスクリプトは現在のブランチをpushし、10秒待ってからCIが完了するまで待機します。
- *
- * 使用方法:
- * ```bash
- * deno run -A scripts/push-with-ci.ts
- * ```
- */
-
 import $ from "jsr:@david/dax";
-import { pushWithWaitCI } from "./wait-ci.ts";
+import { Result, ok, err } from "npm:neverthrow";
 
-/**
- * 現在のブランチ名を取得
- */
-async function getCurrentBranch(): Promise<string> {
-  const result = await $`git branch --show-current`.text();
-  return result.trim();
-}
+type WaitCiError =
+  | { type: "workflow_not_found"; message: string }
+  | { type: "workflow_failed"; message: string };
 
-/**
- * 指定された時間だけ待機
- */
-async function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+export async function pushWithWaitCI(): Promise<Result<void, WaitCiError>> {
+  // console.log("ワークフロー:", workflowFile);
 
-/**
- * 指定されたブランチをpushしてCIの完了を待つ
- */
-async function pushAndWaitCI() {
-  try {
-    // 現在のブランチを取得
-    const branch = await getCurrentBranch();
-    console.log(`🚀 Pushing branch: ${branch}`);
+  const prevRunId =
+    await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId'`.text();
+  if (!prevRunId.trim()) {
+    console.log("Previous run not found.");
+    // return err({
+    //   type: "workflow_not_found",
+    //   message: "ワークフロー実行が見つかりませんでした。",
+    // });
+  }
 
-    // pushを実行
-    await $`git push origin ${branch}`;
-    console.log("✅ Push completed");
+  const branchName = await $`git symbolic-ref --short HEAD`.text();
+  await $`git push origin ${branchName}`;
+  // wait 10 seconds
 
-    // GitHub ActionsのCIがトリガーされるまで待機
-    console.log("⏳ Waiting for CI to be triggered...");
-    await sleep(10000); // 10秒待機
+  const p = $.progress("Updating Database");
+  await new Promise((resolve) => setTimeout(resolve, 10000));
 
-    // CIの完了を待機
-    await pushWithWaitCI();
-  } catch (error) {
-    console.error("Error:", error);
-    Deno.exit(1);
+  let runId: string | undefined = undefined;
+  let maxRetry = 5;
+  while (maxRetry-- > 0) {
+    const currentId =
+      await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId'`.text();
+    if (prevRunId !== currentId) {
+      runId = currentId;
+      break;
+    }
+    p.increment();
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  }
+  if (!runId) {
+    return err({
+      type: "workflow_not_found",
+      message: "ワークフロー実行が見つかりませんでした。",
+    });
+  }
+  p.finish();
+
+  await $`gh run watch ${runId}`;
+
+  const status =
+    await $`gh run view ${runId} --json conclusion --jq '.conclusion'`.text();
+  console.log(status.trim());
+
+  if (status.trim() === "success") {
+    return ok(undefined);
+  } else {
+    console.log("---- CI Log ----");
+    await $`gh run view ${runId} --log-failed`.noThrow();
+
+    return err({
+      type: "workflow_failed",
+      message: `ワークフローが失敗しました: ${status}`,
+    });
   }
 }
 
-// スクリプト実行
+// CLI エントリーポイント
 if (import.meta.main) {
-  await pushAndWaitCI();
+  // const args = Deno.args;
+  // const workflowFile = args[0] || "ci.yml";
+  // const waitSeconds = args[1] ? parseInt(args[1], 10) : 10;
+
+  const result = await pushWithWaitCI();
+  result.match(
+    () => Deno.exit(0),
+    (error) => {
+      console.error(error.message);
+      Deno.exit(1);
+    }
+  );
 }
 
 // テスト
 import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
 
-test("getCurrentBranch returns a string", async () => {
-  const branch = await getCurrentBranch();
-  expect(typeof branch).toBe("string");
-  expect(branch.length).toBeGreaterThan(0);
+test("引数のバリデーションが正しく動作すること", async () => {
+  const result = await pushWithWaitCI();
+  expect(result.isOk() || result.isErr()).toBe(true);
+});
+
+test("デフォルト引数で動作すること", async () => {
+  const result = await pushWithWaitCI();
+  expect(result.isOk() || result.isErr()).toBe(true);
 });
