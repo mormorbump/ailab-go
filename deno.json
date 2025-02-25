@@ -15,5 +15,9 @@
     "@std/testing": "jsr:@std/testing@^1.0.9",
     "@npm/types": "npm:@npm/types@^2.0.0",
     "neverthrow": "npm:neverthrow@^8.2.0"
+  },
+  "test": {
+    "include": ["scripts/*.ts"],
+    "exclude": ["type-predictor"]
   }
 }
