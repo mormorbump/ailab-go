@@ -2,7 +2,7 @@
 /**
  * 現在のブランチをpushしてCIの完了を待つスクリプト
  *
- * このスクリプトは現在のブランチをpushし、CIが完了するまで待機します。
+ * このスクリプトは現在のブランチをpushし、10秒待ってからCIが完了するまで待機します。
  *
  * 使用方法:
  * ```bash
@@ -22,6 +22,13 @@ async function getCurrentBranch(): Promise<string> {
 }
 
 /**
+ * 指定された時間だけ待機
+ */
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
  * 指定されたブランチをpushしてCIの完了を待つ
  */
 async function pushAndWaitCI() {
@@ -33,6 +40,10 @@ async function pushAndWaitCI() {
     // pushを実行
     await $`git push origin ${branch}`;
     console.log("✅ Push completed");
+
+    // GitHub ActionsのCIがトリガーされるまで待機
+    console.log("⏳ Waiting for CI to be triggered...");
+    await sleep(10000); // 10秒待機
 
     // CIの完了を待機
     await waitForCI();
