@@ -1,79 +1,53 @@
 import { BraveSearch } from "jsr:@tyr/brave-search";
+import { createParser } from "@interanl/zodcli";
+import { z } from "npm:zod";
 
 const API_KEY = Deno.env.get("BRAVE_SEARCH_KEY");
 if (!API_KEY) {
   throw new Error("Please set BRAVE_SEARCH_KEY environment variable");
 }
 
-type QueryBase<R, T extends number | undefined> = {
-  type: R;
-  positional?: number;
-  short?: string;
-  default?: T;
-  optional?: boolean;
-  description?: string;
-};
-
-const SearchQueryDef = {
+const cliSchema = {
   query: {
     positional: 0,
-    type: "string",
+    type: z.string().describe("search query"),
   },
   count: {
-    type: "number",
-    default: 5,
+    type: z.number().default(5).describe("number of results"),
+    short: "c",
   },
   search_lang: {
-    type: "string",
-    default: "en",
+    type: z.string().default("jp").describe("search language"),
+    short: "l",
   },
-  // search_lang: string;
-  // country: string;
-} as const satisfies Record<string, QueryBase<any, any>>;
-
-type Query = {
-  query: {
-    positional: 0;
-    type: string;
-  };
-  count: number;
-  search_lang: string;
-  country: string;
-};
-
-// import { BraveSearch } from "jsr:@tyr/brave-search";
-
-import * as Cmd from "npm:cmd-ts";
-const foo = Cmd.command({
-  name: "foo",
-  description: "foo",
-  args: {
-    query: Cmd.positional({
-      type: Cmd.string,
-      displayName: "search query",
-    }),
-    message: Cmd.option({
-      long: "greeting",
-      type: Cmd.string,
-      short: "g",
-      description: "The message to print",
-    }),
+  country: {
+    type: z.string().default("JP").describe("country"),
   },
-  async handler(args) {
-    // console.log("foo", args);
-    const braveSearch = new BraveSearch(API_KEY!);
-    const query = args.query;
-    const webSearchResults = await braveSearch.webSearch(query, {
-      count: 5,
-      search_lang: "jp",
-      country: "JP",
-    });
-    console.log(webSearchResults);
-  },
+} as const;
+
+const searchParser = createParser({
+  name: "search",
+  description: "Search files in directory",
+  args: cliSchema,
 });
 
-export default foo;
-
-if (import.meta.main) {
-  Cmd.run(foo, Deno.args);
+const result = searchParser.safeParse(Deno.args);
+if (!result.ok) {
+  console.log(result.error);
+  Deno.exit(1);
 }
+
+const braveSearch = new BraveSearch(API_KEY!);
+const query = result.data.query;
+const webSearchResults = await braveSearch.webSearch(query, {
+  count: 5,
+  search_lang: result.data.search_lang,
+  country: result.data.country,
+});
+for (const result of webSearchResults.web?.results || []) {
+  console.log("---------");
+  console.log(result.title);
+  console.log(result.url);
+  console.log(result.description);
+}
+// console.log(webSearchResults);

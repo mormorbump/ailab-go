@@ -19,7 +19,8 @@
     "@npm/types": "npm:@npm/types@^2.0.0",
     "duckdb": "npm:duckdb@^1.2.0",
     "neverthrow": "npm:neverthrow@^8.2.0",
-    "@duckdb/duckdb-wasm": "npm:@duckdb/duckdb-wasm"
+    "@duckdb/duckdb-wasm": "npm:@duckdb/duckdb-wasm",
+    "@interanl/zodcli": "./zodcli/mod.ts"
   },
   "test": {
     "include": ["scripts/*.ts"],
