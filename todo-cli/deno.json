@@ -1,0 +1,17 @@
+{
+  "name": "@mizchi/todo",
+  "version": "1.0.0",
+  "description": "A simple TODO CLI app with Deno",
+  "exports": {
+    ".": "./mod.ts"
+  },
+  "imports": {
+    "@std/fs": "jsr:@std/fs@0.218.0",
+    "@std/path": "jsr:@std/path@0.218.0",
+    "zod": "npm:zod@^3.22.4"
+  },
+  "tasks": {
+    "start": "deno run --allow-read --allow-write --allow-env mod.ts",
+    "test": "deno test --allow-read --allow-write --allow-env"
+  }
+}
