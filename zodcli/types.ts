@@ -3,7 +3,7 @@ import { z } from "npm:zod";
 // 基本的なクエリ定義型
 export type QueryBase<ArgType extends z.ZodTypeAny> = {
   type: ArgType;
-  positional?: boolean;
+  positional?: boolean | number | "...";
   short?: string;
   description?: string;
 };

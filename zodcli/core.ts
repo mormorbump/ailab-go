@@ -63,44 +63,113 @@ export function parseArgsToValues<T extends Record<string, QueryBase<any>>>(
 
   // 位置引数の処理
   let positionalIndex = 0;
-  let arrayPosFound = false;
+  let restPosFound = false;
 
-  // 最初に位置引数を検索して型を確認
+  // positionalの位置インデックスを検証
+  const positionalMap = new Map<number, string>();
+  let maxPositionalIndex = -1;
+
+  // 同一インデックスチェックの問題を修正
+  const checkPositionalConflicts = (obj: Record<string, QueryBase<any>>) => {
+    // 位置インデックスの重複をチェック（明示的な数値インデックスのみ）
+    const positionIndices = new Map<number, string>();
+
+    // 明示的な数値のインデックスのみチェック
+    for (const [key, def] of Object.entries(obj)) {
+      if (def && typeof def.positional === "number") {
+        // 既に同じインデックスが登録されているかチェック
+        if (positionIndices.has(def.positional)) {
+          const existingKey = positionIndices.get(def.positional);
+          throw new Error(
+            `位置引数のインデックスが衝突しています: ${key} と ${existingKey} が同じインデックス ${def.positional} を使用しています`
+          );
+        }
+        positionIndices.set(def.positional, key);
+      }
+    }
+
+    // positional: true と positional: "..." はランタイムで自動的に処理されるため、
+    // ここでの衝突チェックは行わない
+  };
+
+  // 明示的な数値インデックスの衝突のみチェック
+  checkPositionalConflicts(queryDef);
+
+  // 最初に位置引数のインデックスをチェックして衝突や連番の欠落を検出
   for (const [key, def] of Object.entries(queryDef)) {
-    if (def.positional && def.type instanceof z.ZodArray) {
-      // 配列型の位置引数が見つかった場合
-      arrayPosFound = true;
-
-      // 残りの位置引数をすべて配列としてマッピング
-      if (positionalIndex < parseResult.positionals.length) {
-        const arrayValues = parseResult.positionals.slice(positionalIndex);
-        result[key] = convertValue(arrayValues, def.type);
-      } else if (def.type instanceof z.ZodDefault) {
-        // @ts-ignore Check for default value
-        result[key] = def.type._def.defaultValue();
-      } else {
-        result[key] = [];
+    if (def.positional) {
+      // レスト引数の場合
+      if (def.positional === "...") {
+        if (restPosFound) {
+          throw new Error(`複数のレスト位置引数が定義されています: ${key}`);
+        }
+        restPosFound = true;
+        continue;
       }
 
-      // 配列型の位置引数はすべての残りの位置引数を消費する
-      positionalIndex = parseResult.positionals.length;
+      // 数値インデックスの場合
+      const index =
+        def.positional === true
+          ? positionalMap.size
+          : typeof def.positional === "number"
+          ? def.positional
+          : positionalMap.size;
+
+      positionalMap.set(index, key);
+      maxPositionalIndex = Math.max(maxPositionalIndex, index);
+    }
+  }
+
+  // 連番チェック
+  for (let i = 0; i <= maxPositionalIndex; i++) {
+    if (!positionalMap.has(i)) {
+      throw new Error(
+        `位置引数の連番が維持されていません: インデックス ${i} が欠落しています`
+      );
+    }
+  }
+
+  // レスト引数の処理（'...'）
+  for (const [key, def] of Object.entries(queryDef)) {
+    if (def.positional === "...") {
+      // 残りの位置引数をすべて配列としてマッピング
+      const restValues = parseResult.positionals.slice(positionalMap.size);
+
+      if (def.type instanceof z.ZodArray) {
+        result[key] = convertValue(restValues, def.type);
+      } else {
+        // 配列型でない場合は自動的に配列に変換
+        result[key] = restValues;
+      }
+
+      restPosFound = true;
       break;
     }
   }
 
-  // 配列型の位置引数がなかった場合は通常の処理
-  if (!arrayPosFound) {
-    positionalIndex = 0;
-    for (const [key, def] of Object.entries(queryDef)) {
-      if (def.positional) {
-        if (positionalIndex < parseResult.positionals.length) {
-          const value = parseResult.positionals[positionalIndex];
-          result[key] = convertValue(value, def.type);
-          positionalIndex++;
-        } else if (def.type instanceof z.ZodDefault) {
-          result[key] = def.type._def.defaultValue();
-        }
+  // 通常の位置引数の処理
+  const sortedPositionals = Array.from(positionalMap.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([_, key]) => key);
+
+  for (let i = 0; i < sortedPositionals.length; i++) {
+    const key = sortedPositionals[i];
+    const def = queryDef[key];
+
+    if (i < parseResult.positionals.length) {
+      if (def.type instanceof z.ZodArray) {
+        // 配列型の位置引数の場合
+        const arrayValues = parseResult.positionals.slice(i);
+        result[key] = convertValue(arrayValues, def.type);
+        break; // 配列が残りの位置引数をすべて消費
+      } else {
+        // 通常の位置引数
+        const value = parseResult.positionals[i];
+        result[key] = convertValue(value, def.type);
       }
+    } else if (def.type instanceof z.ZodDefault) {
+      // デフォルト値を持つ場合
+      result[key] = def.type._def.defaultValue();
     }
   }
 

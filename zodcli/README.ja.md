@@ -11,6 +11,7 @@ ZodCLI は、[Zod](https://github.com/colinhacks/zod) スキーマを使用し�
 - **型安全**: Zodスキーマに基づいた型安全なCLIパーサー
 - **自動ヘルプ生成**: コマンド構造から自動的にヘルプテキストを生成
 - **位置引数とオプションのサポート**: 位置引数と名前付き引数の両方をサポート
+- **位置引数の高度な制御**: インデックスベースの位置引数と残り引数のサポート
 - **サブコマンドのサポート**: gitのようなサブコマンド構造をサポート
 - **デフォルト値**: Zodの機能を活用したデフォルト値の設定
 - **バリデーション**: Zodスキーマによる強力な入力検証
@@ -116,6 +117,55 @@ run(result, (data, subCommandName) => {
   }
 });
 ```
+
+## 位置引数の高度な使い方
+
+位置引数には、以下の3つの指定方法があります：
+
+1. **boolean型での指定**: `positional: true` - 自動的に順番が割り当てられます
+   ```typescript
+   {
+     source: {
+       type: z.string(),
+       positional: true, // 最初の位置引数
+     },
+     destination: {
+       type: z.string(),
+       positional: true, // 2番目の位置引数
+     }
+   }
+   ```
+
+2. **数値型での指定**: `positional: 0` - 明示的にインデックスを指定できます
+   ```typescript
+   {
+     destination: {
+       type: z.string(),
+       positional: 1, // 2番目の位置引数
+     },
+     source: {
+       type: z.string(),
+       positional: 0, // 1番目の位置引数
+     }
+   }
+   ```
+
+3. **残り引数の指定**: `positional: '...'` - 残りのすべての位置引数を配列として受け取ります
+   ```typescript
+   {
+     command: {
+       type: z.string(),
+       positional: 0, // 1番目の位置引数
+     },
+     args: {
+       type: z.string().array(),
+       positional: '...', // 残りすべての引数
+     }
+   }
+   ```
+
+この例では `command` を最初の引数として、それ以降のすべての引数を `args` 配列として受け取ります。
+
 
 ## サポートされている型
 

@@ -71,6 +71,22 @@ const processCommand: CommandDef<typeof testQueryDef> = {
   args: testQueryDef,
 };
 
+// 残り引数すべてを取得するテスト用の定義
+const restPositionalQueryDef = {
+  command: {
+    type: z.string().describe("command to execute"),
+    positional: true,
+  },
+  args: {
+    type: z.string().array().describe("command arguments"),
+    positional: "...",
+  },
+  verbose: {
+    type: z.boolean().default(false).describe("verbose output"),
+    short: "v",
+  },
+} as const satisfies Record<string, QueryBase<any>>;
+
 // サンプルのサブコマンド定義
 const gitCommands: SubCommandMap = {
   add: {
@@ -309,4 +325,50 @@ test("サブコマンドのヘルプテキスト", () => {
   expect(helpText).toContain("SUBCOMMANDS:");
   expect(helpText).toContain("add");
   expect(helpText).toContain("commit");
+});
+
+// レスト引数（'...'）のテスト
+test("残り引数全部を受け取るレスト引数のテスト", () => {
+  // 位置引数を模擬
+  const parseResult = {
+    values: { verbose: true },
+    positionals: ["npm", "install", "react", "typescript", "--save-dev"],
+  };
+
+  const args = parseArgsToValues(parseResult, restPositionalQueryDef);
+
+  // 最初の位置引数とレスト引数が正しく処理されるか確認
+  expect(args.command).toBe("npm");
+  expect(Array.isArray(args.args)).toBe(true);
+  expect(args.args.length).toBe(4);
+  expect(args.args).toEqual(["install", "react", "typescript", "--save-dev"]);
+  expect(args.verbose).toBe(true);
+});
+
+// 位置引数のインデックス衝突をテスト
+test("位置引数のインデックス衝突エラーのテスト", () => {
+  // 最もシンプルなテストケース
+  const simpleDef = {
+    first: { type: z.string(), positional: 0 },
+    second: { type: z.string(), positional: 0 },
+  };
+
+  // エラーが投げられるかをチェック
+  expect(() => {
+    parseArgsToValues({ values: {}, positionals: ["test"] }, simpleDef);
+  }).toThrow();
+});
+
+// 位置引数の連番欠落をテスト
+test("位置引数の連番欠落エラーのテスト", () => {
+  // 最もシンプルなテストケース
+  const simpleDef = {
+    first: { type: z.string(), positional: 0 },
+    third: { type: z.string(), positional: 2 }, // インデックス1が欠落
+  };
+
+  // エラーが投げられるかをチェック
+  expect(() => {
+    parseArgsToValues({ values: {}, positionals: ["test"] }, simpleDef);
+  }).toThrow();
 });

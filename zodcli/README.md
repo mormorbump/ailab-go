@@ -11,6 +11,7 @@ ZodCLI is a Deno module for easily building type-safe command-line interfaces us
 - **Type-Safe**: Type-safe CLI parser based on Zod schemas
 - **Automatic Help Generation**: Automatically generates help text from command structures
 - **Positional Arguments and Options Support**: Supports both positional and named arguments
+- **Advanced Positional Arguments**: Supports index-based position control and rest arguments
 - **Subcommand Support**: Supports subcommand structures like git
 - **Default Values**: Leverages Zod features for setting default values
 - **Validation**: Powerful input validation with Zod schemas
@@ -118,6 +119,55 @@ run(result, (data, subCommandName) => {
   }
 });
 ```
+
+## Advanced Positional Arguments
+
+There are three ways to specify positional arguments:
+
+1. **Boolean Specification**: `positional: true` - Automatically assigns position order
+   ```typescript
+   {
+     source: {
+       type: z.string(),
+       positional: true, // First positional argument
+     },
+     destination: {
+       type: z.string(),
+       positional: true, // Second positional argument
+     }
+   }
+   ```
+
+2. **Numeric Specification**: `positional: 0` - Explicitly specify the index
+   ```typescript
+   {
+     destination: {
+       type: z.string(),
+       positional: 1, // Second positional argument
+     },
+     source: {
+       type: z.string(),
+       positional: 0, // First positional argument
+     }
+   }
+   ```
+
+3. **Rest Arguments**: `positional: '...'` - Capture all remaining positional arguments as an array
+   ```typescript
+   {
+     command: {
+       type: z.string(),
+       positional: 0, // First positional argument
+     },
+     args: {
+       type: z.string().array(),
+       positional: '...', // All remaining arguments
+     }
+   }
+   ```
+
+In this example, `command` is the first argument and all subsequent arguments are captured as an array in `args`.
+
 
 ## Supported Types
 
