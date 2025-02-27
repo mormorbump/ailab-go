@@ -39,18 +39,37 @@ export type {
   InferZodType,
   ParseArgsConfig,
   ParseArgsOptionConfig,
+  ParseError,
+  ParseSuccess,
   QueryBase,
+  SafeParseResult,
   SubCommandMap,
+  SubCommandParseSuccess,
   SubCommandResult,
+  SubCommandSafeParseResult,
 } from "./types.ts";
 
 // コア機能のエクスポート
 export {
   createCommand,
-  createSubCommands,
+  createParser,
+  createNestedCommands,
+  createSubParser,
   createZodSchema,
-  parseArgsToValues,
+  resolveValues,
 } from "./core.ts";
+
+// 後方互換性のためのエイリアス
+import { createSubParser } from "./core.ts";
+import type { SubCommandMap } from "./types.ts";
+
+export function createNestedParser<T extends SubCommandMap>(
+  rootName: string,
+  rootDescription: string,
+  subCommands: T
+) {
+  return createSubParser(subCommands, rootName, rootDescription);
+}
 
 // ユーティリティ関数のエクスポート
 export {
@@ -58,6 +77,7 @@ export {
   createTypeFromZod,
   generateHelp,
   getTypeDisplayString,
+  printHelp,
   run,
   zodTypeToParseArgsType,
 } from "./utils.ts";

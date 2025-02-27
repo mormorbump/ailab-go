@@ -16,6 +16,8 @@ ZodCLI is a Deno module for easily building type-safe command-line interfaces us
 - **Default Values**: Leverages Zod features for setting default values
 - **Validation**: Powerful input validation with Zod schemas
 - **JSON Schema Conversion**: Convert Zod schemas to JSON schemas
+- **Multiple Parse Styles**: Supports both exception-throwing and Result-based parsing
+- **Type Inference**: Improved type inference for better TypeScript experience
 
 ## Installation
 
@@ -26,17 +28,17 @@ deno add jsr:@mizchi/zodcli
 Or import directly:
 
 ```typescript
-import { createCommand } from "jsr:@mizchi/zodcli";
+import { createParser } from "jsr:@mizchi/zodcli";
 ```
 
 ## Basic Usage
 
 ```typescript
-import { createCommand, run } from "./zodcli/mod.ts";
+import { createParser } from "jsr:@mizchi/zodcli";
 import { z } from "npm:zod";
 
-// Define a command
-const searchCommand = createCommand({
+// Define a parser
+const searchParser = createParser({
   name: "search",
   description: "Search with custom parameters",
   args: {
@@ -55,70 +57,145 @@ const searchCommand = createCommand({
   },
 });
 
-// Parse arguments
-const result = searchCommand.parse(Deno.args);
-
-// Process results
-run(result, (data) => {
+// Option 1: Parse arguments with exception handling
+try {
+  const data = searchParser.parse(Deno.args);
   console.log(`Searching for: ${data.query}, count: ${data.count}, format: ${data.format}`);
-  // Actual processing...
-});
+} catch (error) {
+  console.error(error.message);
+  console.log(searchParser.help());
+}
+
+// Option 2: Parse arguments with Result pattern (Zod-style)
+const result = searchParser.safeParse(Deno.args);
+if (result.ok) {
+  console.log(`Searching for: ${result.data.query}, count: ${result.data.count}, format: ${result.data.format}`);
+} else {
+  console.error(result.error.message);
+  console.log(searchParser.help());
+}
 ```
 
 ## Using Subcommands
 
 ```typescript
-import { createSubCommandMap } from "./zodcli/mod.ts";
+import { createSubParser, run } from "jsr:@mizchi/zodcli";
 import { z } from "npm:zod";
 
-// Define subcommands
-const gitCommands = createSubCommandMap({
-  add: {
-    name: "git add",
-    description: "Add files to git staging",
-    args: {
-      files: {
-        type: z.string().array().describe("files to add"),
-        positional: true,
+// Define subcommand parser
+const gitParser = createSubParser(
+  {
+    add: {
+      name: "git add",
+      description: "Add files to git staging",
+      args: {
+        files: {
+          type: z.string().array().describe("files to add"),
+          positional: true,
+        },
+        all: {
+          type: z.boolean().default(false).describe("add all files"),
+          short: "a",
+        },
       },
-      all: {
-        type: z.boolean().default(false).describe("add all files"),
-        short: "a",
+    },
+    commit: {
+      name: "git commit",
+      description: "Commit staged changes",
+      args: {
+        message: {
+          type: z.string().describe("commit message"),
+          positional: true,
+        },
+        amend: {
+          type: z.boolean().default(false).describe("amend previous commit"),
+          short: "a",
+        },
       },
     },
   },
-  commit: {
-    name: "git commit",
-    description: "Commit staged changes",
-    args: {
-      message: {
-        type: z.string().describe("commit message"),
-        positional: true,
-      },
-      amend: {
-        type: z.boolean().default(false).describe("amend previous commit"),
-        short: "a",
-      },
-    },
-  },
-});
+  "git",
+  "Git command line tool"
+);
 
-// Parse subcommands
-const result = gitCommands.parse(Deno.args, "git", "Git command line tool");
-
-// Process results including subcommands
-run(result, (data, subCommandName) => {
-  if (subCommandName) {
-    console.log(`Running git ${subCommandName}`);
-    // Process based on subcommand
-    if (subCommandName === "add") {
-      console.log(`Adding files: ${data.files.join(", ")}`);
-    } else if (subCommandName === "commit") {
-      console.log(`Committing with message: ${data.message}`);
-    }
+// Option 1: Parse arguments with exception handling
+try {
+  const { command, data } = gitParser.parse(Deno.args);
+  console.log(`Running git ${command}`);
+  
+  if (command === "add") {
+    console.log(`Adding files: ${data.files.join(", ")}`);
+  } else if (command === "commit") {
+    console.log(`Committing with message: ${data.message}`);
   }
-});
+} catch (error) {
+  console.error(error.message);
+  console.log(gitParser.help());
+}
+
+// Option 2: Parse arguments with Result pattern
+const result = gitParser.safeParse(Deno.args);
+if (result.ok) {
+  const { command, data } = result.data;
+  console.log(`Running git ${command}`);
+  
+  if (command === "add") {
+    console.log(`Adding files: ${data.files.join(", ")}`);
+  } else if (command === "commit") {
+    console.log(`Committing with message: ${data.message}`);
+  }
+} else {
+  console.error(result.error.message);
+  console.log(gitParser.help());
+}
 ```
+
+## Advanced Type Safety
+
+To enhance type safety and catch errors at compile time, you can use type constraints with your schema definitions. This approach helps to ensure that your schema conforms to the expected structure before runtime.
+
+### Using ParserSchema Type Constraint
+
+```typescript
+import { type ParserSchema, createParser } from "jsr:@mizchi/zodcli";
+import { z } from "npm:zod";
+
+// Define your schema with type constraint
+const searchArgsSchema = {
+  query: {
+    type: z.string().describe("search query"),
+    positional: 0,
+  },
+  count: {
+    type: z.number().optional().default(5).describe("number of results"),
+    short: "c",
+  },
+  format: {
+    type: z.enum(["json", "text", "table"]).default("text"),
+    short: "f",
+  },
+} as const as ParserSchema; // Apply 'as const' and ParserSchema constraint
+
+// Create parser with type-checked schema
+const searchParser = createParser({
+  name: "search",
+  description: "Search with custom parameters",
+  args: searchArgsSchema,
+});
+
+// Now any schema errors would be caught at compile time
+```
+
+The `as const` assertion ensures that object literals are treated as readonly with their values narrowed to specific literal types, rather than wider types. Combined with the `ParserSchema` type constraint, this approach provides early detection of schema errors.
+
+### Benefits of Enhanced Type Safety
+
+- **Early Error Detection**: Catch schema errors during development instead of at runtime
+- **Improved Autocomplete**: Better IDE suggestions when working with your schemas
+- **Type Narrowing**: More precise types for enum values and other literals
+- **Safer Refactoring**: Changes to your schema structure are type-checked
+
+This pattern is especially useful for larger CLI applications with complex argument structures, where runtime errors might be more difficult to detect during testing.
 
 ## Advanced Positional Arguments
 
@@ -179,23 +256,33 @@ In this example, `command` is the first argument and all subsequent arguments ar
 - `z.optional()` - Optional values
 - `z.default()` - Fields with default values
 
+## API Reference
+
+### Core Functions
+
+- **`createParser(definition)`**: Creates a new parser from a command definition
+- **`createSubParser(subCommandMap, rootName, rootDescription)`**: Creates a subcommand parser
+- **`run(parser, args, onSuccess, onError?)`**: Helper for running a parser with callbacks
+
+### Parser Methods
+
+- **`.parse(args)`**: Parses arguments and throws an exception on error
+- **`.safeParse(args)`**: Parses arguments and returns a Result-style object
+- **`.help()`**: Returns the help text for the command
+- **`.zodSchema`**: The Zod schema object
+- **`.jsonSchema`**: The equivalent JSON schema
+
+### Legacy API (Deprecated)
+
+The following functions are maintained for backward compatibility:
+
+- **`createCommand(definition)`**: Legacy version of `createParser`
+- **`createSubCommands(subCommandMap)`**: Legacy version of `createSubParser`
+
 ## Testing
 
 ```bash
-deno test .
-```
-
-## Usage Examples
-
-```bash
-# Display help
-deno run -A zodcli/examples/cli.ts --help
-
-# Run search command
-deno run -A zodcli/examples/cli.ts "search query" --count 10 --format json
-
-# Run subcommand
-deno run -A zodcli/examples/cli.ts add file1.txt file2.txt --all
+deno test
 ```
 
 ## License

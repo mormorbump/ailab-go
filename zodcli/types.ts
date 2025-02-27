@@ -1,9 +1,9 @@
-import { z } from "npm:zod";
+import type { z } from "npm:zod";
 
 // 基本的なクエリ定義型
 export type QueryBase<ArgType extends z.ZodTypeAny> = {
   type: ArgType;
-  positional?: boolean | number | "...";
+  positional?: number | "...";
   short?: string;
   description?: string;
 };
@@ -48,3 +48,30 @@ export interface ParseArgsConfig {
   strict?: boolean;
   allowPositionals?: boolean;
 }
+
+// Zodスタイルの成功結果
+export type ParseSuccess<T> = {
+  ok: true;
+  data: T;
+};
+
+// Zodスタイルのエラー結果
+export type ParseError = {
+  ok: false;
+  error: Error | z.ZodError;
+};
+
+// Zodスタイルのパース結果
+export type SafeParseResult<T> = ParseSuccess<T> | ParseError;
+
+// サブコマンドのZodスタイル成功結果
+export type SubCommandParseSuccess = {
+  ok: true;
+  data: {
+    command: string;
+    data: any;
+  };
+};
+
+// サブコマンドのZodスタイルパース結果
+export type SubCommandSafeParseResult = SubCommandParseSuccess | ParseError;
