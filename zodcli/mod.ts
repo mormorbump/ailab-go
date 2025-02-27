@@ -47,6 +47,9 @@ export type {
   SubCommandParseSuccess,
   SubCommandResult,
   SubCommandSafeParseResult,
+  InferArgs,
+  InferParser,
+  InferNestedParser,
 } from "./types.ts";
 
 // コア機能のエクスポート
@@ -61,14 +64,14 @@ export {
 
 // 後方互換性のためのエイリアス
 import { createSubParser } from "./core.ts";
-import type { SubCommandMap } from "./types.ts";
+import type { NestedCommandOptions, SubCommandMap } from "./types.ts";
 
 export function createNestedParser<T extends SubCommandMap>(
-  rootName: string,
-  rootDescription: string,
-  subCommands: T
+  subCommands: T,
+  options?: string | NestedCommandOptions,
+  description?: string
 ) {
-  return createSubParser(subCommands, rootName, rootDescription);
+  return createSubParser(subCommands, options, description);
 }
 
 // ユーティリティ関数のエクスポート
@@ -78,9 +81,11 @@ export {
   generateHelp,
   getTypeDisplayString,
   printHelp,
-  run,
   zodTypeToParseArgsType,
 } from "./utils.ts";
+
+// isHelp関数のエクスポート
+export { isHelp } from "./core.ts";
 
 // スキーマ関連のエクスポート
 export { isOptionalType, zodToJsonSchema } from "./schema.ts";

@@ -14,6 +14,41 @@ export type InferQueryType<T extends Record<string, QueryBase<any>>> = {
   [K in keyof T]: InferZodType<T[K]["type"]>;
 };
 
+/**
+ * Zodスキーマから引数オブジェクトの型を推論します
+ * @example
+ * const schema = z.object({ name: z.string(), age: z.number() });
+ * type Args = InferArgs<typeof schema>; // { name: string, age: number }
+ */
+export type InferArgs<Schema extends z.ZodTypeAny> = z.infer<Schema>;
+
+/**
+ * パーサーオブジェクトから返される型を推論します
+ * @example
+ * const parser = createParser({...});
+ * type ParsedResult = InferParser<typeof parser>; // パースした結果の型
+ */
+export type InferParser<P extends { parse: (args: string[]) => any }> =
+  P extends { parse: (args: string[]) => infer R } ? R : never;
+
+/**
+ * NestedParserの結果の型を推論します。各サブコマンドとそのデータの型を正確に推論します。
+ * この型はサブコマンドオブジェクト定義から直接型を推論します。
+ * @example
+ * const subCommands = {
+ *   add: { args: { files: { type: z.string().array() } } },
+ *   commit: { args: { message: { type: z.string() } } }
+ * };
+ * type GitResult = InferNestedParser<typeof subCommands>;
+ * // { command: "add"; data: { files: string[] } } | { command: "commit"; data: { message: string } }
+ */
+export type InferNestedParser<T extends Record<string, CommandDef<any>>> = {
+  [K in keyof T]: {
+    command: K extends string ? K : never;
+    data: InferQueryType<T[K]["args"]>;
+  };
+}[keyof T];
+
 // コマンド定義型
 export type CommandDef<T extends Record<string, QueryBase<any>>> = {
   name: string;
@@ -23,6 +58,13 @@ export type CommandDef<T extends Record<string, QueryBase<any>>> = {
 
 // サブコマンド定義型
 export type SubCommandMap = Record<string, CommandDef<any>>;
+
+// ネストされたコマンドのオプション
+export interface NestedCommandOptions {
+  name: string;
+  description?: string;
+  default?: string;
+}
 
 // 実行結果の型定義
 export type CommandResult<T> =
@@ -65,13 +107,12 @@ export type ParseError = {
 export type SafeParseResult<T> = ParseSuccess<T> | ParseError;
 
 // サブコマンドのZodスタイル成功結果
-export type SubCommandParseSuccess = {
+export type SubCommandParseSuccess<T = any> = {
   ok: true;
-  data: {
-    command: string;
-    data: any;
-  };
+  data: T;
 };
 
 // サブコマンドのZodスタイルパース結果
-export type SubCommandSafeParseResult = SubCommandParseSuccess | ParseError;
+export type SubCommandSafeParseResult<T = any> =
+  | SubCommandParseSuccess<T>
+  | ParseError;

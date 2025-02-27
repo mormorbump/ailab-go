@@ -4,6 +4,8 @@ import type {
   CommandDef,
   CommandResult,
   InferQueryType,
+  InferNestedParser,
+  NestedCommandOptions,
   ParseArgsConfig,
   ParseError,
   QueryBase,
@@ -14,6 +16,16 @@ import type {
 } from "./types.ts";
 import { convertValue, generateHelp, zodTypeToParseArgsType } from "./utils.ts";
 import { zodToJsonSchema } from "./schema.ts";
+
+/**
+ * 引数が "--help", "-h" フラグを含むか、または空かどうかをチェックします
+ *
+ * @param args チェックする引数の配列
+ * @returns ヘルプフラグが含まれるか引数が空の場合はtrue、それ以外はfalse
+ */
+export function isHelp(args: string[]): boolean {
+  return args.includes("--help") || args.includes("-h") || args.length === 0;
+}
 
 // クエリ定義からParseArgsConfigを生成
 export function createParseArgsConfig<T extends Record<string, QueryBase<any>>>(
@@ -110,7 +122,8 @@ export function resolveValues<T extends Record<string, QueryBase<any>>>(
       // 配列型でない場合は自動的に配列に変換
       result[restParam] = restValues;
     }
-    result[restParam] = rawParsed.positionals.slice(maxPositionalIndex + 1);
+    // 以下の行は型変換された値を上書きしてしまうので削除
+    // result[restParam] = rawParsed.positionals.slice(maxPositionalIndex + 1);
   }
   // 位置引数の処理
   for (const [key, def] of Object.entries(queryDef)) {
@@ -240,46 +253,79 @@ export function createCommand<T extends Record<string, QueryBase<any>>>(
 }
 
 // サブコマンドマップの作成
-export function createNestedCommands<T extends SubCommandMap>(subCommands: T) {
+export function createNestedCommands<T extends SubCommandMap>(
+  subCommands: T,
+  options?: NestedCommandOptions
+) {
   const commands = new Map<string, ReturnType<typeof createCommand>>();
+  const commandNames = new Set<string>();
 
   // 各サブコマンドに対してcreateCliCommandを実行
   for (const [name, def] of Object.entries(subCommands)) {
     commands.set(name, createCommand(def));
+    commandNames.add(name);
+  }
+
+  const rootName = options?.name || "command";
+  const rootDescription = options?.description || "Command with subcommands";
+  const defaultCommand = options?.default;
+
+  // デフォルトコマンドの検証
+  if (defaultCommand && !commandNames.has(defaultCommand)) {
+    throw new Error(
+      `Default command '${defaultCommand}' not found in subcommands`
+    );
   }
 
   // rootのヘルプテキスト生成
-  const rootHelpText = (name: string, description: string) =>
+  const rootHelpText = (name = rootName, description = rootDescription) =>
     generateHelp(name, description, {}, subCommands);
 
   // パース関数
   function parse(
     argv: string[],
-    rootName = "command",
-    rootDescription = "Command with subcommands"
+    name = rootName,
+    description = rootDescription
   ): SubCommandResult {
     // ヘルプフラグのチェック
     if (argv.includes("-h") || argv.includes("--help") || argv.length === 0) {
       return {
         type: "help",
-        helpText: rootHelpText(rootName, rootDescription),
+        helpText: rootHelpText(name, description),
       };
     }
 
-    // 最初の引数をサブコマンド名として処理
-    const subCommandName = argv[0];
-    const command = commands.get(subCommandName);
+    let subCommandName: string;
+    let subCommandArgs: string[];
 
+    // サブコマンド名の解決
+    if (commandNames.has(argv[0])) {
+      // 明示的にサブコマンドが指定された場合
+      subCommandName = argv[0];
+      subCommandArgs = argv.slice(1); // 最初の引数を取り除く
+    } else if (defaultCommand) {
+      // デフォルトコマンドがある場合はそれを使用
+      subCommandName = defaultCommand;
+      subCommandArgs = argv; // 全ての引数をデフォルトコマンドに渡す
+    } else {
+      // デフォルトコマンドがなく、サブコマンドも不明の場合
+      return {
+        type: "error",
+        error: new Error(`Unknown subcommand: ${argv[0]}`),
+        helpText: rootHelpText(name, description),
+      };
+    }
+
+    const command = commands.get(subCommandName);
     if (!command) {
+      // これは発生しないはずだが、型安全のために残しておく
       return {
         type: "error",
         error: new Error(`Unknown subcommand: ${subCommandName}`),
-        helpText: rootHelpText(rootName, rootDescription),
+        helpText: rootHelpText(name, description),
       };
     }
 
-    // サブコマンド用の引数から最初の要素（サブコマンド名）を削除
-    const subCommandArgs = argv.slice(1);
     return {
       type: "subcommand",
       name: subCommandName,
@@ -291,6 +337,8 @@ export function createNestedCommands<T extends SubCommandMap>(subCommands: T) {
     commands,
     parse,
     rootHelpText,
+    defaultCommand,
+    commandNames,
   };
 }
 
@@ -384,51 +432,70 @@ export function createParser<T extends Record<string, QueryBase<any>>>(
  *
  * @example
  * ```ts
+ * // 基本的な使い方
  * const gitParser = createSubParser({
  *   add: {
  *     name: "git add",
  *     description: "Add files to staging",
- *     args: {
- *       files: {
- *         type: z.string().array().describe("files to add"),
- *         positional: true,
- *       },
- *     },
+ *     args: { files: { type: z.string().array(), positional: true } }
  *   },
  *   commit: {
  *     name: "git commit",
  *     description: "Commit changes",
- *     args: {
- *       message: {
- *         type: z.string().describe("commit message"),
- *         positional: true,
- *       },
- *     },
- *   },
- * }, "git", "Git command line tool");
+ *     args: { message: { type: z.string(), positional: true } }
+ *   }
+ * }, { name: "git", description: "Git command line tool" });
+ *
+ * // デフォルトコマンドを指定して作成
+ * const npmParser = createSubParser({
+ *   install: { name: "npm install", description: "Install packages", ... },
+ *   update: { name: "npm update", description: "Update packages", ... },
+ *   test: { name: "npm test", description: "Run tests", ... }
+ * }, { name: "npm", description: "Node package manager", default: "install" });
  *
  * try {
- *   const { command, data } = gitParser.parse(Deno.args);
- *   console.log(`Running git ${command} with:`, data);
+ *   // 'npm react lodash'のように実行するとinstallコマンドが使用される
+ *   const { command, data } = npmParser.parse(Deno.args);
+ *   console.log(`Running npm ${command} with:`, data);
  * } catch (error) {
  *   console.error(error.message);
  * }
  * ```
  *
  * @param subCommands サブコマンドマップ
- * @param rootName ルートコマンド名
- * @param rootDescription ルートコマンドの説明
+ * @param options コマンド名、説明、デフォルトコマンドを含むオプション
  * @returns サブコマンドパーサーオブジェクト
  */
 export function createSubParser<T extends SubCommandMap>(
   subCommands: T,
-  rootName = "command",
-  rootDescription = "Command with subcommands"
+  options: string | NestedCommandOptions | undefined = undefined,
+  description?: string
 ) {
-  const subCommandHandler = createNestedCommands(subCommands);
+  type Result = InferNestedParser<T>;
+  let commandOptions: NestedCommandOptions;
 
-  function parse(argv: string[]) {
-    const result = subCommandHandler.parse(argv, rootName, rootDescription);
+  // 下位互換性のための処理
+  if (typeof options === "string") {
+    // 従来のインターフェース: createSubParser(subCommands, rootName, rootDescription)
+    commandOptions = {
+      name: options,
+      description: description || "Command with subcommands",
+    };
+  } else if (options) {
+    // 新しいインターフェース: createSubParser(subCommands, { name, description, default })
+    commandOptions = options;
+  } else {
+    // デフォルト値
+    commandOptions = {
+      name: "command",
+      description: "Command with subcommands",
+    };
+  }
+
+  const subCommandHandler = createNestedCommands(subCommands, commandOptions);
+
+  function parse(argv: string[]): Result {
+    const result = subCommandHandler.parse(argv);
 
     if (result.type === "error") {
       throw result.error;
@@ -444,15 +511,15 @@ export function createSubParser<T extends SubCommandMap>(
       return {
         command: result.name,
         data: result.result.data,
-      };
+      } as Result;
     }
 
     // 型安全のため、ここには到達しないはず
     throw new Error("Unknown parse result");
   }
 
-  function safeParse(argv: string[]): SubCommandSafeParseResult {
-    const result = subCommandHandler.parse(argv, rootName, rootDescription);
+  function safeParse(argv: string[]): SubCommandSafeParseResult<Result> {
+    const result = subCommandHandler.parse(argv);
 
     if (result.type === "error") {
       return { ok: false, error: result.error };
@@ -473,7 +540,7 @@ export function createSubParser<T extends SubCommandMap>(
         data: {
           command: result.name,
           data: result.result.data,
-        },
+        } as Result,
       };
     }
 
@@ -484,8 +551,9 @@ export function createSubParser<T extends SubCommandMap>(
   return {
     parse,
     safeParse,
-    help: (name = rootName, description = rootDescription) =>
-      subCommandHandler.rootHelpText(name, description),
+    help: () => subCommandHandler.rootHelpText(),
     commands: subCommandHandler.commands,
+    defaultCommand: subCommandHandler.defaultCommand,
+    commandNames: subCommandHandler.commandNames,
   };
 }
