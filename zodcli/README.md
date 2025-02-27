@@ -44,7 +44,7 @@ const searchParser = createParser({
   args: {
     query: {
       type: z.string().describe("search query"),
-      positional: true,
+      positional: 0,
     },
     count: {
       type: z.number().optional().default(5).describe("number of results"),
@@ -56,6 +56,17 @@ const searchParser = createParser({
     },
   },
 });
+
+// run help
+if (
+  Deno.args.length === 0 ||
+  Deno.args.includes("--help") ||
+  Deno.args.includes("-h")
+) {
+  console.log(searchParser.help());
+  Deno.exit(0);
+}
+
 
 // Option 1: Parse arguments with exception handling
 try {
@@ -201,35 +212,7 @@ This pattern is especially useful for larger CLI applications with complex argum
 
 There are three ways to specify positional arguments:
 
-1. **Boolean Specification**: `positional: true` - Automatically assigns position order
-   ```typescript
-   {
-     source: {
-       type: z.string(),
-       positional: true, // First positional argument
-     },
-     destination: {
-       type: z.string(),
-       positional: true, // Second positional argument
-     }
-   }
-   ```
-
-2. **Numeric Specification**: `positional: 0` - Explicitly specify the index
-   ```typescript
-   {
-     destination: {
-       type: z.string(),
-       positional: 1, // Second positional argument
-     },
-     source: {
-       type: z.string(),
-       positional: 0, // First positional argument
-     }
-   }
-   ```
-
-3. **Rest Arguments**: `positional: '...'` - Capture all remaining positional arguments as an array
+### **Rest Arguments**: `positional: '...'` - Capture all remaining positional arguments as an array
    ```typescript
    {
      command: {
@@ -261,8 +244,7 @@ In this example, `command` is the first argument and all subsequent arguments ar
 ### Core Functions
 
 - **`createParser(definition)`**: Creates a new parser from a command definition
-- **`createSubParser(subCommandMap, rootName, rootDescription)`**: Creates a subcommand parser
-- **`run(parser, args, onSuccess, onError?)`**: Helper for running a parser with callbacks
+- **`createNestedParser(rootName, rootDescription, subCommandMap)`**: Creates a subcommand parser
 
 ### Parser Methods
 

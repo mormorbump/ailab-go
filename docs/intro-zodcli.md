@@ -50,6 +50,27 @@ const searchParser = createParser({
   },
 });
 
+// help の表示
+console.log(searchParser.help());
+/**
+ * $ deno run -A zodcli/examples/usage.ts 
+search
+> Search files in directory
+
+ARGUMENTS:
+  <query:str> - search pattern
+
+  ...<restAll:str[][]> - rest arguments
+
+OPTIONS:
+  --query <str> - search pattern
+  --path, -p <str> - target directory (default: "./")
+  --recursive, -r <bool> - search recursively (default: false)
+
+FLAGS:
+  --help, -h - show help
+ */
+
 const result = searchParser.safeParse(Deno.args);
 if (result.ok) {
   console.log("Parsed:", result.data, result.data.restAll, result.data.query);
@@ -59,12 +80,3 @@ if (result.ok) {
 `$ deno run cli.ts xxx bar -q 1` みたいにポジショナルな引数をバリデートします。
 
 default 引数
-
-
-## まとめ
-
-zodcliは、Zodの型定義とバリデーション機能を活用した型安全なコマンドラインパーサーです。TypeScriptの型システムと密接に統合されており、以下の特徴を備えています：
-
-- **Zodスキーマによる簡潔な引数定義**
-- **TypeScriptの強力な型推論サポート**
-- **複数のパース方法とエラーハンドリング**
