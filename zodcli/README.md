@@ -22,15 +22,6 @@ ZodCLI is a Deno module for easily building type-safe command-line interfaces us
 deno add jsr:@mizchi/zodcli
 ```
 
-```typescript
-// deno.json
-{
-  "imports": {
-    "zodcli": "./zodcli/mod.ts"
-  }
-}
-```
-
 Or import directly:
 
 ```typescript

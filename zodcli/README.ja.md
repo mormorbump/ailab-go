@@ -20,15 +20,6 @@ ZodCLI は、[Zod](https://github.com/colinhacks/zod) スキーマを使用し�
 
 `deno add jsr:@mizchi/zodcli`
 
-```typescript
-// deno.json
-{
-  "imports": {
-    "zodcli": "./zodcli/mod.ts"
-  }
-}
-```
-
 または直接インポート:
 
 ```typescript
