@@ -20,10 +20,20 @@ import { executeCommand } from "./src/commands.ts";
 // メイン関数
 if (import.meta.main) {
   try {
-    // コマンドを実行
-    executeCommand(Deno.args);
+    // コマンドを実行（非同期関数なので即時実行）
+    (async () => {
+      await executeCommand(Deno.args);
+    })().catch((error) => {
+      // エラーの型に応じてメッセージを表示
+      if (error instanceof Error) {
+        console.error("エラー:", error.message);
+      } else {
+        console.error("予期しないエラーが発生しました:", String(error));
+      }
+      Deno.exit(1);
+    });
   } catch (error) {
-    // エラーの型に応じてメッセージを表示
+    // 非同期処理前のエラー
     if (error instanceof Error) {
       console.error("エラー:", error.message);
     } else {

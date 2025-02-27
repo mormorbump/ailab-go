@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "npm:zod";
 import { createNestedParser } from "../../zodcli/mod.ts";
 import {
   addTodo,
@@ -11,6 +11,14 @@ import {
   getTodoStats,
   removeCompletedTodos,
 } from "./db.ts";
+import { processChatCommand, setTodoParserForHelp } from "./ai.ts";
+import {
+  ask,
+  confirm,
+  select,
+  selectPriority,
+  selectOrCreateCategory,
+} from "./ask.ts";
 
 // 新しいTODOを追加するコマンド
 const addCommandSchema = {
@@ -122,6 +130,21 @@ const clearCommandSchema = {
   },
 };
 
+// AIとの対話モードコマンド
+const chatCommandSchema = {
+  name: "chat",
+  description: "AIと対話してTODOを管理する",
+  args: {
+    prompt: {
+      type: z
+        .string()
+        .optional()
+        .describe("対話プロンプト（指定しない場合は標準入力から読み込み）"),
+      positional: 0,
+    },
+  },
+};
+
 // コマンド定義をまとめる
 const todoCommandDefs = {
   add: addCommandSchema,
@@ -134,6 +157,7 @@ const todoCommandDefs = {
   search: searchCommandSchema,
   stats: statsCommandSchema,
   clear: clearCommandSchema,
+  chat: chatCommandSchema,
 } as const;
 
 // TODOコマンドパーサーを作成
@@ -143,8 +167,11 @@ export const todoParser = createNestedParser(todoCommandDefs, {
   default: "list", // デフォルトはlistコマンド
 });
 
+// aiモジュールにtodoParserを設定（循環参照問題の解決）
+setTodoParserForHelp(todoParser);
+
 // コマンドの実行関数
-export function executeCommand(args: string[]): void {
+export async function executeCommand(args: string[]): Promise<void> {
   try {
     const result = todoParser.safeParse(args);
 
@@ -158,21 +185,21 @@ export function executeCommand(args: string[]): void {
 
     switch (command) {
       case "add":
-        handleAddCommand(data);
+        await handleAddCommand(data);
         break;
       case "list":
       case "ls":
         handleListCommand(data);
         break;
       case "toggle":
-        handleToggleCommand(data);
+        await handleToggleCommand(data);
         break;
       case "remove":
       case "rm":
-        handleRemoveCommand(data);
+        await handleRemoveCommand(data);
         break;
       case "update":
-        handleUpdateCommand(data);
+        await handleUpdateCommand(data);
         break;
       case "search":
         handleSearchCommand(data);
@@ -181,7 +208,10 @@ export function executeCommand(args: string[]): void {
         handleStatsCommand();
         break;
       case "clear":
-        handleClearCommand(data);
+        await handleClearCommand(data);
+        break;
+      case "chat":
+        await handleChatCommand(data);
         break;
       default:
         console.log(todoParser.help());
@@ -218,8 +248,32 @@ function dim(text: string): string {
 }
 
 // addコマンドのハンドラ
-function handleAddCommand(data: { text: string }): void {
-  const newTodo = addTodo(data.text);
+async function handleAddCommand(data: { text: string }): Promise<void> {
+  // タスクの内容が与えられていない場合は質問する
+  let taskText = data.text;
+  if (!taskText || taskText.trim() === "") {
+    taskText = await ask("追加するTODOの内容を入力してください");
+    if (!taskText || taskText.trim() === "") {
+      console.log(
+        `${yellow(
+          "!"
+        )} TODOの内容が入力されていないため、追加をキャンセルします。`
+      );
+      return;
+    }
+  }
+
+  // 詳細情報はスキップ
+  const askForDetails = false;
+
+  let details = "";
+  let priority = "中" as "高" | "中" | "低";
+  let category = "";
+
+  // 詳細情報の入力をスキップ
+
+  // TODOを追加
+  const newTodo = addTodo(taskText);
   console.log(
     `${green("✓")} 新しいTODOを追加しました: ${bold(newTodo.text)} (ID: ${dim(
       newTodo.id.substring(0, 8)
@@ -260,15 +314,43 @@ function handleListCommand(data: { all: boolean }): void {
 }
 
 // toggleコマンドのハンドラ
-function handleToggleCommand(data: { id: string }): void {
-  const updatedTodo = toggleTodo(data.id);
+async function handleToggleCommand(data: { id: string }): Promise<void> {
+  // 先にTODOを取得して存在と現在の状態を確認
+  const todo = getTodo(data.id);
 
-  if (!updatedTodo) {
+  if (!todo) {
     console.error(
       `${red("✗")} ID: ${dim(
         data.id.substring(0, 8)
       )} のTODOは見つかりませんでした。`
     );
+    return;
+  }
+
+  // 現在の状態を表示
+  const currentStatus = todo.completed ? "完了" : "未完了";
+  const newStatus = todo.completed ? "未完了" : "完了";
+
+  console.log(`現在のTODO: ${bold(todo.text)}`);
+  console.log(
+    `現在の状態: ${todo.completed ? green("完了") : yellow("未完了")}`
+  );
+
+  // 状態を切り替える前に確認
+  const shouldToggle = await confirm(
+    `このTODOを「${newStatus}」に変更してもよろしいですか？`,
+    true
+  );
+
+  if (!shouldToggle) {
+    console.log(`${yellow("!")} 状態の変更をキャンセルしました。`);
+    return;
+  }
+
+  const updatedTodo = toggleTodo(data.id);
+
+  if (!updatedTodo) {
+    console.error(`${red("✗")} 状態の更新中にエラーが発生しました。`);
     return;
   }
 
@@ -283,25 +365,34 @@ function handleToggleCommand(data: { id: string }): void {
 }
 
 // removeコマンドのハンドラ
-function handleRemoveCommand(data: { id: string; force: boolean }): void {
-  // 強制削除でない場合、TODOの内容を表示して確認
-  if (!data.force) {
-    const todo = getTodo(data.id);
+async function handleRemoveCommand(data: {
+  id: string;
+  force: boolean;
+}): Promise<void> {
+  const todo = getTodo(data.id);
 
-    if (!todo) {
-      console.error(
-        `${red("✗")} ID: ${dim(
-          data.id.substring(0, 8)
-        )} のTODOは見つかりませんでした。`
-      );
-      return;
-    }
-
-    console.log(`${yellow("!")} 次のTODOを削除します: ${bold(todo.text)}`);
-    console.log(
-      `${yellow("!")} 強制削除するには -f オプションを使用してください。`
+  if (!todo) {
+    console.error(
+      `${red("✗")} ID: ${dim(
+        data.id.substring(0, 8)
+      )} のTODOは見つかりませんでした。`
     );
     return;
+  }
+
+  // 強制削除でない場合、対話的に確認を取る
+  if (!data.force) {
+    console.log(`${yellow("!")} 次のTODOを削除します: ${bold(todo.text)}`);
+
+    const shouldDelete = await confirm(
+      "このTODOを削除してもよろしいですか？",
+      false
+    );
+
+    if (!shouldDelete) {
+      console.log(`${yellow("!")} 削除をキャンセルしました。`);
+      return;
+    }
   }
 
   const removed = removeTodo(data.id);
@@ -321,32 +412,68 @@ function handleRemoveCommand(data: { id: string; force: boolean }): void {
 }
 
 // updateコマンドのハンドラ
-function handleUpdateCommand(data: {
+async function handleUpdateCommand(data: {
   id: string;
   text?: string;
   completed?: boolean;
-}): void {
-  // 更新対象がなければ何もしない
-  if (data.text === undefined && data.completed === undefined) {
-    console.error(
-      `${yellow(
-        "!"
-      )} 更新する内容を指定してください (--text または --completed)`
-    );
-    return;
-  }
+}): Promise<void> {
+  const todo = getTodo(data.id);
 
-  const updatedTodo = updateTodo(data.id, {
-    text: data.text,
-    completed: data.completed,
-  });
-
-  if (!updatedTodo) {
+  if (!todo) {
     console.error(
       `${red("✗")} ID: ${dim(
         data.id.substring(0, 8)
       )} のTODOは見つかりませんでした。`
     );
+    return;
+  }
+
+  console.log(`現在のTODO: ${bold(todo.text)}`);
+  console.log(`状態: ${todo.completed ? green("完了") : yellow("未完了")}`);
+
+  // 更新内容が指定されていない場合は対話的に入力させる
+  let updateText = data.text;
+  let updateCompleted = data.completed;
+
+  if (updateText === undefined && updateCompleted === undefined) {
+    console.log(`${yellow("!")} 更新内容を入力してください`);
+
+    // テキストの更新を確認
+    const shouldUpdateText = await confirm("テキストを更新しますか？", false);
+    if (shouldUpdateText) {
+      updateText = await ask("新しいテキスト", todo.text);
+    }
+
+    // 完了状態の更新を確認
+    const shouldUpdateStatus = await confirm("完了状態を変更しますか？", false);
+    if (shouldUpdateStatus) {
+      const statusOptions = ["完了", "未完了"] as const;
+      const selectedStatus = await select(
+        "状態を選択してください:",
+        statusOptions,
+        todo.completed ? 0 : 1
+      );
+      updateCompleted = selectedStatus === "完了";
+    }
+
+    // 何も変更がない場合
+    if (updateText === undefined && updateCompleted === undefined) {
+      console.log(
+        `${yellow(
+          "!"
+        )} 更新内容が指定されていないため、更新をキャンセルします。`
+      );
+      return;
+    }
+  }
+
+  const updatedTodo = updateTodo(data.id, {
+    text: updateText,
+    completed: updateCompleted,
+  });
+
+  if (!updatedTodo) {
+    console.error(`${red("✗")} 更新中にエラーが発生しました。`);
     return;
   }
 
@@ -406,31 +533,70 @@ function handleStatsCommand(): void {
 }
 
 // clearコマンドのハンドラ
-function handleClearCommand(data: { force: boolean }): void {
-  // 強制削除でない場合、確認メッセージを表示
-  if (!data.force) {
-    const stats = getTodoStats();
+async function handleClearCommand(data: { force: boolean }): Promise<void> {
+  const stats = getTodoStats();
 
-    if (stats.completed === 0) {
-      console.log(`${yellow("!")} 完了済みのTODOはありません。`);
-      return;
-    }
-
-    console.log(
-      `${yellow("!")} ${stats.completed}件の完了済みTODOを削除します。`
-    );
-    console.log(
-      `${yellow("!")} 削除するには -f オプションを使用してください。`
-    );
-    return;
-  }
-
-  const count = removeCompletedTodos();
-
-  if (count === 0) {
+  if (stats.completed === 0) {
     console.log(`${yellow("!")} 完了済みのTODOはありません。`);
     return;
   }
 
+  // 強制削除でない場合、対話的に確認を取る
+  if (!data.force) {
+    console.log(
+      `${yellow("!")} ${stats.completed}件の完了済みTODOを削除します。`
+    );
+
+    const shouldDelete = await confirm(
+      `${stats.completed}件の完了済みTODOを削除してもよろしいですか？`,
+      false
+    );
+
+    if (!shouldDelete) {
+      console.log(`${yellow("!")} 削除をキャンセルしました。`);
+      return;
+    }
+  }
+
+  const count = removeCompletedTodos();
   console.log(`${green("✓")} ${count}件の完了済みTODOを削除しました。`);
+}
+
+// chatコマンドのハンドラ
+async function handleChatCommand(data: { prompt?: string }): Promise<void> {
+  try {
+    // プロンプトが指定されていない場合は標準入力から読み込む
+    let userPrompt = data.prompt;
+    if (!userPrompt) {
+      console.log(
+        "対話モードを開始します。終了するには「終了」と入力してください。"
+      );
+      console.log("何をお手伝いしましょうか？");
+      console.log(">> ");
+
+      // 標準入力から読み込む
+      const buf = new Uint8Array(1024);
+      const n = await Deno.stdin.read(buf);
+      if (n) {
+        userPrompt = new TextDecoder().decode(buf.subarray(0, n)).trim();
+      }
+
+      if (
+        !userPrompt ||
+        userPrompt.toLowerCase() === "終了" ||
+        userPrompt.toLowerCase() === "exit"
+      ) {
+        console.log("対話モードを終了します。");
+        return;
+      }
+    }
+
+    // AIとの対話処理を実行
+    await processChatCommand(userPrompt);
+  } catch (error) {
+    console.error(
+      "対話処理中にエラーが発生しました:",
+      error instanceof Error ? error.message : String(error)
+    );
+  }
 }

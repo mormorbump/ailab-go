@@ -55,3 +55,22 @@ export const todoUpdateSchema = todoSchema.partial().pick({
  * TODOの更新用の型
  */
 export type TodoUpdate = z.infer<typeof todoUpdateSchema>;
+
+/**
+ * チャット履歴のZodスキーマ
+ */
+export const chatHistorySchema = z.object({
+  /** チャット履歴のID */
+  id: z.string().uuid(),
+  /** ユーザーの入力プロンプト */
+  userPrompt: z.string(),
+  /** AIの応答 */
+  aiResponse: z.string(),
+  /** 会話が行われた日時 */
+  timestamp: z.string().datetime(),
+});
+
+/**
+ * チャット履歴の型
+ */
+export type ChatHistory = z.infer<typeof chatHistorySchema>;

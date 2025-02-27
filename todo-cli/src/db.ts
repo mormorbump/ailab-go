@@ -1,5 +1,5 @@
 import { DatabaseSync, SupportedValueType } from "node:sqlite";
-import { Todo, TodoUpdate } from "./types.ts";
+import { ChatHistory, Todo, TodoUpdate } from "./types.ts";
 import { ensureDirSync, existsSync } from "@std/fs";
 import { dirname, join } from "@std/path";
 
@@ -19,7 +19,7 @@ export function initDb(): DatabaseSync {
   // DBに接続
   const db = new DatabaseSync(DB_PATH);
 
-  // テーブルが存在しない場合は作成
+  // TODOテーブルが存在しない場合は作成
   db.exec(`
     CREATE TABLE IF NOT EXISTS todos (
       id TEXT PRIMARY KEY,
@@ -27,6 +27,16 @@ export function initDb(): DatabaseSync {
       completed INTEGER DEFAULT 0,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
+    )
+  `);
+
+  // チャット履歴テーブルが存在しない場合は作成
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS chat_history (
+      id TEXT PRIMARY KEY,
+      user_prompt TEXT NOT NULL,
+      ai_response TEXT NOT NULL,
+      timestamp TEXT NOT NULL
     )
   `);
 
@@ -316,4 +326,66 @@ export function removeCompletedTodos(): number {
   db.close();
 
   return count;
+}
+
+/**
+ * 新しい会話履歴を追加する
+ * @param userPrompt ユーザーの入力プロンプト
+ * @param aiResponse AIの応答
+ * @returns 追加された会話履歴
+ */
+export function addChatHistory(
+  userPrompt: string,
+  aiResponse: string
+): ChatHistory {
+  const db = initDb();
+  const now = new Date().toISOString();
+
+  const chatHistory: ChatHistory = {
+    id: crypto.randomUUID(),
+    userPrompt,
+    aiResponse,
+    timestamp: now,
+  };
+
+  db.prepare(
+    "INSERT INTO chat_history (id, user_prompt, ai_response, timestamp) VALUES (?, ?, ?, ?)"
+  ).run(
+    chatHistory.id,
+    chatHistory.userPrompt,
+    chatHistory.aiResponse,
+    chatHistory.timestamp
+  );
+
+  db.close();
+
+  return chatHistory;
+}
+
+/**
+ * 直近の会話履歴を取得する
+ * @param limit 取得する履歴の数（デフォルト:5）
+ * @returns 会話履歴のリスト
+ */
+export function getRecentChatHistory(limit = 5): ChatHistory[] {
+  const db = initDb();
+
+  const query = `
+    SELECT
+      id,
+      user_prompt as userPrompt,
+      ai_response as aiResponse,
+      timestamp
+    FROM
+      chat_history
+    ORDER BY
+      timestamp DESC
+    LIMIT ?
+  `;
+
+  const rows = db.prepare(query).all(limit) as ChatHistory[];
+
+  db.close();
+
+  return rows;
 }
