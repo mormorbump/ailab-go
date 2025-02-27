@@ -25,8 +25,38 @@ export function convertValue(
     return undefined;
   }
 
+  // Boolean型の特別処理
+  if (zodType instanceof z.ZodBoolean) {
+    // すでにboolean型なら、そのまま返す
+    if (typeof value === "boolean") {
+      return value;
+    }
+    // 文字列をboolean値に変換
+    if (typeof value === "string") {
+      if (value === "true" || value === "1" || value === "") {
+        return true;
+      }
+      if (value === "false" || value === "0") {
+        return false;
+      }
+      // デフォルトでは表現できない文字列は真とみなす
+      // (コマンドラインの --flag 形式はtrueとして扱われる)
+      return true;
+    }
+    // その他の場合はそのまま返す
+    return !!value;
+  }
+
   if (zodType instanceof z.ZodNumber) {
-    return typeof value === "string" ? Number(value) : value;
+    // 確実に数値に変換する
+    if (typeof value === "string") {
+      const numValue = Number(value);
+      // NaNを避ける
+      if (!isNaN(numValue)) {
+        return numValue;
+      }
+    }
+    return typeof value === "number" ? value : 0; // デフォルト値として0を使用
   } else if (zodType instanceof z.ZodEnum) {
     return value;
   } else if (zodType instanceof z.ZodArray) {

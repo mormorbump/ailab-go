@@ -11,6 +11,7 @@
  *   deno run -A scripts/git-shallow-search.ts github/Spoon-Knife "README"
  *   deno run -A scripts/git-shallow-search.ts https://github.com/mizchi/monorepo "import" --glob="*.ts"
  *   deno run -A scripts/git-shallow-search.ts mizchi/monorepo --list-files --glob="*.md" --branch=dev
+ *   deno run -A scripts/git-shallow-search.ts mizchi/monorepo "import" --files  # ファイル名のみ表示
  */
 
 import { join, resolve, dirname } from "jsr:@std/path";
@@ -145,10 +146,25 @@ const subCommands = {
           ),
         short: "v",
       },
+      files: {
+        type: z
+          .boolean()
+          .default(false)
+          .describe("Show only filenames instead of matching content"),
+        short: "f",
+      },
+      lines: {
+        type: z
+          .boolean()
+          .default(false)
+          .describe("Show filenames with line numbers in VSCode jump format"),
+        short: "L",
+      },
       maxCount: {
         type: z
           .number()
           .optional()
+          .default(5)
           .describe("Maximum number of matches per file"),
         short: "m",
       },
@@ -596,17 +612,41 @@ async function searchFiles(
   let searchResult = "";
   let hasResults = false;
 
+  // 表示モードの決定
+  const filesOnlyMode = args.files === true;
+  const linesMode = args.lines === true;
+
+  if (filesOnlyMode && linesMode) {
+    logInfo(
+      "ファイル名と行番号を表示モードを有効化しました（VSCodeジャンプフォーマット）"
+    );
+  } else if (filesOnlyMode) {
+    logInfo("ファイル名のみ表示モードを有効化しました");
+  } else if (linesMode) {
+    logInfo("行番号付きで表示モードを有効化しました");
+  }
+
   if (hasRg) {
     // ripgrep コマンドオプションの構築
     const rgOptions = [];
 
-    // オプションの追加
-    if (args.maxCount !== undefined) {
-      rgOptions.push(`--max-count`, args.maxCount.toString());
-    }
+    // オプションによる表示モードの決定
+    if (filesOnlyMode && !linesMode) {
+      // ファイル名のみ表示モード
+      rgOptions.push(`--files-with-matches`);
+    } else {
+      // 通常の検索時の設定またはlinesMode
+      // オプションの追加
+      if (args.maxCount !== undefined) {
+        rgOptions.push(`--max-count`, args.maxCount.toString());
+      }
 
-    if (args.context !== undefined) {
-      rgOptions.push(`--context`, args.context.toString());
+      if (args.context !== undefined && !linesMode) {
+        rgOptions.push(`--context`, args.context.toString());
+      }
+
+      // 行番号表示（通常モードまたはlinesModeの場合）
+      rgOptions.push(`--line-number`);
     }
 
     if (args.ignoreCase) {
@@ -626,19 +666,79 @@ async function searchFiles(
       rgOptions.push("--glob", args.glob);
     }
 
-    // いつでも行番号を表示
-    rgOptions.push(`--line-number`);
-
     // 検索の実行
     try {
       // まず検索結果があるかチェック
       const checkResult =
-        await $`cd ${searchDir} && rg --quiet ${args.pattern}`.noThrow();
+        await $`cd ${searchDir} && rg --quiet "${args.pattern}"`.noThrow();
       hasResults = checkResult.code === 0;
 
       if (hasResults) {
-        // 結果がある場合は、表示用のコマンドを直接実行
-        await $`cd ${searchDir} && rg ${rgOptions.join(" ")} ${args.pattern}`;
+        if (linesMode) {
+          // 行番号付きの検索結果を取得
+          const output = await $`cd ${searchDir} && rg --line-number ${
+            filesOnlyMode ? "--no-heading" : ""
+          } "${args.pattern}"`.text();
+          const lines = output.trim().split("\n");
+          const homeDir = Deno.env.get("HOME") || "~";
+
+          // 各行を処理
+          for (const line of lines) {
+            if (line.trim()) {
+              // 形式: file:line:content または file:line:column:content
+              const parts = line.split(":");
+              if (parts.length >= 2) {
+                const filePath = parts[0];
+                const lineNumber = parts[1];
+
+                // 絶対パスに変換
+                const absolutePath = join(searchDir, filePath);
+
+                // ホームディレクトリからの相対パスに変換
+                let displayPath;
+                if (absolutePath.startsWith(homeDir)) {
+                  // ~/path/to/file の形式で表示
+                  displayPath = absolutePath.replace(homeDir, "~");
+                } else {
+                  // ホームディレクトリ以外は絶対パスのまま
+                  displayPath = absolutePath;
+                }
+
+                // VSCodeジャンプフォーマット（ファイル:行）で表示
+                console.log(`${displayPath}:${lineNumber}`);
+              }
+            }
+          }
+        } else if (filesOnlyMode) {
+          // ファイル名のみの場合、結果を取得して相対パスに変換
+          const output = await $`cd ${searchDir} && rg ${rgOptions.join(
+            " "
+          )} "${args.pattern}"`.text();
+          const files = output.trim().split("\n");
+          const homeDir = Deno.env.get("HOME") || "~";
+
+          // 各ファイルに対してホームディレクトリからの相対パスを表示
+          for (const file of files) {
+            if (file.trim()) {
+              const absolutePath = join(searchDir, file);
+
+              // ホームディレクトリからの相対パスに変換
+              if (absolutePath.startsWith(homeDir)) {
+                // ~/path/to/file の形式で表示
+                const relativePath = absolutePath.replace(homeDir, "~");
+                console.log(relativePath);
+              } else {
+                // ホームディレクトリ以外は絶対パスのまま
+                console.log(absolutePath);
+              }
+            }
+          }
+        } else {
+          // 通常の検索の場合はそのまま表示
+          await $`cd ${searchDir} && rg ${rgOptions.join(" ")} "${
+            args.pattern
+          }"`;
+        }
       }
     } catch (error: unknown) {
       // エラーは無視
@@ -654,12 +754,18 @@ async function searchFiles(
       grepOptions.push("-i");
     }
 
-    if (args.context !== undefined) {
-      grepOptions.push(`-C`, args.context.toString());
-    }
+    // --files オプションが指定されている場合はファイル名のみ表示（grepの場合は-l）
+    if (filesOnlyMode) {
+      grepOptions.push("-l");
+    } else {
+      // 通常の検索時の設定
+      if (args.context !== undefined) {
+        grepOptions.push(`-C`, args.context.toString());
+      }
 
-    // 行番号を表示
-    grepOptions.push("-n");
+      // 行番号を表示（ファイル名のみモードでない場合）
+      grepOptions.push("-n");
+    }
 
     // globパターンによるファイル絞り込み（簡易的な実装）
     let includePattern = "";
@@ -671,14 +777,87 @@ async function searchFiles(
     try {
       // まず検索結果があるかチェック（-q = quiet）
       const checkResult =
-        await $`cd ${searchDir} && grep -q -r ${includePattern} ${args.pattern} .`.noThrow();
+        await $`cd ${searchDir} && grep -q -r ${includePattern} "${args.pattern}" .`.noThrow();
       hasResults = checkResult.code === 0;
 
       if (hasResults) {
-        // 結果がある場合は、表示用のコマンドを直接実行
-        await $`cd ${searchDir} && grep -r ${grepOptions.join(
-          " "
-        )} ${includePattern} ${args.pattern} .`;
+        if (linesMode) {
+          // 行番号付きの検索結果を取得
+          const output =
+            await $`cd ${searchDir} && grep -n -r ${includePattern} "${args.pattern}" .`.text();
+          const lines = output.trim().split("\n");
+          const homeDir = Deno.env.get("HOME") || "~";
+
+          // 各行を処理
+          for (const line of lines) {
+            if (line.trim()) {
+              // 形式: ./file:line:content
+              const firstColonIndex = line.indexOf(":");
+              if (firstColonIndex > 0) {
+                let filePath = line.substring(0, firstColonIndex);
+                const rest = line.substring(firstColonIndex + 1);
+                const secondColonIndex = rest.indexOf(":");
+
+                if (secondColonIndex > 0) {
+                  const lineNumber = rest.substring(0, secondColonIndex);
+
+                  // ファイル名が ./path/to/file の形式であれば ./ を削除
+                  if (filePath.startsWith("./")) {
+                    filePath = filePath.substring(2);
+                  }
+
+                  // 絶対パスに変換
+                  const absolutePath = join(searchDir, filePath);
+
+                  // ホームディレクトリからの相対パスに変換
+                  let displayPath;
+                  if (absolutePath.startsWith(homeDir)) {
+                    // ~/path/to/file の形式で表示
+                    displayPath = absolutePath.replace(homeDir, "~");
+                  } else {
+                    // ホームディレクトリ以外は絶対パスのまま
+                    displayPath = absolutePath;
+                  }
+
+                  // VSCodeジャンプフォーマット（ファイル:行）で表示
+                  console.log(`${displayPath}:${lineNumber}`);
+                }
+              }
+            }
+          }
+        } else if (filesOnlyMode) {
+          // ファイル名のみの場合、結果を取得して相対パスに変換
+          const output =
+            await $`cd ${searchDir} && grep -l -r ${includePattern} "${args.pattern}" .`.text();
+          const files = output.trim().split("\n");
+          const homeDir = Deno.env.get("HOME") || "~";
+
+          // 各ファイルに対してホームディレクトリからの相対パスを表示
+          for (const file of files) {
+            if (file.trim()) {
+              // ファイル名が ./path/to/file の形式であれば ./ を削除
+              const cleanPath = file.startsWith("./")
+                ? file.substring(2)
+                : file;
+              const absolutePath = join(searchDir, cleanPath);
+
+              // ホームディレクトリからの相対パスに変換
+              if (absolutePath.startsWith(homeDir)) {
+                // ~/path/to/file の形式で表示
+                const relativePath = absolutePath.replace(homeDir, "~");
+                console.log(relativePath);
+              } else {
+                // ホームディレクトリ以外は絶対パスのまま
+                console.log(absolutePath);
+              }
+            }
+          }
+        } else {
+          // 通常の検索の場合はそのまま表示
+          await $`cd ${searchDir} && grep -r ${grepOptions.join(
+            " "
+          )} ${includePattern} "${args.pattern}" .`;
+        }
       }
     } catch (error: unknown) {
       // エラーは無視
@@ -686,10 +865,8 @@ async function searchFiles(
     }
   }
 
-  // 検索結果の表示
-  if (hasResults) {
-    console.log(searchResult);
-  } else {
+  // 検索結果がない場合はメッセージを表示
+  if (!hasResults) {
     logWarning(
       `パターン "${args.pattern}" に一致する結果は見つかりませんでした。`
     );

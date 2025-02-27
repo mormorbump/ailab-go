@@ -17,6 +17,31 @@ import type {
 import { convertValue, generateHelp, zodTypeToParseArgsType } from "./utils.ts";
 import { zodToJsonSchema } from "./schema.ts";
 
+// デバッグモードの制御
+let DEBUG_MODE = false;
+
+/**
+ * デバッグモードを設定する関数
+ * @param enable デバッグモードを有効にするかどうか
+ */
+export function setDebugMode(enable: boolean): void {
+  DEBUG_MODE = enable;
+}
+
+/**
+ * デバッグログを出力する関数
+ * @param message ログメッセージまたはログ関数
+ */
+function debug(message: string | (() => string)): void {
+  if (DEBUG_MODE) {
+    if (typeof message === "function") {
+      console.log(message());
+    } else {
+      console.log(message);
+    }
+  }
+}
+
 /**
  * 引数が "--help", "-h" フラグを含むか、または空かどうかをチェックします
  *
@@ -72,8 +97,6 @@ export function createParseArgsConfig<T extends Record<string, QueryBase<any>>>(
     strict: false,
   };
 }
-
-// const debug = console.log;
 
 // parseArgsの結果をZodスキーマに基づいて変換
 export function resolveValues<T extends Record<string, QueryBase<any>>>(
@@ -149,7 +172,25 @@ export function resolveValues<T extends Record<string, QueryBase<any>>>(
     }
     const value = rawParsed.values[key];
     if (value !== undefined) {
-      result[key] = convertValue(value, def.type);
+      // ブーリアン型の場合は特別処理
+      if (def.type instanceof z.ZodBoolean) {
+        // すでにブーリアン値ならそのまま、文字列なら変換
+        result[key] =
+          typeof value === "boolean"
+            ? value
+            : value === "true" || value === "1" || value === ""
+            ? true
+            : value === "false" || value === "0"
+            ? false
+            : true; // その他の場合はtrue扱い
+      } else {
+        // それ以外はconvertValue関数で変換
+        const convertedValue = convertValue(value, def.type);
+        debug(
+          `[resolveValues] ${key} = ${value} (${typeof value}) -> ${convertedValue} (${typeof convertedValue})`
+        );
+        result[key] = convertedValue;
+      }
     } else if (def.type instanceof z.ZodDefault) {
       // デフォルト値を持つ場合は、値が提供されなくてもデフォルト値を適用
       result[key] = def.type._def.defaultValue();
@@ -203,12 +244,136 @@ export function createCommand<T extends Record<string, QueryBase<any>>>(
 
   // parseArgsWrapper: boolean引数のための特別処理とショートオプションの解決
   function parseArgsWrapper(args: string[]) {
-    return parseArgs({
-      args: args,
-      options: parseArgsConfig.options,
-      allowPositionals: parseArgsConfig.allowPositionals,
-      strict: parseArgsConfig.strict,
-    });
+    // 短縮オプションを長い形式に変換する前処理
+    const processedArgs = [...args];
+
+    // -abc のような連結された短縮オプションを分解（将来的な対応）
+
+    // 短縮オプションを長い形式に変換
+    for (let i = 0; i < processedArgs.length; i++) {
+      const arg = processedArgs[i];
+      if (shortToLongMap.has(arg)) {
+        // 短縮オプションを長い形式に置き換え
+        const longOption = shortToLongMap.get(arg)!;
+        processedArgs[i] = longOption;
+
+        // boolean型のオプションかどうかを確認
+        if (booleanOptions.has(longOption)) {
+          // booleanオプションの場合は値を取らないので次の引数を処理しない
+          continue;
+        }
+      }
+    }
+
+    // デバッグ用：引数をビフォー処理
+    debug(() => `[parseArgsWrapper] Original args: ${JSON.stringify(args)}`);
+    debug(
+      () =>
+        `[parseArgsWrapper] Processed args: ${JSON.stringify(processedArgs)}`
+    );
+
+    // ブール型オプションと値を持つオプションを手動で処理
+    const manualProcessedArgs: string[] = [];
+    const manualValues: Record<string, string | boolean | string[]> = {};
+    const manualPositionals: string[] = [];
+
+    for (let i = 0; i < processedArgs.length; i++) {
+      const arg = processedArgs[i];
+
+      // オプションかどうかをチェック
+      if (arg.startsWith("--")) {
+        const optionName = arg.slice(2); // '--'を削除
+
+        // オプションが定義されているかチェック
+        if (parseArgsConfig.options && parseArgsConfig.options[optionName]) {
+          const option = parseArgsConfig.options[optionName];
+
+          if (option.type === "boolean") {
+            // ブール型オプションは値を取らない
+            manualValues[optionName] = true;
+          } else if (
+            i + 1 < processedArgs.length &&
+            !processedArgs[i + 1].startsWith("-")
+          ) {
+            // 次の引数が別のオプションでなければ、値として扱う
+            manualValues[optionName] = processedArgs[i + 1];
+            i++; // 値をスキップ
+          } else {
+            // 値が提供されていない場合は空文字列を設定
+            manualValues[optionName] = "";
+          }
+        }
+      } else if (!arg.startsWith("-")) {
+        // オプションでない場合は位置引数として扱う
+        manualPositionals.push(arg);
+      }
+    }
+
+    debug(
+      () => `[parseArgsWrapper] Manual values: ${JSON.stringify(manualValues)}`
+    );
+    debug(
+      () =>
+        `[parseArgsWrapper] Manual positionals: ${JSON.stringify(
+          manualPositionals
+        )}`
+    );
+
+    try {
+      // 標準の引数パーサーを使用（デバッグ比較用）
+      const parseResult = parseArgs({
+        args: processedArgs,
+        options: parseArgsConfig.options,
+        allowPositionals: parseArgsConfig.allowPositionals,
+        strict: false, // 厳密モードをオフにして未知のオプションを許可
+      });
+
+      // 手動処理した結果と標準パーサーの結果を比較（デバッグ用）
+      debug(
+        () =>
+          `[parseArgsWrapper] Standard parse result: ${JSON.stringify(
+            parseResult.values
+          )}`
+      );
+
+      // 手動パース結果を使用する
+      const values = { ...manualValues };
+      for (const [key, option] of Object.entries(
+        parseArgsConfig.options || {}
+      )) {
+        if (key === "help") continue; // helpオプションはスキップ
+
+        // 数値型の場合は明示的に変換
+        if (queryDef[key] && queryDef[key].type instanceof z.ZodNumber) {
+          if (typeof values[key] === "string") {
+            const numValue = Number(values[key]);
+            if (!isNaN(numValue)) {
+              // 型エラーを回避するために明示的に型付けする
+              (values as Record<string, string | boolean | number | undefined>)[
+                key
+              ] = numValue;
+              debug(
+                `[parseArgsWrapper] ${key} = ${numValue} (${typeof numValue})`
+              );
+            }
+          }
+        }
+      }
+
+      return {
+        values,
+        positionals: manualPositionals,
+      };
+    } catch (error) {
+      // デバッグ用
+      debug(() => `[parseArgsWrapper] Parse error: ${error}`);
+      debug(
+        () =>
+          `[parseArgsWrapper] Processed args: ${JSON.stringify(processedArgs)}`
+      );
+      debug(() => `[parseArgsWrapper] Original args: ${JSON.stringify(args)}`);
+      throw error;
+    }
   }
 
   // パース関数

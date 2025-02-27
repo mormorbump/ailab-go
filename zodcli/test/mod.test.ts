@@ -8,8 +8,8 @@ import {
   convertValue,
   getTypeDisplayString,
   type QueryBase,
-  type CommandDef,
-  type SubCommandMap,
+  type CommandSchema, // CommandDef から CommandSchema に変更
+  type NestedCommandMap, // SubCommandMap から NestedCommandMap に変更
 } from "../mod.ts";
 import { createCommand, createNestedCommands } from "../core.ts";
 
@@ -66,7 +66,7 @@ const multiPositionalQueryDef = {
 } as const satisfies Record<string, QueryBase<any>>;
 
 // サンプルのコマンド定義
-const processCommand: CommandDef<typeof testQueryDef> = {
+const processCommand: CommandSchema<typeof testQueryDef> = {
   name: "process",
   description: "Process files with various options",
   args: testQueryDef,
@@ -89,7 +89,7 @@ const restPositionalQueryDef = {
 } as const satisfies Record<string, QueryBase<any>>;
 
 // サンプルのサブコマンド定義
-const gitCommands: SubCommandMap = {
+const gitCommands: NestedCommandMap = {
   add: {
     name: "git add",
     description: "Add files to git staging",
@@ -547,7 +547,10 @@ test("無効な入力値に対するエラー処理", () => {
     // ZodErrorであることを確認
     expect(result.error instanceof z.ZodError).toBe(true);
     // エラーメッセージに問題の詳細が含まれているか確認
-    expect(result.error.message).toContain("Expected number");
+    // 修正: 新しいエラーメッセージ形式に合わせる
+    expect(result.error.message).toContain(
+      "Number must be greater than or equal to 1"
+    );
   }
 });
 
