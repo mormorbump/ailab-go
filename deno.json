@@ -5,6 +5,7 @@
       "exclude": ["no-explicit-any"]
     }
   },
+  "workspace": ["./zodcli"],
   "tasks": {
     "build:prompt": "deno run -A .cline/build.ts",
     "test": "deno test -A --coverage=coverage && deno coverage coverage",

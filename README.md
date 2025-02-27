@@ -81,6 +81,43 @@ const schema = predictor.predict(data);
 const result = schema.safeParse(data);
 ```
 
+### zodcli
+
+Zod を使用した型安全なコマンドラインパーサーモジュールです。
+
+特徴：
+- **型安全**: Zodスキーマに基づいた型安全なCLIパーサー
+- **自動ヘルプ生成**: コマンド構造から自動的にヘルプテキストを生成
+- **位置引数とオプションのサポート**: 位置引数と名前付き引数の両方をサポート
+- **サブコマンドのサポート**: gitのようなサブコマンド構造をサポート
+- **デフォルト値**: Zodの機能を活用したデフォルト値の設定
+
+使用例：
+```typescript
+import { createCliCommand, runCommand } from "@mizchi/zodcli";
+import { z } from "npm:zod";
+
+const cli = createCliCommand({
+  name: "myapp",
+  description: "My CLI application",
+  args: {
+    file: {
+      type: z.string().describe("input file"),
+      positional: true,
+    },
+    verbose: {
+      type: z.boolean().default(false),
+      short: "v",
+    }
+  }
+});
+
+const result = cli.parse(Deno.args);
+runCommand(result, (data) => {
+  console.log(`Processing ${data.file}, verbose: ${data.verbose}`);
+});
+```
+
 ### アダプターパターン実装例
 
 TypeScriptでのAdapterパターンは、外部依存を抽象化し、テスト可能なコードを実現するためのパターンです。
@@ -102,6 +139,7 @@ TypeScriptでのAdapterパターンは、外部依存を抽象化し、テスト
 |--------------|-----------|--------|-------|
 | ルールとモード定義 | 安定 | 90% | 低 |
 | type-predictor | 開発中 | 60% | 高 |
+| zodcli | 安定 | 100% | 中 |
 | アダプターパターン例 | 安定 | 80% | 中 |
 | テストインフラ | 安定 | 70% | 中 |
 | CI/CD パイプライン | 開発中 | 50% | 中 |
