@@ -42,7 +42,7 @@ export type InferParser<P extends { parse: (args: string[]) => any }> =
  * type GitResult = InferNestedParser<typeof subCommands>;
  * // { command: "add"; data: { files: string[] } } | { command: "commit"; data: { message: string } }
  */
-export type InferNestedParser<T extends Record<string, CommandDef<any>>> = {
+export type InferNestedParser<T extends Record<string, CommandSchema<any>>> = {
   [K in keyof T]: {
     command: K extends string ? K : never;
     data: InferQueryType<T[K]["args"]>;
@@ -50,14 +50,14 @@ export type InferNestedParser<T extends Record<string, CommandDef<any>>> = {
 }[keyof T];
 
 // コマンド定義型
-export type CommandDef<T extends Record<string, QueryBase<any>>> = {
+export type CommandSchema<T extends Record<string, QueryBase<any>>> = {
   name: string;
   description: string;
   args: T;
 };
 
-// サブコマンド定義型
-export type SubCommandMap = Record<string, CommandDef<any>>;
+// ネストコマンド定義型
+export type NestedCommandMap = Record<string, CommandSchema<any>>;
 
 // ネストされたコマンドのオプション
 export interface NestedCommandOptions {
@@ -72,7 +72,7 @@ export type CommandResult<T> =
   | { type: "help"; helpText: string }
   | { type: "error"; error: Error | z.ZodError; helpText: string };
 
-export type SubCommandResult =
+export type NestedCommandResult =
   | { type: "subcommand"; name: string; result: CommandResult<any> }
   | { type: "help"; helpText: string }
   | { type: "error"; error: Error; helpText: string };
@@ -106,13 +106,13 @@ export type ParseError = {
 // Zodスタイルのパース結果
 export type SafeParseResult<T> = ParseSuccess<T> | ParseError;
 
-// サブコマンドのZodスタイル成功結果
-export type SubCommandParseSuccess<T = any> = {
+// ネストコマンドのZodスタイル成功結果
+export type NestedCommandParseSuccess<T = any> = {
   ok: true;
   data: T;
 };
 
-// サブコマンドのZodスタイルパース結果
-export type SubCommandSafeParseResult<T = any> =
-  | SubCommandParseSuccess<T>
+// ネストコマンドのZodスタイルパース結果
+export type NestedCommandSafeParseResult<T = any> =
+  | NestedCommandParseSuccess<T>
   | ParseError;

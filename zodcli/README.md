@@ -12,7 +12,7 @@ ZodCLI is a Deno module for easily building type-safe command-line interfaces us
 - **Automatic Help Generation**: Automatically generates help text from command structures
 - **Positional Arguments and Options Support**: Supports both positional and named arguments
 - **Advanced Positional Arguments**: Supports index-based position control and rest arguments
-- **Subcommand Support**: Supports subcommand structures like git
+- **Nested Command Support**: Supports nested command structures like git
 - **Default Values**: Leverages Zod features for setting default values
 - **Validation**: Powerful input validation with Zod schemas
 - **JSON Schema Conversion**: Convert Zod schemas to JSON schemas
@@ -87,14 +87,14 @@ if (result.ok) {
 }
 ```
 
-## Using Subcommands
+## Using Nested Commands
 
 ```typescript
-import { createSubParser, run } from "jsr:@mizchi/zodcli";
+import { createNestedParser, run } from "jsr:@mizchi/zodcli";
 import { z } from "npm:zod";
 
-// Define subcommand parser
-const gitParser = createSubParser(
+// Define nested command parser
+const gitParser = createNestedParser(
   {
     add: {
       name: "git add",
@@ -165,10 +165,10 @@ if (result.ok) {
 
 To enhance type safety and catch errors at compile time, you can use type constraints with your schema definitions. This approach helps to ensure that your schema conforms to the expected structure before runtime.
 
-### Using ParserSchema Type Constraint
+### Using CommandSchema Type Constraint
 
 ```typescript
-import { type ParserSchema, createParser } from "jsr:@mizchi/zodcli";
+import { type CommandSchema, createParser } from "jsr:@mizchi/zodcli";
 import { z } from "npm:zod";
 
 // Define your schema with type constraint
@@ -185,7 +185,7 @@ const searchArgsSchema = {
     type: z.enum(["json", "text", "table"]).default("text"),
     short: "f",
   },
-} as const as ParserSchema; // Apply 'as const' and ParserSchema constraint
+} as const as CommandSchema; // Apply 'as const' and CommandSchema constraint
 
 // Create parser with type-checked schema
 const searchParser = createParser({
@@ -243,8 +243,8 @@ In this example, `command` is the first argument and all subsequent arguments ar
 
 ### Core Functions
 
-- **`createParser(definition)`**: Creates a new parser from a command definition
-- **`createNestedParser(rootName, rootDescription, subCommandMap)`**: Creates a subcommand parser
+- **`createParser(definition)`**: Creates a new parser from a command schema definition
+- **`createNestedParser(commandMap, options)`**: Creates a nested command parser
 
 ### Parser Methods
 
@@ -259,7 +259,8 @@ In this example, `command` is the first argument and all subsequent arguments ar
 The following functions are maintained for backward compatibility:
 
 - **`createCommand(definition)`**: Legacy version of `createParser`
-- **`createSubCommands(subCommandMap)`**: Legacy version of `createSubParser`
+- **`createSubParser(commandMap, options)`**: Legacy alternative to `createNestedParser`
+- **`createNestedCommands(commandMap)`**: Lower-level implementation used by `createNestedParser`
 
 ## Testing
 

@@ -1,7 +1,7 @@
 import { z } from "npm:zod";
 import { parseArgs } from "node:util";
 import type {
-  CommandDef,
+  CommandSchema,
   CommandResult,
   InferQueryType,
   InferNestedParser,
@@ -10,9 +10,9 @@ import type {
   ParseError,
   QueryBase,
   SafeParseResult,
-  SubCommandMap,
-  SubCommandResult,
-  SubCommandSafeParseResult,
+  NestedCommandMap,
+  NestedCommandResult,
+  NestedCommandSafeParseResult,
 } from "./types.ts";
 import { convertValue, generateHelp, zodTypeToParseArgsType } from "./utils.ts";
 import { zodToJsonSchema } from "./schema.ts";
@@ -173,7 +173,7 @@ export function createZodSchema<T extends Record<string, QueryBase<any>>>(
 
 // コマンド定義からCLIコマンドを生成する関数
 export function createCommand<T extends Record<string, QueryBase<any>>>(
-  commandDef: CommandDef<T>
+  commandDef: CommandSchema<T>
 ) {
   const queryDef = commandDef.args;
   const parseArgsConfig = createParseArgsConfig(queryDef);
@@ -252,8 +252,8 @@ export function createCommand<T extends Record<string, QueryBase<any>>>(
   };
 }
 
-// サブコマンドマップの作成
-export function createNestedCommands<T extends SubCommandMap>(
+// ネストコマンドマップの作成
+export function createNestedCommands<T extends NestedCommandMap>(
   subCommands: T,
   options?: NestedCommandOptions
 ) {
@@ -286,7 +286,7 @@ export function createNestedCommands<T extends SubCommandMap>(
     argv: string[],
     name = rootName,
     description = rootDescription
-  ): SubCommandResult {
+  ): NestedCommandResult {
     // ヘルプフラグのチェック
     if (argv.includes("-h") || argv.includes("--help") || argv.length === 0) {
       return {
@@ -376,7 +376,7 @@ export function createNestedCommands<T extends SubCommandMap>(
  * @returns パーサーオブジェクト
  */
 export function createParser<T extends Record<string, QueryBase<any>>>(
-  definition: CommandDef<T>
+  definition: CommandSchema<T>
 ) {
   const command = createCommand(definition);
 
@@ -466,7 +466,7 @@ export function createParser<T extends Record<string, QueryBase<any>>>(
  * @param options コマンド名、説明、デフォルトコマンドを含むオプション
  * @returns サブコマンドパーサーオブジェクト
  */
-export function createSubParser<T extends SubCommandMap>(
+export function createSubParser<T extends NestedCommandMap>(
   subCommands: T,
   options: string | NestedCommandOptions | undefined = undefined,
   description?: string
@@ -518,7 +518,7 @@ export function createSubParser<T extends SubCommandMap>(
     throw new Error("Unknown parse result");
   }
 
-  function safeParse(argv: string[]): SubCommandSafeParseResult<Result> {
+  function safeParse(argv: string[]): NestedCommandSafeParseResult<Result> {
     const result = subCommandHandler.parse(argv);
 
     if (result.type === "error") {

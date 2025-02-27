@@ -1,5 +1,5 @@
 import { BraveSearch } from "jsr:@tyr/brave-search";
-import { createParser } from "@interanl/zodcli";
+import { createParser } from "@mizchi/zodcli";
 import { z } from "npm:zod";
 
 const API_KEY = Deno.env.get("BRAVE_SEARCH_KEY");

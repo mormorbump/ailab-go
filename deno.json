@@ -5,7 +5,7 @@
       "exclude": ["no-explicit-any"]
     }
   },
-  "workspace": ["./zodcli"],
+  "workspace": ["./zodcli/"],
   "tasks": {
     "build:prompt": "deno run -A .cline/build.ts",
     "test": "deno test -A --coverage=coverage && deno coverage coverage",
@@ -19,8 +19,7 @@
     "@npm/types": "npm:@npm/types@^2.0.0",
     "duckdb": "npm:duckdb@^1.2.0",
     "neverthrow": "npm:neverthrow@^8.2.0",
-    "@duckdb/duckdb-wasm": "npm:@duckdb/duckdb-wasm",
-    "@interanl/zodcli": "./zodcli/mod.ts"
+    "@duckdb/duckdb-wasm": "npm:@duckdb/duckdb-wasm"
   },
   "test": {
     "include": ["scripts/*.ts"],

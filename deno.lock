@@ -13,6 +13,7 @@
     "jsr:@std/data-structures@^1.0.6": "1.0.6",
     "jsr:@std/expect@^1.0.13": "1.0.13",
     "jsr:@std/fmt@1": "1.0.5",
+    "jsr:@std/fs@*": "1.0.13",
     "jsr:@std/fs@1": "1.0.13",
     "jsr:@std/fs@^1.0.9": "1.0.13",
     "jsr:@std/internal@^1.0.5": "1.0.5",

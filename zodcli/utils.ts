@@ -1,5 +1,9 @@
 import { z } from "npm:zod";
-import type { QueryBase, SubCommandMap, SubCommandResult } from "./types.ts";
+import type {
+  QueryBase,
+  NestedCommandMap,
+  NestedCommandResult,
+} from "./types.ts";
 
 // Zodの型からparseArgsの型に変換
 export function zodTypeToParseArgsType(
@@ -71,7 +75,7 @@ export function generateHelp<T extends Record<string, QueryBase<any>>>(
   commandName: string,
   description: string,
   queryDef: T,
-  subCommands?: SubCommandMap
+  subCommands?: NestedCommandMap
 ): string {
   let help = `${commandName}\n> ${description}\n\n`;
 
