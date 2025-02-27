@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mizchi/lab"
+    "url": "https://github.com/mizchi/ailab"
   },
   "exports": {
     ".": "./mod.ts"
@@ -25,7 +25,7 @@
     "exclude": ["test"]
   },
   "tasks": {
-    "test": "deno test -A test/mod.test.ts",
+    "test": "deno test .",
     "check": "deno check mod.ts",
     "fmt": "deno fmt",
     "lint": "deno lint"
