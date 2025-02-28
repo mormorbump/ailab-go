@@ -29,6 +29,11 @@
       "__filename": "/home/mizchi/lab/.cline/roomodes/mizchi-writer.md"
     },
     {
+      "slug": "deno-refactor",
+      "roleDefinition": "## リファクターモード\n\ndeno lint をみる。\n\nデッドコードをみる\nimport type",
+      "__filename": "/home/mizchi/lab/.cline/roomodes/deno-refactor.md"
+    },
+    {
       "name": "Deno:Module",
       "groups": [
         "read",

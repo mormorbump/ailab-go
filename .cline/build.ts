@@ -59,7 +59,11 @@ async function main() {
     // プロンプトファイルを読み込む
     const files: string[] = [];
     for await (const entry of Deno.readDir(RULES_DIR)) {
-      if (entry.isFile && entry.name.endsWith(".md")) {
+      if (
+        entry.isFile &&
+        entry.name.endsWith(".md") &&
+        !entry.name.startsWith("_")
+      ) {
         files.push(entry.name);
       }
     }
