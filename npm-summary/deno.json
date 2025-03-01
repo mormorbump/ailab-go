@@ -1,6 +1,6 @@
 {
   "name": "@mizchi/npm-summary",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Utility to extract and analyze TypeScript type definitions from npm packages",
   "author": "mizchi",
   "license": "MIT",
