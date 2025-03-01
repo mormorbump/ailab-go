@@ -24,7 +24,7 @@ deno add -A @mizchi/npm-summary
 deno run -A jsr:@mizchi/npm-summary/cli.ts zod
 
 # Install as a global command
-deno install -Afg -n npm-summary jsr:@mizchi/npm-summary/cli.ts
+deno install -Afg -n npm-summary jsr:@mizchi/npm-summary/cli
 ```
 
 ## CLI Usage
