@@ -42,6 +42,7 @@ Options:
   --include=<pattern>  Include file patterns (can specify multiple, e.g., --include=README.md --include=*.ts)
   --dry                Dry run (show file content and token count without sending to AI)
   --out=<file>         Output results to a file
+  --prompt, -p <text>  Custom prompt for summary generation (creates summary-[hash].md for different prompts)
   `);
 }
 
@@ -90,7 +91,8 @@ async function handleLsCommand(args: string[]) {
   // オプションの処理
   // 明示的に@latest指定の場合のみキャッシュを使用しない
   // --no-cacheオプションが指定された場合もキャッシュを使用しない
-  const explicitLatest = version === "latest" &&
+  const explicitLatest =
+    version === "latest" &&
     (packageName.includes("@") || args[0].includes("@"));
   const forceNoCache = explicitLatest;
   const useCache = !options.values["no-cache"] && !forceNoCache;
@@ -98,7 +100,7 @@ async function handleLsCommand(args: string[]) {
 
   if (explicitLatest) {
     console.log(
-      "Explicit @latest specified, bypassing cache to fetch the latest version",
+      "Explicit @latest specified, bypassing cache to fetch the latest version"
     );
   } else if (options.values["no-cache"]) {
     console.log("--no-cache option specified, bypassing cache");
@@ -122,7 +124,7 @@ async function handleLsCommand(args: string[]) {
 async function handleReadCommand(args: string[]) {
   if (args.length < 1) {
     console.error(
-      "Usage: deno run -A cli.ts read <package-name>[@version]/<file-path>",
+      "Usage: deno run -A cli.ts read <package-name>[@version]/<file-path>"
     );
     Deno.exit(1);
   }
@@ -139,10 +141,10 @@ async function handleReadCommand(args: string[]) {
   if (slashIndex === -1) {
     if (args.length < 2) {
       console.error(
-        "Usage: npm-summary read <package-name>[@version]/<file-path>",
+        "Usage: npm-summary read <package-name>[@version]/<file-path>"
       );
       console.error(
-        "Or: npm-summary read <package-name>[@version] <file-path> (legacy format)",
+        "Or: npm-summary read <package-name>[@version] <file-path> (legacy format)"
       );
       Deno.exit(1);
     }
@@ -190,7 +192,8 @@ async function handleReadCommand(args: string[]) {
   // オプションの処理
   // 明示的に@latest指定の場合のみキャッシュを使用しない
   // --no-cacheオプションが指定された場合もキャッシュを使用しない
-  const explicitLatest = version === "latest" &&
+  const explicitLatest =
+    version === "latest" &&
     (packageName.includes("@") || args[0].includes("@"));
   const forceNoCache = explicitLatest;
   const useCache = !options.values["no-cache"] && !forceNoCache;
@@ -198,7 +201,7 @@ async function handleReadCommand(args: string[]) {
 
   if (explicitLatest) {
     console.log(
-      "Explicit @latest specified, bypassing cache to fetch the latest version",
+      "Explicit @latest specified, bypassing cache to fetch the latest version"
     );
   } else if (options.values["no-cache"]) {
     console.log("--no-cache option specified, bypassing cache");
@@ -261,6 +264,7 @@ async function handleDefaultCommand(args: string[]) {
       // 値を取るオプション
       token: { type: "string" },
       out: { type: "string" },
+      prompt: { type: "string", short: "p" }, // プロンプトオプション追加
       include: { type: "string", multiple: true }, // 複数指定可能なincludeパターン
     },
     allowPositionals: true,
@@ -269,7 +273,8 @@ async function handleDefaultCommand(args: string[]) {
   // オプションの処理
   // 明示的に@latest指定の場合のみキャッシュを使用しない
   // --no-cacheオプションが指定された場合もキャッシュを使用しない
-  const explicitLatest = version === "latest" &&
+  const explicitLatest =
+    version === "latest" &&
     (packageName.includes("@") || args[0].includes("@"));
   const forceNoCache = explicitLatest;
   const useCache = !options.values["no-cache"] && !forceNoCache;
@@ -279,10 +284,11 @@ async function handleDefaultCommand(args: string[]) {
   const token = options.values["token"] as string | undefined;
   const outFile = options.values["out"] as string | undefined;
   const include = options.values["include"] as string[] | undefined;
+  const prompt = options.values["prompt"] as string | undefined;
 
   if (explicitLatest) {
     console.log(
-      "Explicit @latest specified, bypassing cache to fetch the latest version",
+      "Explicit @latest specified, bypassing cache to fetch the latest version"
     );
   } else if (options.values["no-cache"]) {
     console.log("--no-cache option specified, bypassing cache");
@@ -295,6 +301,7 @@ async function handleDefaultCommand(args: string[]) {
     token,
     include,
     dry,
+    prompt,
   });
 
   // Write results to a file or display in standard output
@@ -332,7 +339,7 @@ if (import.meta.main) {
     }
   } catch (error) {
     console.error(
-      `Error: ${error instanceof Error ? error.message : String(error)}`,
+      `Error: ${error instanceof Error ? error.message : String(error)}`
     );
     Deno.exit(1);
   }

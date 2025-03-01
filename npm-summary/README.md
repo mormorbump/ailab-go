@@ -45,6 +45,10 @@ npm-summary react --no-cache
 # Output result to a file
 npm-summary zod --out=zod-types.md
 
+# Custom prompt for generating summary
+npm-summary zod --prompt="Explain this package like I'm 5 years old"
+npm-summary zod -p "Create a detailed guide with code examples"
+
 # List all files in a package
 npm-summary ls zod@3.21.4
 
@@ -64,14 +68,30 @@ The tool supports two environment variables for the AI summary generation:
 
 Set either one to enable AI summary generation.
 
+## Custom Prompts
+
+You can customize how summaries are generated using the `--prompt` (or `-p`) option:
+
+```bash
+# Generate a summary with a custom prompt
+npm-summary zod --prompt="Explain this package like I'm 5 years old"
+
+# Short form
+npm-summary react -p "Create a detailed guide with advanced examples"
+```
+
+Different prompts create different summary files, so you can generate multiple
+perspectives on the same package without overwriting previous summaries.
+
 ## Cache Strategy
 
 The tool uses an intelligent caching strategy:
 
 - Package content is cached at
   `$HOME/.npmsummary/[package-name]/[version]/content.md`
-- AI summaries are cached at
-  `$HOME/.npmsummary/[package-name]/[version]/summary.md`
+- AI summaries are cached at:
+  - Default prompt: `$HOME/.npmsummary/[package-name]/[version]/summary.md`
+  - Custom prompts: `$HOME/.npmsummary/[package-name]/[version]/summary-[hash].md`
 - Summaries are automatically generated and reused when available
 - Use `--no-cache` to ignore all caching
 - Use `@latest` explicitly (e.g., `zod@latest`) to force fetching the latest

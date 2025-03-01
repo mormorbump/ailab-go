@@ -29,6 +29,8 @@ export type GetPackageFilesOptions = {
   include?: string[];
   /** Dry run (display file content and token count without sending to AI) */
   dry?: boolean;
+  /** Custom prompt for summary generation */
+  prompt?: string;
 };
 
 /**
