@@ -203,8 +203,8 @@ go run .cline/build.go
    brew install go
 
    # Linux
-   wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
-   sudo tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz
+   wget https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
+   sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
    export PATH=$PATH:/usr/local/go/bin
 
    # Windows
@@ -234,6 +234,118 @@ go run .cline/build.go
 
    # ルールとモードの生成
    go run .cline/build.go
+   ```
+
+## go.work を用いたプロジェクトの立ち上げ方
+
+このプロジェクトは Go のワークスペース機能（go.work）を使用したマルチモジュール構成になっています。これにより、複数の Go モジュールを一つのワークスペースで管理できます。
+
+### go.work の概要
+
+go.work ファイルは、複数の Go モジュールを一つのワークスペースとして扱うための設定ファイルです。主な利点は以下の通りです：
+
+- 複数のモジュールを一度に開発できる
+- モジュール間の依存関係を簡単に解決できる
+- 各モジュールが独自の go.mod ファイルを持ちながら連携できる
+
+### 新しいプロジェクトでの go.work の設定方法
+
+1. **ワークスペースの初期化**
+   ```bash
+   # プロジェクトのルートディレクトリで実行
+   go work init
+   ```
+
+2. **モジュールの追加**
+   ```bash
+   # 既存のモジュールを追加
+   go work use ./path/to/module1
+   go work use ./path/to/module2
+   
+   # または直接 go.work ファイルを編集
+   # go.work
+   # go 1.24.0
+   #
+   # use (
+   #   ./path/to/module1
+   #   ./path/to/module2
+   # )
+   ```
+
+3. **新しいモジュールの作成と追加**
+   ```bash
+   # 新しいディレクトリを作成
+   mkdir -p scripts/cmd/new-tool
+   cd scripts/cmd/new-tool
+   
+   # モジュールを初期化
+   go mod init github.com/yourusername/project/scripts/cmd/new-tool
+   
+   # ワークスペースに追加（プロジェクトルートに戻って）
+   cd ../../../
+   go work use ./scripts/cmd/new-tool
+   ```
+
+### 既存のプロジェクトでの go.work の利用方法
+
+このプロジェクトでは、以下のモジュールが go.work で管理されています：
+
+```
+go 1.24.0
+
+use (
+	./go-pkg-summary
+	./scripts/cmd/check-ci
+	./scripts/cmd/duckdb-vss
+	./scripts/cmd/gh-search
+	./scripts/cmd/git-push-with-ci
+	./scripts/cmd/lsp-client
+	./scripts/cmd/search-files
+	./scripts/cmd/search-gopkg
+)
+```
+
+プロジェクトをクローンした後、以下の手順で開発を始めることができます：
+
+1. **依存関係のダウンロード**
+   ```bash
+   # 全モジュールの依存関係をダウンロード
+   go work sync
+   ```
+
+2. **全モジュールのビルド**
+   ```bash
+   # ワークスペース内の全モジュールをビルド
+   go build ./...
+   ```
+
+3. **特定のモジュールの実行**
+   ```bash
+   # 例: go-pkg-summary モジュールを実行
+   go run ./go-pkg-summary
+   
+   # または特定のコマンドを実行
+   go run ./scripts/cmd/search-gopkg
+   ```
+
+### go.work の管理
+
+1. **依存関係の同期**
+   ```bash
+   # 全モジュールの依存関係を同期
+   go work sync
+   ```
+
+2. **ワークスペースの情報表示**
+   ```bash
+   # ワークスペースの情報を表示
+   go work edit -json
+   ```
+
+3. **モジュールの削除**
+   ```bash
+   # モジュールをワークスペースから削除
+   go work edit -dropuse=./path/to/module
    ```
 
 ### 開発ワークフロー
