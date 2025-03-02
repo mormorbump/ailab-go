@@ -33,30 +33,30 @@
 
 // 型定義のエクスポート
 export type {
-  CommandSchema,
   CommandResult,
+  CommandSchema,
+  InferArgs,
+  InferNestedParser,
+  InferParser,
   InferQueryType,
   InferZodType,
+  NestedCommandMap,
+  NestedCommandParseSuccess,
+  NestedCommandResult,
+  NestedCommandSafeParseResult,
   ParseArgsConfig,
   ParseArgsOptionConfig,
   ParseError,
   ParseSuccess,
   QueryBase,
   SafeParseResult,
-  NestedCommandMap,
-  NestedCommandParseSuccess,
-  NestedCommandResult,
-  NestedCommandSafeParseResult,
-  InferArgs,
-  InferParser,
-  InferNestedParser,
 } from "./types.ts";
 
 // コア機能のエクスポート
 export {
   createCommand,
-  createParser,
   createNestedCommands,
+  createParser,
   createSubParser,
   createZodSchema,
   resolveValues,
@@ -64,12 +64,12 @@ export {
 
 // 後方互換性のためのエイリアス
 import { createSubParser } from "./core.ts";
-import type { NestedCommandOptions, NestedCommandMap } from "./types.ts";
+import type { NestedCommandMap, NestedCommandOptions } from "./types.ts";
 
 export function createNestedParser<T extends NestedCommandMap>(
   subCommands: T,
   options?: string | NestedCommandOptions,
-  description?: string
+  description?: string,
 ) {
   return createSubParser(subCommands, options, description);
 }

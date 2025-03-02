@@ -2,9 +2,9 @@
 import { z } from "npm:zod";
 import {
   createParser,
-  isHelp,
   type InferArgs,
   type InferParser,
+  isHelp,
 } from "../mod.ts";
 
 // スキーマ定義からの型推論の例
@@ -74,7 +74,7 @@ type ParsedResult = InferParser<typeof parser>;
 // ----- isHelp関数の使用例 -----
 console.log("ヘルプフラグのチェック例:");
 console.log(
-  "引数がない場合や --help/-h を含む場合、ヘルプを表示して終了します"
+  "引数がない場合や --help/-h を含む場合、ヘルプを表示して終了します",
 );
 
 // isHelp関数を使ってヘルプフラグをチェック
@@ -106,10 +106,10 @@ try {
   console.log("Parsed data:");
   console.log("=".repeat(30));
   console.log(
-    `count: ${parseResult.count} (type: ${typeof parseResult.count})`
+    `count: ${parseResult.count} (type: ${typeof parseResult.count})`,
   );
   console.log(
-    `limit: ${parseResult.limit} (type: ${typeof parseResult.limit})`
+    `limit: ${parseResult.limit} (type: ${typeof parseResult.limit})`,
   );
   console.log(`values (JSON): ${JSON.stringify(parseResult.values)}`);
   console.log(`values.length: ${parseResult.values.length}`);
@@ -117,7 +117,8 @@ try {
   // 各要素を個別に表示
   for (let i = 0; i < parseResult.values.length; i++) {
     console.log(
-      `values[${i}]: ${parseResult.values[i]} (${typeof parseResult.values[i]})`
+      `values[${i}]: ${parseResult.values[i]} (${typeof parseResult
+        .values[i]})`,
     );
   }
 
@@ -125,21 +126,20 @@ try {
   const sum = parseResult.values.reduce((a, b) => a + b, 0);
   console.log(`values の合計: ${sum} (${typeof sum})`);
   console.log(
-    `values: [${
-      parseResult.values
-    }] (type: ${typeof parseResult.values}, array items type: ${
+    `values: [${parseResult.values}] (type: ${typeof parseResult
+      .values}, array items type: ${
       parseResult.values.length > 0 ? typeof parseResult.values[0] : "empty"
-    })`
+    })`,
   );
   console.log(`id: ${parseResult.id} (type: ${typeof parseResult.id})`);
   console.log(
-    `verbose: ${parseResult.verbose} (type: ${typeof parseResult.verbose})`
+    `verbose: ${parseResult.verbose} (type: ${typeof parseResult.verbose})`,
   );
   console.log("=".repeat(30));
 } catch (error) {
   console.error(
     "Error:",
-    error instanceof Error ? error.message : String(error)
+    error instanceof Error ? error.message : String(error),
   );
   console.log(parser.help());
   Deno.exit(1);
@@ -149,7 +149,7 @@ try {
 console.log("使用例:");
 console.log("1. 基本的な使用法:");
 console.log(
-  "   deno run -A number.ts 123 --count 5 --limit 20 --values 1 --values 2 --values 3"
+  "   deno run -A number.ts 123 --count 5 --limit 20 --values 1 --values 2 --values 3",
 );
 console.log("");
 console.log("2. 短縮オプション:");

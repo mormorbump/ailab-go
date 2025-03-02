@@ -3,13 +3,13 @@ import { test } from "@std/testing/bdd";
 
 import { z } from "npm:zod";
 import {
-  zodToJsonSchema,
-  resolveValues,
+  type CommandSchema, // CommandDef から CommandSchema に変更
   convertValue,
   getTypeDisplayString,
-  type QueryBase,
-  type CommandSchema, // CommandDef から CommandSchema に変更
   type NestedCommandMap, // SubCommandMap から NestedCommandMap に変更
+  type QueryBase,
+  resolveValues,
+  zodToJsonSchema,
 } from "../mod.ts";
 import { createCommand, createNestedCommands } from "../core.ts";
 
@@ -138,7 +138,7 @@ test("JSONスキーマの生成", () => {
     expect.objectContaining({
       type: "string",
       description: "input file path",
-    })
+    }),
   );
 
   // required が正しいか確認（オプショナルな項目は含まれない）
@@ -149,7 +149,7 @@ test("JSONスキーマの生成", () => {
     expect.objectContaining({
       default: "sync",
       enum: ["sync", "async", "stream"],
-    })
+    }),
   );
 });
 
@@ -549,7 +549,7 @@ test("無効な入力値に対するエラー処理", () => {
     // エラーメッセージに問題の詳細が含まれているか確認
     // 修正: 新しいエラーメッセージ形式に合わせる
     expect(result.error.message).toContain(
-      "Number must be greater than or equal to 1"
+      "Number must be greater than or equal to 1",
     );
   }
 });

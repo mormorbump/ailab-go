@@ -46,7 +46,7 @@ function parseAccessKey(path: string): AccessKeyElement[] {
 function collectSamples(
   obj: unknown,
   currentKey: AccessKeyElement[] = [],
-  samples: Map<string, SampledValue> = new Map()
+  samples: Map<string, SampledValue> = new Map(),
 ): Map<string, SampledValue> {
   // null または非オブジェクトの場合
   if (obj === null || typeof obj !== "object") {
@@ -264,7 +264,7 @@ test("predictTypeFromSamples - type prediction", () => {
       accessKey: ["value"],
       flatAccessKey: "value",
       sampleValues: [1, 2, 3],
-    })
+    }),
   ).toEqual({
     type: "number",
     isArray: false,
@@ -276,7 +276,7 @@ test("predictTypeFromSamples - type prediction", () => {
       accessKey: ["value"],
       flatAccessKey: "value",
       sampleValues: [1, null, 3],
-    })
+    }),
   ).toEqual({
     type: "number | null",
     isArray: false,
@@ -291,7 +291,7 @@ test("predictTypeFromSamples - type prediction", () => {
         [1, 2],
         [3, 4],
       ],
-    })
+    }),
   ).toEqual({
     type: "array",
     isArray: true,
@@ -307,7 +307,7 @@ test("predictTypeFromSamples - type prediction", () => {
         [1, "two"],
         [3, true],
       ],
-    })
+    }),
   ).toEqual({
     type: "array",
     isArray: true,

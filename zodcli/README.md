@@ -4,19 +4,26 @@ Type-safe command-line parser module using Zod
 
 ## Overview
 
-ZodCLI is a Deno module for easily building type-safe command-line interfaces using [Zod](https://github.com/colinhacks/zod) schemas. With this module, you can parse command-line arguments, validate inputs, and generate help messages in a type-safe manner.
+ZodCLI is a Deno module for easily building type-safe command-line interfaces
+using [Zod](https://github.com/colinhacks/zod) schemas. With this module, you
+can parse command-line arguments, validate inputs, and generate help messages in
+a type-safe manner.
 
 ## Features
 
 - **Type-Safe**: Type-safe CLI parser based on Zod schemas
-- **Automatic Help Generation**: Automatically generates help text from command structures
-- **Positional Arguments and Options Support**: Supports both positional and named arguments
-- **Advanced Positional Arguments**: Supports index-based position control and rest arguments
+- **Automatic Help Generation**: Automatically generates help text from command
+  structures
+- **Positional Arguments and Options Support**: Supports both positional and
+  named arguments
+- **Advanced Positional Arguments**: Supports index-based position control and
+  rest arguments
 - **Nested Command Support**: Supports nested command structures like git
 - **Default Values**: Leverages Zod features for setting default values
 - **Validation**: Powerful input validation with Zod schemas
 - **JSON Schema Conversion**: Convert Zod schemas to JSON schemas
-- **Multiple Parse Styles**: Supports both exception-throwing and Result-based parsing
+- **Multiple Parse Styles**: Supports both exception-throwing and Result-based
+  parsing
 - **Type Inference**: Improved type inference for better TypeScript experience
 
 ## Installation
@@ -67,11 +74,12 @@ if (
   Deno.exit(0);
 }
 
-
 // Option 1: Parse arguments with exception handling
 try {
   const data = searchParser.parse(Deno.args);
-  console.log(`Searching for: ${data.query}, count: ${data.count}, format: ${data.format}`);
+  console.log(
+    `Searching for: ${data.query}, count: ${data.count}, format: ${data.format}`,
+  );
 } catch (error) {
   console.error(error.message);
   console.log(searchParser.help());
@@ -80,7 +88,9 @@ try {
 // Option 2: Parse arguments with Result pattern (Zod-style)
 const result = searchParser.safeParse(Deno.args);
 if (result.ok) {
-  console.log(`Searching for: ${result.data.query}, count: ${result.data.count}, format: ${result.data.format}`);
+  console.log(
+    `Searching for: ${result.data.query}, count: ${result.data.count}, format: ${result.data.format}`,
+  );
 } else {
   console.error(result.error.message);
   console.log(searchParser.help());
@@ -126,14 +136,14 @@ const gitParser = createNestedParser(
     },
   },
   "git",
-  "Git command line tool"
+  "Git command line tool",
 );
 
 // Option 1: Parse arguments with exception handling
 try {
   const { command, data } = gitParser.parse(Deno.args);
   console.log(`Running git ${command}`);
-  
+
   if (command === "add") {
     console.log(`Adding files: ${data.files.join(", ")}`);
   } else if (command === "commit") {
@@ -149,7 +159,7 @@ const result = gitParser.safeParse(Deno.args);
 if (result.ok) {
   const { command, data } = result.data;
   console.log(`Running git ${command}`);
-  
+
   if (command === "add") {
     console.log(`Adding files: ${data.files.join(", ")}`);
   } else if (command === "commit") {
@@ -163,7 +173,9 @@ if (result.ok) {
 
 ## Advanced Type Safety
 
-To enhance type safety and catch errors at compile time, you can use type constraints with your schema definitions. This approach helps to ensure that your schema conforms to the expected structure before runtime.
+To enhance type safety and catch errors at compile time, you can use type
+constraints with your schema definitions. This approach helps to ensure that
+your schema conforms to the expected structure before runtime.
 
 ### Using CommandSchema Type Constraint
 
@@ -197,37 +209,45 @@ const searchParser = createParser({
 // Now any schema errors would be caught at compile time
 ```
 
-The `as const` assertion ensures that object literals are treated as readonly with their values narrowed to specific literal types, rather than wider types. Combined with the `ParserSchema` type constraint, this approach provides early detection of schema errors.
+The `as const` assertion ensures that object literals are treated as readonly
+with their values narrowed to specific literal types, rather than wider types.
+Combined with the `ParserSchema` type constraint, this approach provides early
+detection of schema errors.
 
 ### Benefits of Enhanced Type Safety
 
-- **Early Error Detection**: Catch schema errors during development instead of at runtime
-- **Improved Autocomplete**: Better IDE suggestions when working with your schemas
+- **Early Error Detection**: Catch schema errors during development instead of
+  at runtime
+- **Improved Autocomplete**: Better IDE suggestions when working with your
+  schemas
 - **Type Narrowing**: More precise types for enum values and other literals
 - **Safer Refactoring**: Changes to your schema structure are type-checked
 
-This pattern is especially useful for larger CLI applications with complex argument structures, where runtime errors might be more difficult to detect during testing.
+This pattern is especially useful for larger CLI applications with complex
+argument structures, where runtime errors might be more difficult to detect
+during testing.
 
 ## Advanced Positional Arguments
 
 There are three ways to specify positional arguments:
 
 ### **Rest Arguments**: `positional: '...'` - Capture all remaining positional arguments as an array
-   ```typescript
-   {
-     command: {
-       type: z.string(),
-       positional: 0, // First positional argument
-     },
-     args: {
-       type: z.string().array(),
-       positional: '...', // All remaining arguments
-     }
-   }
-   ```
 
-In this example, `command` is the first argument and all subsequent arguments are captured as an array in `args`.
+```typescript
+{
+  command: {
+    type: z.string(),
+    positional: 0, // First positional argument
+  },
+  args: {
+    type: z.string().array(),
+    positional: '...', // All remaining arguments
+  }
+}
+```
 
+In this example, `command` is the first argument and all subsequent arguments
+are captured as an array in `args`.
 
 ## Supported Types
 
@@ -243,7 +263,8 @@ In this example, `command` is the first argument and all subsequent arguments ar
 
 ### Core Functions
 
-- **`createParser(definition)`**: Creates a new parser from a command schema definition
+- **`createParser(definition)`**: Creates a new parser from a command schema
+  definition
 - **`createNestedParser(commandMap, options)`**: Creates a nested command parser
 
 ### Parser Methods
@@ -259,8 +280,10 @@ In this example, `command` is the first argument and all subsequent arguments ar
 The following functions are maintained for backward compatibility:
 
 - **`createCommand(definition)`**: Legacy version of `createParser`
-- **`createSubParser(commandMap, options)`**: Legacy alternative to `createNestedParser`
-- **`createNestedCommands(commandMap)`**: Lower-level implementation used by `createNestedParser`
+- **`createSubParser(commandMap, options)`**: Legacy alternative to
+  `createNestedParser`
+- **`createNestedCommands(commandMap)`**: Lower-level implementation used by
+  `createNestedParser`
 
 ## Testing
 

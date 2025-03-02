@@ -1,7 +1,7 @@
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { PGlite } from "npm:@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
-import { beforeAll, afterAll, test } from "jsr:@std/testing/bdd";
+import { afterAll, beforeAll, test } from "jsr:@std/testing/bdd";
 import { configureGlobalSanitizers } from "jsr:@std/testing/unstable-bdd";
 import { expect } from "jsr:@std/expect";
 import { users } from "./db/schema.ts";

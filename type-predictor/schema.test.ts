@@ -49,7 +49,7 @@ function buildPrimitiveSchema(type: string): z.ZodType {
  */
 function buildArraySchema(
   itemTypes: Set<string> | undefined,
-  children: Map<string, StructurePrediction> | undefined
+  children: Map<string, StructurePrediction> | undefined,
 ): z.ZodType {
   // タプル型の場合
   if (children && children.size > 0 && children.has("$")) {
@@ -66,7 +66,7 @@ function buildArraySchema(
       return z.array(itemSchemas[0]);
     }
     return z.array(
-      z.union([itemSchemas[0], itemSchemas[1], ...itemSchemas.slice(2)])
+      z.union([itemSchemas[0], itemSchemas[1], ...itemSchemas.slice(2)]),
     );
   }
 
@@ -79,7 +79,7 @@ function buildArraySchema(
  */
 function buildRecordSchema(
   keyPattern: string | undefined,
-  valueType: string | undefined
+  valueType: string | undefined,
 ): z.ZodType {
   if (!keyPattern || !valueType) {
     return z.record(z.any());
@@ -110,7 +110,7 @@ function buildRecordSchema(
  * オブジェクトのスキーマを構築
  */
 function buildObjectSchema(
-  children: Map<string, StructurePrediction>
+  children: Map<string, StructurePrediction>,
 ): z.ZodType {
   const shape: Record<string, z.ZodType> = {};
   for (const [key, value] of children) {
@@ -131,7 +131,7 @@ function buildStructureSchema(structure: StructurePrediction): z.ZodType {
         structure.children?.get("$")?.valueType
           ? new Set([structure.children.get("$")!.valueType!])
           : undefined,
-        structure.children
+        structure.children,
       );
     case "record":
       return buildRecordSchema(structure.keyPattern, structure.valueType);
@@ -147,7 +147,7 @@ function buildStructureSchema(structure: StructurePrediction): z.ZodType {
  */
 export function buildSchema(
   structure: StructurePrediction,
-  predictions: Map<string, TypePrediction>
+  predictions: Map<string, TypePrediction>,
 ): z.ZodType {
   return buildStructureSchema(structure);
 }

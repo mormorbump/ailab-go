@@ -91,8 +91,7 @@ function detectEnumPattern(patterns: string[]): string[] | undefined {
   if (patterns.length < 2) return undefined;
 
   // パターンの特徴を分析
-  const allPatternsSameCase =
-    patterns.every((p) => /^[a-z]+$/.test(p)) || // すべて小文字
+  const allPatternsSameCase = patterns.every((p) => /^[a-z]+$/.test(p)) || // すべて小文字
     patterns.every((p) => /^[A-Z]+$/.test(p)) || // すべて大文字
     patterns.every((p) => /^[A-Z][a-z]+$/.test(p)); // すべてパスカルケース
 
@@ -211,7 +210,7 @@ test("predictType - enum detection", () => {
 
   const { predictions } = predictType(input);
   expect(predictions.get("status")?.type).toBe(
-    "enum(active | inactive | pending)"
+    "enum(active | inactive | pending)",
   );
 });
 
@@ -286,6 +285,6 @@ test("predictType - complex mixed types", () => {
 
   const { predictions } = predictType(input);
   expect(predictions.get("value")?.type).toBe(
-    "string | number | boolean | null"
+    "string | number | boolean | null",
   );
 });

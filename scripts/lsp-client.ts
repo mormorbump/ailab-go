@@ -18,10 +18,12 @@ type InitializeParams = {
   processId: number | null;
   rootUri: string | null;
   capabilities: Record<string, unknown>;
-  workspaceFolders: Array<{
-    uri: string;
-    name: string;
-  }> | null;
+  workspaceFolders:
+    | Array<{
+      uri: string;
+      name: string;
+    }>
+    | null;
 };
 
 type Position = {
@@ -152,7 +154,7 @@ class LspClient {
             if (remainingContent.length >= contentLength) {
               // メッセージが完全に含まれている場合
               return JSON.parse(
-                this.decoder.decode(remainingContent.slice(0, contentLength))
+                this.decoder.decode(remainingContent.slice(0, contentLength)),
               );
             } else {
               // 残りのコンテンツを読み込む
@@ -161,8 +163,8 @@ class LspClient {
               let contentPos = remainingContent.length;
 
               while (contentPos < contentLength) {
-                const { value: contentChunk, done: contentDone } =
-                  await this.stdoutReader.read();
+                const { value: contentChunk, done: contentDone } = await this
+                  .stdoutReader.read();
                 if (contentDone) {
                   throw new Error("Unexpected end of content stream");
                 }
@@ -219,7 +221,7 @@ class LspClient {
 
   private async sendRequest(
     method: string,
-    params?: unknown
+    params?: unknown,
   ): Promise<unknown> {
     if (!this.stdinWriter) {
       throw new Error("Writer is not initialized");
@@ -330,7 +332,7 @@ class LspClient {
     };
     return (await this.sendRequest(
       "textDocument/documentSymbol",
-      params
+      params,
     )) as DocumentSymbol[];
   }
 
@@ -372,7 +374,7 @@ class LspClient {
 }
 
 if (import.meta.main) {
-  await using client = new LspClient(true); // デバッグモードを有効化
+  await using client = new LspClient(true);// デバッグモードを有効化
 
   // 初期化
   console.log("Initializing LSP client...");
@@ -406,7 +408,7 @@ if (import.meta.main) {
   // console.log("Requesting hover information...");
   const hoverResult = await client.getHoverByRange(
     testUri,
-    doubleSymbol.selectionRange.start
+    doubleSymbol.selectionRange.start,
   );
   console.log("[lsp] 'double' function:", hoverResult);
 }

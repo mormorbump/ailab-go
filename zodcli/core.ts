@@ -1,18 +1,18 @@
 import { z } from "npm:zod";
 import { parseArgs } from "node:util";
 import type {
-  CommandSchema,
   CommandResult,
-  InferQueryType,
+  CommandSchema,
   InferNestedParser,
+  InferQueryType,
+  NestedCommandMap,
   NestedCommandOptions,
+  NestedCommandResult,
+  NestedCommandSafeParseResult,
   ParseArgsConfig,
   ParseError,
   QueryBase,
   SafeParseResult,
-  NestedCommandMap,
-  NestedCommandResult,
-  NestedCommandSafeParseResult,
 } from "./types.ts";
 import { convertValue, generateHelp, zodTypeToParseArgsType } from "./utils.ts";
 import { zodToJsonSchema } from "./schema.ts";
@@ -54,7 +54,7 @@ export function isHelp(args: string[]): boolean {
 
 // クエリ定義からParseArgsConfigを生成
 export function createParseArgsConfig<T extends Record<string, QueryBase<any>>>(
-  queryDef: T
+  queryDef: T,
 ): ParseArgsConfig {
   const options: Record<
     string,
@@ -101,7 +101,7 @@ export function createParseArgsConfig<T extends Record<string, QueryBase<any>>>(
 // parseArgsの結果をZodスキーマに基づいて変換
 export function resolveValues<T extends Record<string, QueryBase<any>>>(
   rawParsed: { values: Record<string, any>; positionals: string[] },
-  queryDef: T
+  queryDef: T,
 ): InferQueryType<T> {
   const result: Record<string, any> = {};
 
@@ -123,7 +123,7 @@ export function resolveValues<T extends Record<string, QueryBase<any>>>(
   // レスト引数の処理（'...'）
   // レスと引数定義の重複チェック
   const restDefs = Object.values(queryDef).filter(
-    (x) => x.positional === "..."
+    (x) => x.positional === "...",
   ) as QueryBase<any>[];
   if (restDefs.length > 1) {
     if (positionalKeys.includes(positionalKeys.length)) {
@@ -133,11 +133,11 @@ export function resolveValues<T extends Record<string, QueryBase<any>>>(
 
   const maxPositionalIndex = Math.max(...positionalKeys);
   const restParam = Object.keys(queryDef).find(
-    (key) => queryDef[key].positional === "..."
+    (key) => queryDef[key].positional === "...",
   );
   if (restParam) {
-    const restValues =
-      rawParsed.positionals.slice(maxPositionalIndex + 1) ?? [];
+    const restValues = rawParsed.positionals.slice(maxPositionalIndex + 1) ??
+      [];
     const def = queryDef[restParam];
     if (def.type instanceof z.ZodArray) {
       result[restParam] = convertValue(restValues, def.type);
@@ -175,19 +175,18 @@ export function resolveValues<T extends Record<string, QueryBase<any>>>(
       // ブーリアン型の場合は特別処理
       if (def.type instanceof z.ZodBoolean) {
         // すでにブーリアン値ならそのまま、文字列なら変換
-        result[key] =
-          typeof value === "boolean"
-            ? value
-            : value === "true" || value === "1" || value === ""
-            ? true
-            : value === "false" || value === "0"
-            ? false
-            : true; // その他の場合はtrue扱い
+        result[key] = typeof value === "boolean"
+          ? value
+          : value === "true" || value === "1" || value === ""
+          ? true
+          : value === "false" || value === "0"
+          ? false
+          : true; // その他の場合はtrue扱い
       } else {
         // それ以外はconvertValue関数で変換
         const convertedValue = convertValue(value, def.type);
         debug(
-          `[resolveValues] ${key} = ${value} (${typeof value}) -> ${convertedValue} (${typeof convertedValue})`
+          `[resolveValues] ${key} = ${value} (${typeof value}) -> ${convertedValue} (${typeof convertedValue})`,
         );
         result[key] = convertedValue;
       }
@@ -201,7 +200,7 @@ export function resolveValues<T extends Record<string, QueryBase<any>>>(
 
 // クエリ定義からzodスキーマを生成
 export function createZodSchema<T extends Record<string, QueryBase<any>>>(
-  queryDef: T
+  queryDef: T,
 ): z.ZodObject<any> {
   const schema: Record<string, z.ZodTypeAny> = {};
 
@@ -214,7 +213,7 @@ export function createZodSchema<T extends Record<string, QueryBase<any>>>(
 
 // コマンド定義からCLIコマンドを生成する関数
 export function createCommand<T extends Record<string, QueryBase<any>>>(
-  commandDef: CommandSchema<T>
+  commandDef: CommandSchema<T>,
 ) {
   const queryDef = commandDef.args;
   const parseArgsConfig = createParseArgsConfig(queryDef);
@@ -223,7 +222,7 @@ export function createCommand<T extends Record<string, QueryBase<any>>>(
   const helpText = generateHelp(
     commandDef.name,
     commandDef.description,
-    queryDef
+    queryDef,
   );
 
   // ショートオプションから長いオプション名へのマッピングを作成
@@ -269,7 +268,7 @@ export function createCommand<T extends Record<string, QueryBase<any>>>(
     debug(() => `[parseArgsWrapper] Original args: ${JSON.stringify(args)}`);
     debug(
       () =>
-        `[parseArgsWrapper] Processed args: ${JSON.stringify(processedArgs)}`
+        `[parseArgsWrapper] Processed args: ${JSON.stringify(processedArgs)}`,
     );
 
     // ブール型オプションと値を持つオプションを手動で処理
@@ -310,13 +309,15 @@ export function createCommand<T extends Record<string, QueryBase<any>>>(
     }
 
     debug(
-      () => `[parseArgsWrapper] Manual values: ${JSON.stringify(manualValues)}`
+      () => `[parseArgsWrapper] Manual values: ${JSON.stringify(manualValues)}`,
     );
     debug(
       () =>
-        `[parseArgsWrapper] Manual positionals: ${JSON.stringify(
-          manualPositionals
-        )}`
+        `[parseArgsWrapper] Manual positionals: ${
+          JSON.stringify(
+            manualPositionals,
+          )
+        }`,
     );
 
     try {
@@ -331,16 +332,20 @@ export function createCommand<T extends Record<string, QueryBase<any>>>(
       // 手動処理した結果と標準パーサーの結果を比較（デバッグ用）
       debug(
         () =>
-          `[parseArgsWrapper] Standard parse result: ${JSON.stringify(
-            parseResult.values
-          )}`
+          `[parseArgsWrapper] Standard parse result: ${
+            JSON.stringify(
+              parseResult.values,
+            )
+          }`,
       );
 
       // 手動パース結果を使用する
       const values = { ...manualValues };
-      for (const [key, option] of Object.entries(
-        parseArgsConfig.options || {}
-      )) {
+      for (
+        const [key, option] of Object.entries(
+          parseArgsConfig.options || {},
+        )
+      ) {
         if (key === "help") continue; // helpオプションはスキップ
 
         // 数値型の場合は明示的に変換
@@ -353,7 +358,7 @@ export function createCommand<T extends Record<string, QueryBase<any>>>(
                 key
               ] = numValue;
               debug(
-                `[parseArgsWrapper] ${key} = ${numValue} (${typeof numValue})`
+                `[parseArgsWrapper] ${key} = ${numValue} (${typeof numValue})`,
               );
             }
           }
@@ -369,7 +374,7 @@ export function createCommand<T extends Record<string, QueryBase<any>>>(
       debug(() => `[parseArgsWrapper] Parse error: ${error}`);
       debug(
         () =>
-          `[parseArgsWrapper] Processed args: ${JSON.stringify(processedArgs)}`
+          `[parseArgsWrapper] Processed args: ${JSON.stringify(processedArgs)}`,
       );
       debug(() => `[parseArgsWrapper] Original args: ${JSON.stringify(args)}`);
       throw error;
@@ -420,7 +425,7 @@ export function createCommand<T extends Record<string, QueryBase<any>>>(
 // ネストコマンドマップの作成
 export function createNestedCommands<T extends NestedCommandMap>(
   subCommands: T,
-  options?: NestedCommandOptions
+  options?: NestedCommandOptions,
 ) {
   const commands = new Map<string, ReturnType<typeof createCommand>>();
   const commandNames = new Set<string>();
@@ -438,7 +443,7 @@ export function createNestedCommands<T extends NestedCommandMap>(
   // デフォルトコマンドの検証
   if (defaultCommand && !commandNames.has(defaultCommand)) {
     throw new Error(
-      `Default command '${defaultCommand}' not found in subcommands`
+      `Default command '${defaultCommand}' not found in subcommands`,
     );
   }
 
@@ -450,7 +455,7 @@ export function createNestedCommands<T extends NestedCommandMap>(
   function parse(
     argv: string[],
     name = rootName,
-    description = rootDescription
+    description = rootDescription,
   ): NestedCommandResult {
     // ヘルプフラグのチェック
     if (argv.includes("-h") || argv.includes("--help") || argv.length === 0) {
@@ -541,7 +546,7 @@ export function createNestedCommands<T extends NestedCommandMap>(
  * @returns パーサーオブジェクト
  */
 export function createParser<T extends Record<string, QueryBase<any>>>(
-  definition: CommandSchema<T>
+  definition: CommandSchema<T>,
 ) {
   const command = createCommand(definition);
 
@@ -553,7 +558,7 @@ export function createParser<T extends Record<string, QueryBase<any>>>(
       throw result.error;
     } else if (result.type === "help") {
       throw new Error(
-        "Help requested. Use --help or -h to display help information."
+        "Help requested. Use --help or -h to display help information.",
       );
     }
 
@@ -634,7 +639,7 @@ export function createParser<T extends Record<string, QueryBase<any>>>(
 export function createSubParser<T extends NestedCommandMap>(
   subCommands: T,
   options: string | NestedCommandOptions | undefined = undefined,
-  description?: string
+  description?: string,
 ) {
   type Result = InferNestedParser<T>;
   let commandOptions: NestedCommandOptions;

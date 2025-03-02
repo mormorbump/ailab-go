@@ -73,7 +73,7 @@ export async function ensureDir(dir: string): Promise<void> {
  */
 export async function fetchPackageInfo(
   packageName: string,
-  version?: string
+  version?: string,
 ): Promise<any> {
   // Handle encoding for scoped packages
   const encodedPackageName = packageName.startsWith("@")
@@ -89,7 +89,7 @@ export async function fetchPackageInfo(
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch package info: ${response.status} ${response.statusText}`
+      `Failed to fetch package info: ${response.status} ${response.statusText}`,
     );
   }
 
@@ -102,7 +102,7 @@ export async function fetchPackageInfo(
 export async function getTarball(
   pkgName: string,
   version: string,
-  tarUrl: string
+  tarUrl: string,
 ): Promise<Uint8Array> {
   const cacheDir = getCacheDir(pkgName, version);
   const tarballPath = join(cacheDir, "raw.tar.gz");
@@ -126,7 +126,7 @@ export async function getTarball(
   const response = await fetch(tarUrl);
   if (!response.ok) {
     throw new Error(
-      `Failed to download tarball: ${response.status} ${response.statusText}`
+      `Failed to download tarball: ${response.status} ${response.statusText}`,
     );
   }
 
@@ -146,7 +146,7 @@ export async function getTarball(
  * Read content from ReadableStream
  */
 export async function readEntryContent(
-  stream: ReadableStream<Uint8Array>
+  stream: ReadableStream<Uint8Array>,
 ): Promise<string> {
   const reader = stream.getReader();
   const chunks: Uint8Array[] = [];
@@ -201,7 +201,7 @@ export function extractTypeInfo(dtsContent: string): string[] {
 
   // Detect function and variable exports
   const constFuncMatches = dtsContent.matchAll(
-    /export\s+(const|function|class)\s+(\w+)/g
+    /export\s+(const|function|class)\s+(\w+)/g,
   );
   for (const match of constFuncMatches) {
     if (match[2]) exportedTypes.push(`${match[1]} ${match[2]}`);
@@ -315,7 +315,7 @@ export function formatImportPath(importPath: string, pkgName: string): string {
  */
 export function findDtsFile(
   dtsFiles: Map<string, string>,
-  possiblePaths: string[]
+  possiblePaths: string[],
 ): string | null {
   for (const path of possiblePaths) {
     if (dtsFiles.has(path)) {
@@ -330,7 +330,7 @@ export function findDtsFile(
  */
 export async function getContentFromCache(
   pkgName: string,
-  version: string
+  version: string,
 ): Promise<string | null> {
   const cacheDir = getCacheDir(pkgName, version);
   const contentPath = join(cacheDir, "content.md");
@@ -356,7 +356,7 @@ export async function getContentFromCache(
 export async function saveContentToCache(
   pkgName: string,
   version: string,
-  content: string
+  content: string,
 ): Promise<void> {
   const cacheDir = getCacheDir(pkgName, version);
   const contentPath = join(cacheDir, "content.md");
@@ -385,7 +385,7 @@ export async function getSummaryFileName(prompt?: string): Promise<string> {
 export async function getSummaryFromCache(
   pkgName: string,
   version: string,
-  prompt?: string
+  prompt?: string,
 ): Promise<string | null> {
   const cacheDir = getCacheDir(pkgName, version);
   const summaryFileName = await getSummaryFileName(prompt);
@@ -413,7 +413,7 @@ export async function saveSummaryToCache(
   pkgName: string,
   version: string,
   summary: string,
-  prompt?: string
+  prompt?: string,
 ): Promise<void> {
   const cacheDir = getCacheDir(pkgName, version);
   const summaryFileName = await getSummaryFileName(prompt);
@@ -466,15 +466,14 @@ export async function generateHash(text: string): Promise<string> {
 export async function generateSummary(
   content: string,
   token?: string,
-  customPrompt?: string
+  customPrompt?: string,
 ): Promise<string> {
-  const apiKey =
-    token ||
+  const apiKey = token ||
     Deno.env.get("NPM_SUMMARY_GEMINI_API_KEY") ||
     Deno.env.get("GOOGLE_GENERATIVE_AI_API_KEY");
   if (!apiKey) {
     throw new Error(
-      "API token is not provided and neither NPM_SUMMARY_GEMINI_API_KEY nor GOOGLE_GENERATIVE_AI_API_KEY environment variable is set"
+      "API token is not provided and neither NPM_SUMMARY_GEMINI_API_KEY nor GOOGLE_GENERATIVE_AI_API_KEY environment variable is set",
     );
   }
 
@@ -487,14 +486,15 @@ export async function generateSummary(
   const MAX_TOKENS = 1_000_000;
   if (tokenCount > MAX_TOKENS) {
     console.warn(
-      `Warning: Content exceeds the Gemini model context length (approximately ${tokenCount} tokens > ${MAX_TOKENS}). API may fail.`
+      `Warning: Content exceeds the Gemini model context length (approximately ${tokenCount} tokens > ${MAX_TOKENS}). API may fail.`,
     );
   }
 
   console.log("Generating summary using Gemini API...");
 
   // デフォルトのプロンプトテンプレート
-  const defaultPrompt = `Create a concise library cheatsheet for the following npm package type definitions. Structure your response with these sections:
+  const defaultPrompt =
+    `Create a concise library cheatsheet for the following npm package type definitions. Structure your response with these sections:
 
 # <pkg-name>@<version>
 
@@ -539,7 +539,8 @@ Focus on the most important and useful parts of the API that developers would ne
             role: "user",
             parts: [
               {
-                text: `${promptText}\n\nHere's the content to summarize:\n\n${content}`,
+                text:
+                  `${promptText}\n\nHere's the content to summarize:\n\n${content}`,
               },
             ],
           },
@@ -551,7 +552,7 @@ Focus on the most important and useful parts of the API that developers would ne
           maxOutputTokens: 1024 * 30,
         },
       }),
-    }
+    },
   );
 
   if (!response.ok) {
@@ -568,9 +569,11 @@ Focus on the most important and useful parts of the API that developers would ne
     result.candidates.length === 0
   ) {
     throw new Error(
-      `Unexpected API response structure: no candidates found. Response: ${JSON.stringify(
-        result
-      )}`
+      `Unexpected API response structure: no candidates found. Response: ${
+        JSON.stringify(
+          result,
+        )
+      }`,
     );
   }
 
@@ -582,9 +585,11 @@ Focus on the most important and useful parts of the API that developers would ne
     candidate.content.parts.length === 0
   ) {
     throw new Error(
-      `Unexpected API response structure: invalid content or parts in candidate. Response: ${JSON.stringify(
-        candidate
-      )}`
+      `Unexpected API response structure: invalid content or parts in candidate. Response: ${
+        JSON.stringify(
+          candidate,
+        )
+      }`,
     );
   }
 
@@ -592,9 +597,11 @@ Focus on the most important and useful parts of the API that developers would ne
   const part = candidate.content.parts[0];
   if (!part.text) {
     throw new Error(
-      `Unexpected API response structure: no text in first part. Response: ${JSON.stringify(
-        part
-      )}`
+      `Unexpected API response structure: no text in first part. Response: ${
+        JSON.stringify(
+          part,
+        )
+      }`,
     );
   }
 
@@ -607,7 +614,7 @@ Focus on the most important and useful parts of the API that developers would ne
 export async function listPackageFiles(
   pkgName: string,
   version: string,
-  opts?: GetPackageFilesOptions
+  opts?: GetPackageFilesOptions,
 ): Promise<string[]> {
   const _endpoint = opts?.endpoint ?? DEFAULT_NPM_REGISTRY;
   const _useCache = opts?.useCache ?? true;
@@ -644,7 +651,7 @@ export async function readPackageFile(
   pkgName: string,
   version: string,
   filePath: string,
-  opts?: GetPackageFilesOptions
+  opts?: GetPackageFilesOptions,
 ): Promise<string | null> {
   const _endpoint = opts?.endpoint ?? DEFAULT_NPM_REGISTRY;
   const _useCache = opts?.useCache ?? true;
@@ -680,7 +687,7 @@ export async function readPackageFile(
 export async function getPackageFiles(
   pkgName: string,
   version: string,
-  opts?: GetPackageFilesOptions
+  opts?: GetPackageFilesOptions,
 ): Promise<string> {
   const _endpoint = opts?.endpoint ?? DEFAULT_NPM_REGISTRY;
   const useCache = opts?.useCache ?? true;
@@ -694,7 +701,7 @@ export async function getPackageFiles(
       const cachedSummary = await getSummaryFromCache(
         pkgName,
         version,
-        opts?.prompt
+        opts?.prompt,
       );
       if (cachedSummary) {
         console.log(`Using cached summary for ${pkgName}@${version}`);
@@ -709,12 +716,12 @@ export async function getPackageFiles(
       if (shouldGenerateSummary) {
         try {
           console.log(
-            `Generating summary for ${pkgName}@${version} from cached content`
+            `Generating summary for ${pkgName}@${version} from cached content`,
           );
           const summary = await generateSummary(
             cachedContent,
             undefined,
-            opts?.prompt
+            opts?.prompt,
           );
           await saveSummaryToCache(pkgName, version, summary, opts?.prompt);
           return summary;
@@ -761,11 +768,13 @@ export async function getPackageFiles(
   }
   const pkg = filterPackageJson(JSON.parse(pkgJson));
 
-  output += `\n<package.json>\n${JSON.stringify(
-    pkg,
-    null,
-    2
-  )}\n</package.json>\n`;
+  output += `\n<package.json>\n${
+    JSON.stringify(
+      pkg,
+      null,
+      2,
+    )
+  }\n</package.json>\n`;
 
   // Get entry points
   const entrypoints = getEntrypoints(pkg);
@@ -806,7 +815,8 @@ export async function getPackageFiles(
         const content = dtsFiles.get(foundDtsPath)!;
         output += `/// filename: ${formattedPath}\n${content}\n\n`;
       } else {
-        output += `/// filename: ${formattedPath}\n// (No corresponding .d.ts file found)\n\n`;
+        output +=
+          `/// filename: ${formattedPath}\n// (No corresponding .d.ts file found)\n\n`;
       }
     }
   } else {
@@ -838,8 +848,8 @@ export async function getPackageFiles(
       const indexDts = dtsFiles.has("index.d.ts")
         ? "index.d.ts"
         : Array.from(dtsFiles.keys()).find((file) =>
-            file.endsWith("/index.d.ts")
-          );
+          file.endsWith("/index.d.ts")
+        );
 
       if (indexDts) {
         const content = dtsFiles.get(indexDts)!;
@@ -863,7 +873,8 @@ export async function getPackageFiles(
     output += `\nTotal declaration files: ${dtsFiles.size}\n`;
     output += `</TypeScript Exports>\n`;
   } else {
-    output += `\n<TypeScript Exports>\nNo TypeScript declaration files found\n</TypeScript Exports>\n`;
+    output +=
+      `\n<TypeScript Exports>\nNo TypeScript declaration files found\n</TypeScript Exports>\n`;
   }
 
   // Initialize include patterns
@@ -902,7 +913,8 @@ export async function getPackageFiles(
   }
 
   if (!foundReadme) {
-    output += `\n<README>\nNo README file found or README files are skipped\n</README>\n`;
+    output +=
+      `\n<README>\nNo README file found or README files are skipped\n</README>\n`;
   }
 
   // List all .ts files
@@ -921,7 +933,8 @@ export async function getPackageFiles(
     output += `\nTotal TypeScript files: ${tsFiles.length}\n`;
     output += `</TypeScript Files>\n`;
   } else {
-    output += `\n<TypeScript Files>\nNo TypeScript files found\n</TypeScript Files>\n`;
+    output +=
+      `\n<TypeScript Files>\nNo TypeScript files found\n</TypeScript Files>\n`;
   }
 
   // Save content to cache
@@ -952,7 +965,7 @@ export async function getPackageFiles(
 
     // Sort and display by file size
     const sortedFiles = Array.from(fileSizes.entries()).sort(
-      (a, b) => b[1] - a[1]
+      (a, b) => b[1] - a[1],
     ); // Largest first
 
     for (const [fileName, size] of sortedFiles) {
@@ -967,10 +980,10 @@ export async function getPackageFiles(
     const MAX_TOKENS = 1_000_000;
     if (tokenCount > MAX_TOKENS) {
       console.warn(
-        `Warning: Content exceeds the Gemini model context length (approximately ${tokenCount} tokens > ${MAX_TOKENS}).`
+        `Warning: Content exceeds the Gemini model context length (approximately ${tokenCount} tokens > ${MAX_TOKENS}).`,
       );
       console.warn(
-        `Consider reducing the included files or using more specific include patterns.`
+        `Consider reducing the included files or using more specific include patterns.`,
       );
     }
 
@@ -989,7 +1002,7 @@ export async function getPackageFiles(
       const cachedSummary = await getSummaryFromCache(
         pkgName,
         actualVersion,
-        localOpts.prompt
+        localOpts.prompt,
       );
       if (cachedSummary) {
         console.log(`Using cached summary for ${pkgName}@${actualVersion}`);
@@ -1003,7 +1016,7 @@ export async function getPackageFiles(
       const summary = await generateSummary(
         output,
         localOpts.token,
-        localOpts.prompt
+        localOpts.prompt,
       );
 
       // Save summary to cache if cache is enabled
@@ -1012,7 +1025,7 @@ export async function getPackageFiles(
           pkgName,
           actualVersion,
           summary,
-          localOpts.prompt
+          localOpts.prompt,
         );
         console.log(`Saved summary to cache for ${pkgName}@${actualVersion}`);
       }

@@ -32,7 +32,7 @@ JOBS
 ✓ Run CI (13516856449) completed with 'success'
 */
 import $ from "jsr:@david/dax";
-import { Result, ok, err } from "npm:neverthrow";
+import { err, ok, type Result } from "npm:neverthrow";
 
 import { parseArgs } from "node:util";
 
@@ -53,8 +53,10 @@ export async function pushWithWaitCI(): Promise<Result<void, WaitCiError>> {
   await $`git status --porcelain`;
 
   let prevRunId = parsed.values.workflow
-    ? await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId' --workflow "${parsed.values.workflow}"`.text()
-    : await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId'`.text();
+    ? await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId' --workflow "${parsed.values.workflow}"`
+      .text()
+    : await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId'`
+      .text();
   if (!prevRunId.trim()) {
     console.log("Previous run not found.");
     prevRunId = "<not-found>";
@@ -71,7 +73,8 @@ export async function pushWithWaitCI(): Promise<Result<void, WaitCiError>> {
   let maxRetry = 3;
   while (maxRetry-- > 0) {
     const currentId =
-      await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId'`.text();
+      await $`gh run list --limit 1 --json databaseId --jq '.[0].databaseId'`
+        .text();
     if (prevRunId !== currentId) {
       runId = currentId;
       break;
@@ -113,6 +116,6 @@ if (import.meta.main) {
     (error) => {
       console.error(error.message);
       Deno.exit(1);
-    }
+    },
   );
 }

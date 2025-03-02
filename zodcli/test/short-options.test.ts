@@ -7,7 +7,7 @@ import type { QueryBase } from "../types.ts";
 
 /**
  * 短縮オプション（short）の処理に関する詳細テスト
- * 
+ *
  * このテストでは、gh-search.tsで使用されているパターンに特化して、
  * 短縮オプションの処理が正しく行われることを確認します。
  */
@@ -44,9 +44,11 @@ test("基本的な短縮オプションのパース", () => {
   {
     const result = command.parse([
       "github/repo",
-      "--branch", "main",
+      "--branch",
+      "main",
       "--verbose",
-      "--maxCount", "5",
+      "--maxCount",
+      "5",
     ]);
 
     expect(result.type).toBe("success");
@@ -62,9 +64,11 @@ test("基本的な短縮オプションのパース", () => {
   {
     const result = command.parse([
       "github/repo",
-      "-b", "main",
+      "-b",
+      "main",
       "-v",
-      "-m", "5",
+      "-m",
+      "5",
     ]);
 
     expect(result.type).toBe("success");
@@ -80,9 +84,11 @@ test("基本的な短縮オプションのパース", () => {
   {
     const result = command.parse([
       "github/repo",
-      "-b", "main",
+      "-b",
+      "main",
       "--verbose",
-      "-m", "5",
+      "-m",
+      "5",
     ]);
 
     expect(result.type).toBe("success");
@@ -153,12 +159,13 @@ test("ネストされたコマンドでの短縮オプション", () => {
       "search",
       "github/repo",
       "pattern",
-      "-b", "main",
+      "-b",
+      "main",
       "-f",
     ]);
 
     expect(result.command).toBe("search");
-    
+
     if (result.command === "search") {
       const data = result.data as {
         repoUrl: string;
@@ -166,7 +173,7 @@ test("ネストされたコマンドでの短縮オプション", () => {
         branch?: string;
         files: boolean;
       };
-      
+
       expect(data.repoUrl).toBe("github/repo");
       expect(data.pattern).toBe("pattern");
       expect(data.branch).toBe("main");
@@ -179,12 +186,13 @@ test("ネストされたコマンドでの短縮オプション", () => {
     const result = parser.parse([
       "github/repo",
       "pattern",
-      "-b", "main",
+      "-b",
+      "main",
       "-f",
     ]);
 
     expect(result.command).toBe("search"); // デフォルトコマンド
-    
+
     if (result.command === "search") {
       const data = result.data as {
         repoUrl: string;
@@ -192,7 +200,7 @@ test("ネストされたコマンドでの短縮オプション", () => {
         branch?: string;
         files: boolean;
       };
-      
+
       expect(data.repoUrl).toBe("github/repo");
       expect(data.pattern).toBe("pattern");
       expect(data.branch).toBe("main");
@@ -205,19 +213,21 @@ test("ネストされたコマンドでの短縮オプション", () => {
     const result = parser.parse([
       "files",
       "github/repo",
-      "-b", "dev",
-      "-g", "*.ts",
+      "-b",
+      "dev",
+      "-g",
+      "*.ts",
     ]);
 
     expect(result.command).toBe("files");
-    
+
     if (result.command === "files") {
       const data = result.data as {
         repoUrl: string;
         branch?: string;
         glob?: string;
       };
-      
+
       expect(data.repoUrl).toBe("github/repo");
       expect(data.branch).toBe("dev");
       expect(data.glob).toBe("*.ts");
@@ -320,7 +330,9 @@ test("オプショナル引数とデフォルト値の短縮形式", () => {
         short: "o",
       },
       format: {
-        type: z.enum(["json", "text", "csv"]).default("json").describe("出力形式"),
+        type: z.enum(["json", "text", "csv"]).default("json").describe(
+          "出力形式",
+        ),
         short: "f",
       },
       count: {
@@ -336,9 +348,12 @@ test("オプショナル引数とデフォルト値の短縮形式", () => {
   {
     const result = command.parse([
       "input.txt",
-      "-o", "output.txt",
-      "-f", "csv",
-      "-c", "5",
+      "-o",
+      "output.txt",
+      "-f",
+      "csv",
+      "-c",
+      "5",
     ]);
 
     expect(result.type).toBe("success");
@@ -354,7 +369,8 @@ test("オプショナル引数とデフォルト値の短縮形式", () => {
   {
     const result = command.parse([
       "input.txt",
-      "-f", "text",
+      "-f",
+      "text",
     ]);
 
     expect(result.type).toBe("success");
@@ -456,15 +472,18 @@ test("gh-search.tsパターンの短縮形式サポート", () => {
       "search",
       "github/repo",
       "console.log",
-      "-b", "main",
+      "-b",
+      "main",
       "-f",
       "-i",
-      "-m", "10",
-      "-C", "2",
+      "-m",
+      "10",
+      "-C",
+      "2",
     ]);
 
     expect(result.command).toBe("search");
-    
+
     if (result.command === "search") {
       const data = result.data as {
         repoUrl: string;
@@ -475,7 +494,7 @@ test("gh-search.tsパターンの短縮形式サポート", () => {
         maxCount: number;
         context?: number;
       };
-      
+
       expect(data.repoUrl).toBe("github/repo");
       expect(data.pattern).toBe("console.log");
       expect(data.branch).toBe("main");
@@ -491,13 +510,14 @@ test("gh-search.tsパターンの短縮形式サポート", () => {
     const result = parser.parse([
       "github/repo",
       "console.log",
-      "-b", "main",
+      "-b",
+      "main",
       "-f",
       "-i",
     ]);
 
     expect(result.command).toBe("search"); // デフォルトコマンドが使用される
-    
+
     if (result.command === "search") {
       const data = result.data as {
         repoUrl: string;
@@ -506,7 +526,7 @@ test("gh-search.tsパターンの短縮形式サポート", () => {
         files: boolean;
         ignoreCase: boolean;
       };
-      
+
       expect(data.repoUrl).toBe("github/repo");
       expect(data.pattern).toBe("console.log");
       expect(data.branch).toBe("main");
@@ -520,13 +540,15 @@ test("gh-search.tsパターンの短縮形式サポート", () => {
     const result = parser.parse([
       "files",
       "github/repo",
-      "-b", "dev",
-      "-g", "*.ts",
+      "-b",
+      "dev",
+      "-g",
+      "*.ts",
       "-t",
     ]);
 
     expect(result.command).toBe("files");
-    
+
     if (result.command === "files") {
       const data = result.data as {
         repoUrl: string;
@@ -534,7 +556,7 @@ test("gh-search.tsパターンの短縮形式サポート", () => {
         glob?: string;
         temp: boolean;
       };
-      
+
       expect(data.repoUrl).toBe("github/repo");
       expect(data.branch).toBe("dev");
       expect(data.glob).toBe("*.ts");

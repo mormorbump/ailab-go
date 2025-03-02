@@ -159,7 +159,7 @@ export class DuckDBClient {
     } catch (error) {
       console.error(
         `パラメータ化されたSQLクエリの実行中にエラーが発生しました: ${sql}`,
-        error
+        error,
       );
       throw error;
     }
@@ -173,7 +173,7 @@ export class DuckDBClient {
    */
   async stream<T = any>(
     sql: string,
-    callback: (row: T) => void
+    callback: (row: T) => void,
   ): Promise<void> {
     if (!this.isConnected) {
       if (!this.connect()) {
@@ -189,7 +189,7 @@ export class DuckDBClient {
     } catch (error) {
       console.error(
         `SQLクエリのストリーミング中にエラーが発生しました: ${sql}`,
-        error
+        error,
       );
       throw error;
     }
@@ -215,7 +215,7 @@ export class DuckDBClient {
     } catch (error) {
       console.error(
         `アペンダーの作成中にエラーが発生しました: ${tableName}`,
-        error
+        error,
       );
       throw error;
     }
@@ -235,12 +235,12 @@ export class DuckDBClient {
     try {
       this.exec(`INSTALL ${extensionName}; LOAD ${extensionName};`);
       console.log(
-        `拡張機能 ${extensionName} がインストールされ、読み込まれました`
+        `拡張機能 ${extensionName} がインストールされ、読み込まれました`,
       );
     } catch (error) {
       console.error(
         `拡張機能のインストール中にエラーが発生しました: ${extensionName}`,
-        error
+        error,
       );
       throw error;
     }
@@ -284,10 +284,11 @@ export class VectorSearchClient {
   createEmbeddingsTable(
     tableName: string,
     dimensions: number,
-    additionalColumns: string = ""
+    additionalColumns: string = "",
   ): void {
     const columns = additionalColumns ? `${additionalColumns}, ` : "";
-    const sql = `CREATE TABLE IF NOT EXISTS ${tableName} (${columns}vec FLOAT[${dimensions}]);`;
+    const sql =
+      `CREATE TABLE IF NOT EXISTS ${tableName} (${columns}vec FLOAT[${dimensions}]);`;
     this.client.exec(sql);
   }
 
@@ -302,9 +303,10 @@ export class VectorSearchClient {
     tableName: string,
     indexName: string,
     columnName: string = "vec",
-    metric: "l2sq" | "cosine" | "ip" = "l2sq"
+    metric: "l2sq" | "cosine" | "ip" = "l2sq",
   ): void {
-    const sql = `CREATE INDEX ${indexName} ON ${tableName} USING HNSW (${columnName}) WITH (metric = '${metric}');`;
+    const sql =
+      `CREATE INDEX ${indexName} ON ${tableName} USING HNSW (${columnName}) WITH (metric = '${metric}');`;
     this.client.exec(sql);
   }
 
@@ -323,7 +325,7 @@ export class VectorSearchClient {
     tableName: string,
     queryVector: number[],
     limit: number = 10,
-    columnName: string = "vec"
+    columnName: string = "vec",
   ): Promise<T[]> {
     const sql = `
       SELECT *, array_distance(${columnName}, [${queryVector}]::FLOAT[${queryVector.length}]) as distance
@@ -349,7 +351,7 @@ export class VectorSearchClient {
     tableName: string,
     queryVector: number[],
     limit: number = 10,
-    columnName: string = "vec"
+    columnName: string = "vec",
   ): Promise<T[]> {
     const sql = `
       SELECT *, array_cosine_distance(${columnName}, [${queryVector}]::FLOAT[${queryVector.length}]) as distance
@@ -375,7 +377,7 @@ export class VectorSearchClient {
     tableName: string,
     queryVector: number[],
     limit: number = 10,
-    columnName: string = "vec"
+    columnName: string = "vec",
   ): Promise<T[]> {
     const sql = `
       SELECT *, array_negative_inner_product(${columnName}, [${queryVector}]::FLOAT[${queryVector.length}]) as distance
@@ -402,7 +404,7 @@ export function createDuckDBClient(path: string = ":memory:"): DuckDBClient {
  * @returns VectorSearchClientのインスタンス
  */
 export function createVectorSearchClient(
-  client: DuckDBClient
+  client: DuckDBClient,
 ): VectorSearchClient {
   return new VectorSearchClient(client);
 }
@@ -423,7 +425,7 @@ if (import.meta.main) {
 
     // データを挿入
     client.exec(
-      "INSERT INTO test VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie');"
+      "INSERT INTO test VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie');",
     );
 
     // クエリを実行
@@ -433,7 +435,7 @@ if (import.meta.main) {
     // パラメータ化されたクエリを実行
     const paramResults = await client.queryWithParams(
       "SELECT * FROM test WHERE id > ? AND name LIKE ?;",
-      [1, "%a%"]
+      [1, "%a%"],
     );
     console.log("パラメータ化されたクエリ結果:", paramResults);
 
@@ -451,7 +453,7 @@ if (import.meta.main) {
     vectorClient.createEmbeddingsTable(
       "embeddings",
       3,
-      "id INTEGER, description VARCHAR"
+      "id INTEGER, description VARCHAR",
     );
 
     // データを挿入
@@ -470,7 +472,7 @@ if (import.meta.main) {
     const similarVectors = await vectorClient.searchByEuclideanDistance(
       "embeddings",
       queryVector,
-      2
+      2,
     );
     console.log("類似ベクトル:", similarVectors);
   } catch (error) {
@@ -549,13 +551,13 @@ test("DuckDBClientのパラメータ化クエリが正常に動作すること",
 
     // データを挿入
     client.exec(
-      "INSERT INTO test_params VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie');"
+      "INSERT INTO test_params VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie');",
     );
 
     // パラメータ化クエリを実行
     const results = await client.queryWithParams(
       "SELECT * FROM test_params WHERE id > ? AND name LIKE ?;",
-      [1, "%a%"]
+      [1, "%a%"],
     );
 
     // 結果の検証
@@ -583,7 +585,7 @@ test("DuckDBClientのストリーミングクエリが正常に動作するこ�
 
     // データを挿入
     client.exec(
-      "INSERT INTO test_stream VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie');"
+      "INSERT INTO test_stream VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie');",
     );
 
     // ストリーミングクエリ実行
@@ -636,7 +638,7 @@ test("ベクトル埋め込みテーブルが正常に作成できること", ()
     vectorClient.createEmbeddingsTable(
       "test_embeddings",
       3,
-      "id INTEGER, description VARCHAR"
+      "id INTEGER, description VARCHAR",
     );
 
     // テーブルが存在することを確認
@@ -658,7 +660,7 @@ test("ユークリッド距離を使用した類似ベクトル検索が正常�
     vectorClient.createEmbeddingsTable(
       "test_euclidean",
       3,
-      "id INTEGER, description VARCHAR"
+      "id INTEGER, description VARCHAR",
     );
 
     // データを挿入
@@ -674,7 +676,7 @@ test("ユークリッド距離を使用した類似ベクトル検索が正常�
     const similarVectors = await vectorClient.searchByEuclideanDistance(
       "test_euclidean",
       queryVector,
-      2
+      2,
     );
 
     // 結果の検証
@@ -687,7 +689,7 @@ test("ユークリッド距離を使用した類似ベクトル検索が正常�
       expect(similarVectors[0].id, "最も近いベクトルのIDが1であること").toBe(1);
       expect(
         similarVectors[0].description,
-        "最も近いベクトルの説明が赤色のベクトルであること"
+        "最も近いベクトルの説明が赤色のベクトルであること",
       ).toBe("赤色のベクトル");
     }
   } finally {
@@ -706,7 +708,7 @@ test("コサイン距離を使用した類似ベクトル検索が正常に動�
     vectorClient.createEmbeddingsTable(
       "test_cosine",
       3,
-      "id INTEGER, description VARCHAR"
+      "id INTEGER, description VARCHAR",
     );
 
     // データを挿入
@@ -722,7 +724,7 @@ test("コサイン距離を使用した類似ベクトル検索が正常に動�
     const similarVectors = await vectorClient.searchByCosineDistance(
       "test_cosine",
       queryVector,
-      2
+      2,
     );
 
     // 結果の検証
@@ -735,7 +737,7 @@ test("コサイン距離を使用した類似ベクトル検索が正常に動�
       expect(similarVectors[0].id, "最も近いベクトルのIDが1であること").toBe(1);
       expect(
         similarVectors[0].description,
-        "最も近いベクトルの説明が赤色のベクトルであること"
+        "最も近いベクトルの説明が赤色のベクトルであること",
       ).toBe("赤色のベクトル");
     }
   } finally {
@@ -754,7 +756,7 @@ test("内積を使用した類似ベクトル検索が正常に動作するこ�
     vectorClient.createEmbeddingsTable(
       "test_inner_product",
       3,
-      "id INTEGER, description VARCHAR"
+      "id INTEGER, description VARCHAR",
     );
 
     // データを挿入
@@ -770,7 +772,7 @@ test("内積を使用した類似ベクトル検索が正常に動作するこ�
     const similarVectors = await vectorClient.searchByInnerProduct(
       "test_inner_product",
       queryVector,
-      2
+      2,
     );
 
     // 結果の検証
@@ -783,7 +785,7 @@ test("内積を使用した類似ベクトル検索が正常に動作するこ�
       expect(similarVectors[0].id, "最も近いベクトルのIDが1であること").toBe(1);
       expect(
         similarVectors[0].description,
-        "最も近いベクトルの説明が赤色のベクトルであること"
+        "最も近いベクトルの説明が赤色のベクトルであること",
       ).toBe("赤色のベクトル");
     }
   } finally {
@@ -802,7 +804,7 @@ test("HNSWインデックスが正常に作成できること", () => {
     vectorClient.createEmbeddingsTable(
       "test_hnsw",
       3,
-      "id INTEGER, description VARCHAR"
+      "id INTEGER, description VARCHAR",
     );
 
     // データを挿入

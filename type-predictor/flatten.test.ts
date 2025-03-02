@@ -40,7 +40,7 @@ function parseAccessKey(path: string): AccessKeyElement[] {
 function flattenToEntries(
   obj: unknown,
   prefix = "",
-  result: FlatEntry[] = []
+  result: FlatEntry[] = [],
 ): FlatEntry[] {
   if (obj === null || typeof obj !== "object") {
     if (prefix) {
@@ -54,7 +54,7 @@ function flattenToEntries(
       flattenToEntries(
         item,
         prefix ? `${prefix}.${index}` : `${index}`,
-        result
+        result,
       );
     });
     return result;
@@ -79,7 +79,7 @@ function flattenToEntries(
 function collectSamples(
   obj: unknown,
   currentKey: AccessKeyElement[] = [],
-  samples: Map<string, SampledValue> = new Map()
+  samples: Map<string, SampledValue> = new Map(),
 ): Map<string, SampledValue> {
   // null または非オブジェクトの場合
   if (obj === null || typeof obj !== "object") {
@@ -227,7 +227,7 @@ test("flattenJson - arrays", () => {
     (info) =>
       info.segments.length === 2 &&
       info.segments[0].value === "scores" &&
-      info.segments[1].type === "index"
+      info.segments[1].type === "index",
   );
   expect(scoresElement).toBeDefined();
   expect(scoresElement?.type).toBe("number");

@@ -2,14 +2,14 @@ import { z } from "npm:zod";
 import { createNestedParser } from "../../zodcli/mod.ts";
 import {
   addTodo,
-  listTodos,
-  toggleTodo,
-  removeTodo,
-  updateTodo,
   getTodo,
-  searchTodos,
   getTodoStats,
+  listTodos,
   removeCompletedTodos,
+  removeTodo,
+  searchTodos,
+  toggleTodo,
+  updateTodo,
 } from "./db.ts";
 import { processChatCommand, setTodoParserForHelp } from "./ai.ts";
 
@@ -246,9 +246,11 @@ async function handleAddCommand(data: { text: string }): Promise<void> {
   let taskText = data.text;
   if (!taskText || taskText.trim() === "") {
     console.log(
-      `${yellow(
-        "!"
-      )} TODOの内容が入力されていないため、追加をキャンセルします。`
+      `${
+        yellow(
+          "!",
+        )
+      } TODOの内容が入力されていないため、追加をキャンセルします。`,
     );
     return;
   }
@@ -256,9 +258,11 @@ async function handleAddCommand(data: { text: string }): Promise<void> {
   // TODOを追加
   const newTodo = await addTodo(taskText);
   console.log(
-    `${green("✓")} 新しいTODOを追加しました: ${bold(newTodo.text)} (ID: ${dim(
-      newTodo.id.substring(0, 8)
-    )})`
+    `${green("✓")} 新しいTODOを追加しました: ${bold(newTodo.text)} (ID: ${
+      dim(
+        newTodo.id.substring(0, 8),
+      )
+    })`,
   );
 }
 
@@ -268,9 +272,11 @@ async function handleListCommand(data: { all: boolean }): Promise<void> {
 
   if (todos.length === 0) {
     console.log(
-      `${yellow(
-        "!"
-      )} TODOはありません。新しいTODOを追加するには: todo add <テキスト>`
+      `${
+        yellow(
+          "!",
+        )
+      } TODOはありません。新しいTODOを追加するには: todo add <テキスト>`,
     );
     return;
   }
@@ -301,9 +307,11 @@ async function handleToggleCommand(data: { id: string }): Promise<void> {
 
   if (!todo) {
     console.error(
-      `${red("✗")} ID: ${dim(
-        data.id.substring(0, 8)
-      )} のTODOは見つかりませんでした。`
+      `${red("✗")} ID: ${
+        dim(
+          data.id.substring(0, 8),
+        )
+      } のTODOは見つかりませんでした。`,
     );
     return;
   }
@@ -314,7 +322,7 @@ async function handleToggleCommand(data: { id: string }): Promise<void> {
 
   console.log(`現在のTODO: ${bold(todo.text)}`);
   console.log(
-    `現在の状態: ${todo.completed ? green("完了") : yellow("未完了")}`
+    `現在の状態: ${todo.completed ? green("完了") : yellow("未完了")}`,
   );
 
   const updatedTodo = await toggleTodo(data.id);
@@ -328,9 +336,11 @@ async function handleToggleCommand(data: { id: string }): Promise<void> {
   const statusColor = updatedTodo.completed ? green : yellow;
 
   console.log(
-    `${statusColor("✓")} TODOを${statusText}に変更しました: ${bold(
-      updatedTodo.text
-    )} (ID: ${dim(updatedTodo.id.substring(0, 8))})`
+    `${statusColor("✓")} TODOを${statusText}に変更しました: ${
+      bold(
+        updatedTodo.text,
+      )
+    } (ID: ${dim(updatedTodo.id.substring(0, 8))})`,
   );
 }
 
@@ -343,9 +353,11 @@ async function handleRemoveCommand(data: {
 
   if (!todo) {
     console.error(
-      `${red("✗")} ID: ${dim(
-        data.id.substring(0, 8)
-      )} のTODOは見つかりませんでした。`
+      `${red("✗")} ID: ${
+        dim(
+          data.id.substring(0, 8),
+        )
+      } のTODOは見つかりませんでした。`,
     );
     return;
   }
@@ -354,7 +366,7 @@ async function handleRemoveCommand(data: {
   if (!data.force) {
     console.log(`${yellow("!")} 次のTODOを削除します: ${bold(todo.text)}`);
     console.log(
-      "削除を実行します。（強制削除を中止するには-fフラグを外してください）"
+      "削除を実行します。（強制削除を中止するには-fフラグを外してください）",
     );
   }
 
@@ -362,15 +374,17 @@ async function handleRemoveCommand(data: {
 
   if (!removed) {
     console.error(
-      `${red("✗")} ID: ${dim(
-        data.id.substring(0, 8)
-      )} のTODOは見つかりませんでした。`
+      `${red("✗")} ID: ${
+        dim(
+          data.id.substring(0, 8),
+        )
+      } のTODOは見つかりませんでした。`,
     );
     return;
   }
 
   console.log(
-    `${green("✓")} TODOを削除しました (ID: ${dim(data.id.substring(0, 8))})`
+    `${green("✓")} TODOを削除しました (ID: ${dim(data.id.substring(0, 8))})`,
   );
 }
 
@@ -384,9 +398,11 @@ async function handleUpdateCommand(data: {
 
   if (!todo) {
     console.error(
-      `${red("✗")} ID: ${dim(
-        data.id.substring(0, 8)
-      )} のTODOは見つかりませんでした。`
+      `${red("✗")} ID: ${
+        dim(
+          data.id.substring(0, 8),
+        )
+      } のTODOは見つかりませんでした。`,
     );
     return;
   }
@@ -397,7 +413,7 @@ async function handleUpdateCommand(data: {
   // 更新内容が指定されていない場合
   if (data.text === undefined && data.completed === undefined) {
     console.log(
-      `${yellow("!")} 更新内容が指定されていないため、更新をキャンセルします。`
+      `${yellow("!")} 更新内容が指定されていないため、更新をキャンセルします。`,
     );
     return;
   }
@@ -413,9 +429,11 @@ async function handleUpdateCommand(data: {
   }
 
   console.log(
-    `${green("✓")} TODOを更新しました: ${bold(updatedTodo.text)} (ID: ${dim(
-      updatedTodo.id.substring(0, 8)
-    )})`
+    `${green("✓")} TODOを更新しました: ${bold(updatedTodo.text)} (ID: ${
+      dim(
+        updatedTodo.id.substring(0, 8),
+      )
+    })`,
   );
 }
 
@@ -428,7 +446,7 @@ async function handleSearchCommand(data: {
 
   if (todos.length === 0) {
     console.log(
-      `${yellow("!")} "${data.text}" に一致するTODOは見つかりませんでした。`
+      `${yellow("!")} "${data.text}" に一致するTODOは見つかりませんでした。`,
     );
     return;
   }
@@ -462,10 +480,9 @@ async function handleStatsCommand(): Promise<void> {
   console.log(`完了済み:    ${green(stats.completed.toString())}`);
   console.log(`未完了:      ${yellow(stats.active.toString())}`);
   console.log(
-    `完了率:      ${(stats.total > 0
-      ? (stats.completed / stats.total) * 100
-      : 0
-    ).toFixed(1)}%`
+    `完了率:      ${
+      (stats.total > 0 ? (stats.completed / stats.total) * 100 : 0).toFixed(1)
+    }%`,
   );
   console.log("─".repeat(30));
 }
@@ -482,10 +499,10 @@ async function handleClearCommand(data: { force: boolean }): Promise<void> {
   // 強制削除でない場合
   if (!data.force) {
     console.log(
-      `${yellow("!")} ${stats.completed}件の完了済みTODOを削除します。`
+      `${yellow("!")} ${stats.completed}件の完了済みTODOを削除します。`,
     );
     console.log(
-      "削除を実行します。（強制削除を中止するには-fフラグを外してください）"
+      "削除を実行します。（強制削除を中止するには-fフラグを外してください）",
     );
   }
 
@@ -500,7 +517,7 @@ async function handleChatCommand(data: { prompt?: string }): Promise<void> {
     let userPrompt = data.prompt;
     if (!userPrompt) {
       console.log(
-        "対話モードを開始します。終了するには「終了」と入力してください。"
+        "対話モードを開始します。終了するには「終了」と入力してください。",
       );
       console.log("何をお手伝いしましょうか？");
       console.log(">> ");
@@ -527,7 +544,7 @@ async function handleChatCommand(data: { prompt?: string }): Promise<void> {
   } catch (error) {
     console.error(
       "対話処理中にエラーが発生しました:",
-      error instanceof Error ? error.message : String(error)
+      error instanceof Error ? error.message : String(error),
     );
   }
 }

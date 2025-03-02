@@ -70,7 +70,8 @@ Set either one to enable AI summary generation.
 
 ## Custom Prompts
 
-You can customize how summaries are generated using the `--prompt` (or `-p`) option:
+You can customize how summaries are generated using the `--prompt` (or `-p`)
+option:
 
 ```bash
 # Generate a summary with a custom prompt
@@ -91,7 +92,8 @@ The tool uses an intelligent caching strategy:
   `$HOME/.npmsummary/[package-name]/[version]/content.md`
 - AI summaries are cached at:
   - Default prompt: `$HOME/.npmsummary/[package-name]/[version]/summary.md`
-  - Custom prompts: `$HOME/.npmsummary/[package-name]/[version]/summary-[hash].md`
+  - Custom prompts:
+    `$HOME/.npmsummary/[package-name]/[version]/summary-[hash].md`
 - Summaries are automatically generated and reused when available
 - Use `--no-cache` to ignore all caching
 - Use `@latest` explicitly (e.g., `zod@latest`) to force fetching the latest

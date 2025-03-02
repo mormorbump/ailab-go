@@ -68,7 +68,7 @@ function buildPrimitiveSchema(type: string): z.ZodType {
 function buildArraySchema(
   itemTypes: Set<string> | undefined,
   children: Map<string, StructurePrediction> | undefined,
-  depth = 0
+  depth = 0,
 ): z.ZodType {
   // 再帰の深さ制限
   if (depth > 10) {
@@ -90,7 +90,7 @@ function buildArraySchema(
         const childSchema = buildArraySchema(
           child.itemTypes,
           child.children,
-          depth + 1
+          depth + 1,
         );
         // 多次元配列の処理
         if (child.arrayDepth && child.arrayDepth > 1) {
@@ -161,7 +161,7 @@ function findCommonSchema(schemas: z.ZodType[]): z.ZodType | undefined {
   // すべてのスキーマが同じ型か確認
   const firstType = schemas[0].constructor.name;
   const allSameType = schemas.every(
-    (schema) => schema.constructor.name === firstType
+    (schema) => schema.constructor.name === firstType,
   );
 
   if (allSameType) {
@@ -176,7 +176,7 @@ function findCommonSchema(schemas: z.ZodType[]): z.ZodType | undefined {
  */
 function buildRecordSchema(
   keyPattern: string | undefined,
-  valueType: string | undefined
+  valueType: string | undefined,
 ): z.ZodType {
   if (!keyPattern || !valueType) {
     return z.record(z.any());
@@ -207,7 +207,7 @@ function buildRecordSchema(
  * オブジェクトのスキーマを構築
  */
 function buildObjectSchema(
-  children: Map<string, StructurePrediction>
+  children: Map<string, StructurePrediction>,
 ): z.ZodType {
   // 空のオブジェクトの場合
   if (children.size === 0) {
@@ -259,7 +259,7 @@ function buildStructureSchema(structure: StructurePrediction): z.ZodType {
         schema = buildArraySchema(
           itemTypes.size > 0 ? itemTypes : undefined,
           structure.children,
-          structure.arrayDepth || 1
+          structure.arrayDepth || 1,
         );
       }
       break;
@@ -290,7 +290,7 @@ function buildStructureSchema(structure: StructurePrediction): z.ZodType {
  */
 export function buildSchema(
   structure: StructurePrediction,
-  predictions: Map<string, TypePrediction>
+  predictions: Map<string, TypePrediction>,
 ): z.ZodType {
   // nullの場合
   if (structure.type === "primitive" && structure.valueType === "null") {

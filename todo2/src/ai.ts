@@ -1,13 +1,13 @@
 import {
-  listTodos,
-  addTodo,
-  toggleTodo,
-  removeTodo,
-  getTodoStats,
-  searchTodos,
-  updateTodo,
   addChatHistory,
+  addTodo,
   getRecentChatHistory,
+  getTodoStats,
+  listTodos,
+  type removeTodo,
+  searchTodos,
+  toggleTodo,
+  type updateTodo,
 } from "./db.ts";
 import { ask } from "./ask.ts";
 
@@ -49,11 +49,9 @@ export async function processChatCommand(prompt: string): Promise<void> {
     if (recentHistory.length > 0) {
       historyContext = "\n\n直近の会話履歴:\n";
       recentHistory.forEach((chat, index) => {
-        historyContext += `${index + 1}. ユーザー: ${
-          chat.userPrompt
-        }\n   AI: ${chat.aiResponse.substring(0, 100)}${
-          chat.aiResponse.length > 100 ? "..." : ""
-        }\n\n`;
+        historyContext += `${index + 1}. ユーザー: ${chat.userPrompt}\n   AI: ${
+          chat.aiResponse.substring(0, 100)
+        }${chat.aiResponse.length > 100 ? "..." : ""}\n\n`;
       });
 
       console.log(historyContext);
@@ -85,7 +83,8 @@ export async function processChatCommand(prompt: string): Promise<void> {
           const status = todo.completed ? "✓" : "□";
           console.log(`${status} ${todo.id.substring(0, 8)}: ${todo.text}`);
         });
-        aiResponse = `${todos.length}件のTODOが登録されています。詳細を見るには「list」コマンドを使ってください。`;
+        aiResponse =
+          `${todos.length}件のTODOが登録されています。詳細を見るには「list」コマンドを使ってください。`;
       }
     } else if (promptLower.includes("追加") || promptLower.includes("登録")) {
       // タスク追加
@@ -108,9 +107,9 @@ export async function processChatCommand(prompt: string): Promise<void> {
       if (taskText && taskText.trim()) {
         const newTodo = await addTodo(taskText);
         console.log(
-          `✓ 新しいTODOを追加しました: ${
-            newTodo.text
-          } (ID: ${newTodo.id.substring(0, 8)})`
+          `✓ 新しいTODOを追加しました: ${newTodo.text} (ID: ${
+            newTodo.id.substring(0, 8)
+          })`,
         );
         aiResponse = `「${taskText}」というタスクを追加しました。`;
       } else {
@@ -138,13 +137,13 @@ export async function processChatCommand(prompt: string): Promise<void> {
         console.log("未完了のタスク一覧：");
         todos.forEach((todo, index) => {
           console.log(
-            `${index + 1}. ID:${todo.id.substring(0, 8)} - ${todo.text}`
+            `${index + 1}. ID:${todo.id.substring(0, 8)} - ${todo.text}`,
           );
         });
 
         // ユーザーに選択してもらう
         const answer = await ask(
-          "完了にするタスクのIDまたは番号を入力してください"
+          "完了にするタスクのIDまたは番号を入力してください",
         );
         const num = parseInt(answer, 10);
 
@@ -165,7 +164,8 @@ export async function processChatCommand(prompt: string): Promise<void> {
           aiResponse = `タスク「${updatedTodo.text}」を完了にしました。`;
         } else {
           console.log(`✗ ID:${todoId}のタスクは見つかりませんでした。`);
-          aiResponse = `指定されたIDのタスクは見つかりませんでした。「list」コマンドでタスク一覧を確認してください。`;
+          aiResponse =
+            `指定されたIDのタスクは見つかりませんでした。「list」コマンドでタスク一覧を確認してください。`;
         }
       } else {
         aiResponse = "タスクの完了をキャンセルしました。";
@@ -196,12 +196,14 @@ export async function processChatCommand(prompt: string): Promise<void> {
             const status = todo.completed ? "✓" : "□";
             console.log(`${status} ${todo.id.substring(0, 8)}: ${todo.text}`);
           });
-          aiResponse = `「${searchText}」に関連するタスクが${results.length}件見つかりました。`;
+          aiResponse =
+            `「${searchText}」に関連するタスクが${results.length}件見つかりました。`;
         } else {
           console.log(
-            `「${searchText}」に一致するTODOは見つかりませんでした。`
+            `「${searchText}」に一致するTODOは見つかりませんでした。`,
           );
-          aiResponse = `「${searchText}」に一致するタスクは見つかりませんでした。`;
+          aiResponse =
+            `「${searchText}」に一致するタスクは見つかりませんでした。`;
         }
       } else {
         aiResponse = "検索をキャンセルしました。";
@@ -214,18 +216,19 @@ export async function processChatCommand(prompt: string): Promise<void> {
       console.log(`完了: ${stats.completed}`);
       console.log(`未完了: ${stats.active}`);
       console.log(
-        `完了率: ${(stats.total > 0
-          ? (stats.completed / stats.total) * 100
-          : 0
-        ).toFixed(1)}%`
+        `完了率: ${
+          (stats.total > 0 ? (stats.completed / stats.total) * 100 : 0).toFixed(
+            1,
+          )
+        }%`,
       );
 
-      aiResponse = `現在のTODO状況: 総タスク数${stats.total}件、完了${
-        stats.completed
-      }件、未完了${stats.active}件、完了率${(stats.total > 0
-        ? (stats.completed / stats.total) * 100
-        : 0
-      ).toFixed(1)}%です。`;
+      aiResponse =
+        `現在のTODO状況: 総タスク数${stats.total}件、完了${stats.completed}件、未完了${stats.active}件、完了率${
+          (stats.total > 0 ? (stats.completed / stats.total) * 100 : 0).toFixed(
+            1,
+          )
+        }%です。`;
     } else {
       // その他の入力
       console.log("その他の入力を受け取りました。");
@@ -242,7 +245,7 @@ export async function processChatCommand(prompt: string): Promise<void> {
     console.error(
       `チャット処理中にエラーが発生しました: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 }

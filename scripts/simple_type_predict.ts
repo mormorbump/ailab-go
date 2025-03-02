@@ -38,7 +38,7 @@ interface PatternGroup {
 function flattenObject(
   obj: unknown,
   prefix = "",
-  result: FlatEntry[] = []
+  result: FlatEntry[] = [],
 ): FlatEntry[] {
   if (obj === null || typeof obj !== "object") {
     if (prefix) {

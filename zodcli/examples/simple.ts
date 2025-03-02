@@ -36,12 +36,12 @@ if (import.meta.main) {
     const mockArgs = ["test", "--count", "10", "--format", "json"];
     const data = searchParser.parse(mockArgs);
     console.log(
-      `  検索クエリ: ${data.query}, 件数: ${data.count}, 形式: ${data.format}`
+      `  検索クエリ: ${data.query}, 件数: ${data.count}, 形式: ${data.format}`,
     );
   } catch (error) {
     console.error(
       "  パースエラー:",
-      error instanceof Error ? error.message : String(error)
+      error instanceof Error ? error.message : String(error),
     );
     console.log(searchParser.help());
   }
@@ -53,7 +53,7 @@ if (import.meta.main) {
 
   if (result.ok) {
     console.log(
-      `  検索クエリ: ${result.data.query}, 件数: ${result.data.count}, 形式: ${result.data.format}`
+      `  検索クエリ: ${result.data.query}, 件数: ${result.data.count}, 形式: ${result.data.format}`,
     );
   } else {
     console.error("  パースエラー:", result.error.message);

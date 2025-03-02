@@ -45,9 +45,11 @@ type SearchResult = {
  * @returns 検索結果の配列
  */
 export async function searchNpm(query: string): Promise<SearchResult[]> {
-  const url = `http://registry.npmjs.com/-/v1/search?text=${encodeURIComponent(
-    query
-  )}&size=20`;
+  const url = `http://registry.npmjs.com/-/v1/search?text=${
+    encodeURIComponent(
+      query,
+    )
+  }&size=20`;
   const response = await fetch(url, {
     headers: {
       Accept: "application/json",

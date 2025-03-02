@@ -38,6 +38,7 @@ export type GetPackageFilesOptions = {
  */
 export const DEFAULT_INCLUDE_PATTERNS = [
   "README.md",
+  // deno run -A jsr:@mizchi/npm-summary/cli zod
   "package.json",
   "**/*.ts",
   "**/*.md",

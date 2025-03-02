@@ -1,4 +1,5 @@
 import sharp from "npm:sharp";
+import process from "node:process";
 
 const IMGCAT_PREIX = "\x1B]1337;File=";
 const IMGCAT_SUFFIX = "\x07";
@@ -17,7 +18,7 @@ async function printImage(
     height?: number;
     scale?: number;
     preserveAspectRatio?: boolean;
-  } = {}
+  } = {},
 ) {
   const transformed = sharp(imageData);
   const metadata = await transformed.metadata();
@@ -52,7 +53,7 @@ function _print(size: number, data: string) {
 }
 
 const imageData = await Deno.readFile(
-  new URL("./image.png", import.meta.url).pathname
+  new URL("./image.png", import.meta.url).pathname,
 );
 
 // await printImage(imageData, { fileName: "image.png", scale: 0.5 });

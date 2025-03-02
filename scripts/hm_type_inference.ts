@@ -103,7 +103,7 @@ function unify(t1: Type, t2: Type, env: TypeEnvironment): void {
   }
 
   throw new Error(
-    `Cannot unify types: ${JSON.stringify(t1)} and ${JSON.stringify(t2)}`
+    `Cannot unify types: ${JSON.stringify(t1)} and ${JSON.stringify(t2)}`,
   );
 }
 
@@ -175,6 +175,6 @@ if (import.meta.main) {
   // 結果を表示
   console.log(
     "Inferred type:",
-    JSON.stringify(env.applySubstitutions(tv), null, 2)
+    JSON.stringify(env.applySubstitutions(tv), null, 2),
   );
 }
