@@ -23,15 +23,16 @@
 テストが通った後のリファクタリングフェーズでは、以下のツールを活用します：
 
 1. **静的解析・型チェック**:
-   - `deno check <target>`
-   - `deno lint <target>`
+   - `go vet <package>`
+   - `golangci-lint run`
 
-2. **デッドコード検出・削除 (TSR)**:
-   - `deno run -A npm:tsr 'mod\.ts$'`
+2. **デッドコード検出・削除**:
+   - `go get -tool golang.org/x/tools/cmd/deadcode@latest`
+   - `deadcode ./...`
 
 3. **コードカバレッジ測定**:
-   - `deno test --coverage=coverage <test_file>`
-   - `deno coverage coverage`
+   - `go test -coverprofile=coverage.out ./...`
+   - `go tool cover -html=coverage.out -o coverage.html`
 
 4. **Gitによるバージョン管理**:
    - 各フェーズ（テスト作成→実装→リファクタリング）の完了時にコミット
@@ -48,10 +49,10 @@
 
 ## 詳細情報
 
-Deno環境におけるTDDの詳細な実践方法、例、各種ツールの活用方法については、以下のファイルを参照してください：
+Go環境におけるTDDの詳細な実践方法、例、各種ツールの活用方法については、以下のファイルを参照してください：
 
 ```
-.cline/roomodes/deno-tdd.md
+.cline/roomodes/go-tdd.md
 ```
 
 このファイルにはテストファーストモードの詳細な手順、テストの命名規約、リファクタリングのベストプラクティスなどが含まれています。

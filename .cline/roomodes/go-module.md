@@ -70,6 +70,7 @@ Goのモジュール構造は、標準的なレイアウトに従うことが推
    - 外部からインポートできない非公開パッケージ
    - アプリケーション固有のロジック
    - 再利用を意図していないコード
+   - internalディレクトリには直接ファイルを置くことも可能（サブディレクトリを作る必要はない）
 
 3. **pkg/**
    - 外部からインポート可能な公開パッケージ
@@ -151,12 +152,12 @@ func (r *UserRepo) Save(user *service.User) error {
 
 2. **依存関係の追加**
    ```bash
-   go get github.com/example/package@v1.2.3
+   go get --tool github.com/example/package@v1.2.3
    ```
 
 3. **依存関係の更新**
    ```bash
-   go get -u github.com/example/package
+   go get --tool -u github.com/example/package
    ```
 
 4. **未使用の依存関係の削除**

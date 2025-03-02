@@ -177,10 +177,13 @@
    - `encoding/json`: JSON処理
    - `io/fs`: ファイルシステム操作
    - `regexp`: 正規表現
+   - `net/http`: HTTP クライアント
+   - `html`: HTML パース
 
 2. **外部ライブラリ**
    - `github.com/stretchr/testify`: テストアサーションとモック
    - `gopkg.in/yaml.v3`: YAML処理
+   - `github.com/PuerkitoBio/goquery`: HTML パースと CSS セレクタ
    - `github.com/spf13/cobra`: コマンドラインインターフェース（予定）
    - `github.com/pkg/errors`: エラーラッピング（予定）
 
@@ -228,3 +231,9 @@
    - 関心の分離
    - 依存関係の明確化
    - 拡張性の確保
+
+6. **HTML パースライブラリの選択理由**
+   - `github.com/PuerkitoBio/goquery`: jQuery のような使い慣れた API
+   - CSS セレクタによる要素の選択
+   - 広く使われており、安定している
+   - ドキュメントが充実している

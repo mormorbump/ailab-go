@@ -24,11 +24,20 @@
 
 ### 型定義
 
-```typescript
-// ブランデッド型で型安全性を確保
-type Branded<T, B> = T & { _brand: B };
-type Money = Branded<number, "Money">;
-type Email = Branded<string, "Email">;
+```go
+// カスタム型で型安全性を確保
+type Money float64
+type Email string
+
+// バリデーション用メソッド
+func (m Money) IsValid() bool {
+    return m >= 0
+}
+
+func (e Email) IsValid() bool {
+    // メールアドレスの検証ロジック
+    return strings.Contains(string(e), "@")
+}
 ```
 
 ### 値オブジェクト
@@ -38,11 +47,13 @@ type Email = Branded<string, "Email">;
 - 自己検証
 - ドメイン操作を持つ
 
-```typescript
+```go
 // 作成関数はバリデーション付き
-function createMoney(amount: number): Result<Money, Error> {
-  if (amount < 0) return err(new Error("負の金額不可"));
-  return ok(amount as Money);
+func NewMoney(amount float64) (Money, error) {
+    if amount < 0 {
+        return 0, errors.New("負の金額不可")
+    }
+    return Money(amount), nil
 }
 ```
 
@@ -54,8 +65,39 @@ function createMoney(amount: number): Result<Money, Error> {
 
 ### Result型
 
-```typescript
-type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
+```go
+// Result型の実装
+type Result[T any, E any] struct {
+    value T
+    err   E
+    isOk  bool
+}
+
+// 成功の結果を作成
+func Ok[T any, E any](value T) Result[T, E] {
+    return Result[T, E]{
+        value: value,
+        isOk:  true,
+    }
+}
+
+// エラーの結果を作成
+func Err[T any, E any](err E) Result[T, E] {
+    return Result[T, E]{
+        err:  err,
+        isOk: false,
+    }
+}
+
+// 結果値の取得
+func (r Result[T, E]) Value() (T, bool) {
+    return r.value, r.isOk
+}
+
+// エラー値の取得
+func (r Result[T, E]) Error() (E, bool) {
+    return r.err, !r.isOk
+}
 ```
 
 - 成功/失敗を明示
@@ -86,7 +128,7 @@ type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 
 3. **副作用を分離**
    - IO操作は関数の境界に押し出す
-   - 副作用を持つ処理をPromiseでラップ
+   - 副作用を持つ処理をインターフェースで抽象化
 
 4. **アダプター実装**
    - 外部サービスやDBへのアクセスを抽象化
@@ -101,7 +143,7 @@ type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 
 ## コードスタイル
 
-- 関数優先（クラスは必要な場合のみ）
+- 関数優先（構造体は必要な場合のみ）
 - 不変更新パターンの活用
 - 早期リターンで条件分岐をフラット化
 - エラーとユースケースの列挙型定義

@@ -1,19 +1,15 @@
-# AI + Deno コード生成の実験場
+# AI + Go コード生成の実験場
 
-このプロジェクトは、AI（特にコーディングエージェント）と Deno
-を組み合わせたコード生成の実験場です。Deno
-プロジェクトにおけるコーディングルールとモードを定義するための設定ファイルを管理し、AI
-によるコード生成の品質と効率を向上させることを目的としています。
+このプロジェクトは、[mizchi](https://github.com/mizchi)の[ailab](https://github.com/mizchi/ailab/)を元に作成された、AI（特にコーディングエージェント）とGoを組み合わせたコード生成の実験場です。Goプロジェクトにおけるコーディングルールとモードを定義するための設定ファイルを管理し、AIによるコード生成の品質と効率を向上させることを目的としています。
 
-`.clinerules` と `.roomodes` が主ない生成物です。
+`.clinerules` と `.roomodes` が主な生成物です。
 
 ## プロジェクト概要
 
 ### 主要な目標
 
-1. AI コーディングエージェント（CLINE/Roo
-   など）のための明確なルールとモードを定義する
-2. Deno プロジェクトにおけるベストプラクティスを確立する
+1. AI コーディングエージェント（CLINE/Rooなど）のための明確なルールとモードを定義する
+2. Go プロジェクトにおけるベストプラクティスを確立する
 3. 型安全なコード生成と検証の仕組みを提供する
 4. テスト駆動開発（TDD）のワークフローを AI コーディングに適用する
 5. アダプターパターンなどの設計パターンを活用した実装例を提供する
@@ -22,137 +18,90 @@
 
 1. **コーディングルール定義**
    - 基本ルール（型と関数インターフェース設計、コードコメント、実装パターン選択）
-   - Deno 固有のルール（テスト、モジュール依存関係、コード品質監視）
+   - Go 固有のルール（テスト、モジュール依存関係、コード品質監視）
    - Git ワークフロー（コミット、プルリクエスト作成）
-   - TypeScript ベストプラクティス（型使用方針、エラー処理、実装パターン）
+   - Go ベストプラクティス（型使用方針、エラー処理、実装パターン）
 
 2. **実装モード**
    - スクリプトモード: 一つのファイルに完結した実装
-   - テストファーストモード: 型シグネチャとテストを先に書く実装
+   - テストファーストモード: インターフェース定義とテストを先に書く実装
    - モジュールモード: 複数のファイルで構成される実装
+   - リファクターモード: 既存コードの改善に特化したモード
 
 3. **ユーティリティモジュール**
-   - type-predictor: JSON データから型を予測し、zod スキーマを生成するモジュール
+   - go-pkg-summary: Goパッケージの型定義やファイル構造を表示するツール
    - アダプターパターン実装例: 外部 API との通信を抽象化する実装
 
 ## 技術スタック
 
 ### コア技術
 
-- **Deno**: TypeScript のネイティブサポート、セキュリティ機能、標準ライブラリ
-- **TypeScript**: 静的型付け、型推論、インターフェース
-- **Zod**: スキーマ検証、ランタイム型チェック
-- **Neverthrow**: Result 型によるエラー処理
+- **Go**: 静的型付け、並行処理、標準ライブラリ
+- **testify**: テストアサーション、モック
+- **generics**: Go 1.18以降のジェネリクス機能
 
 ### テスト技術
 
-- **Deno 標準テストライブラリ**: `@std/expect`、`@std/testing/bdd`
+- **Go標準テストライブラリ**: `testing`パッケージ
+- **testify/assert**: テストアサーション
+- **testify/require**: 厳格なアサーション
 - テストカバレッジ計測
 
 ### ビルドとツール
 
-- **Deno タスクランナー**: `deno.json` での定義
+- **Makefile**: タスク定義
 - **GitHub Actions**: CI/CD パイプライン
+- **golangci-lint**: 静的解析ツール
 
 ## 主要モジュール
 
-### type-predictor
+### go-pkg-summary
 
-JSONデータから型を予測し、zodスキーマを生成するモジュール。
+Goパッケージの型定義やファイル構造を表示するコマンドラインツール。
 
 特徴:
 
-- JSONデータの構造を解析し、型を予測
-- 配列、オブジェクト、Record型、列挙型などの高度な型を検出
-- zodスキーマの自動生成
-- 詳細な型情報の分析機能
+- パッケージの型定義を表示
+- パッケージ内のファイル一覧を表示
+- 特定のファイルの内容を表示
+- バージョン指定によるパッケージの検索
 
 使用例:
 
-```typescript
-import { TypePredictor } from "./mod.ts";
+```bash
+# パッケージの型定義を表示
+go-pkg-summary github.com/stretchr/testify/assert
 
-// インスタンスを作成
-const predictor = new TypePredictor();
+# パッケージ内のファイル一覧を表示
+go-pkg-summary ls github.com/stretchr/testify/assert
 
-// JSONデータから型を予測してスキーマを生成
-const data = {
-  name: "John",
-  age: 30,
-  scores: [85, 92, 78],
-};
-
-// スキーマを生成
-const schema = predictor.predict(data);
-
-// スキーマを使用してバリデーション
-const result = schema.safeParse(data);
-```
-
-### zodcli
-
-Zod を使用した型安全なコマンドラインパーサーモジュールです。
-
-特徴：
-
-- **型安全**: Zodスキーマに基づいた型安全なCLIパーサー
-- **自動ヘルプ生成**: コマンド構造から自動的にヘルプテキストを生成
-- **位置引数とオプションのサポート**: 位置引数と名前付き引数の両方をサポート
-- **サブコマンドのサポート**: gitのようなサブコマンド構造をサポート
-- **デフォルト値**: Zodの機能を活用したデフォルト値の設定
-
-使用例：
-
-```typescript
-import { createCliCommand, runCommand } from "@mizchi/zodcli";
-import { z } from "npm:zod";
-
-const cli = createCliCommand({
-  name: "myapp",
-  description: "My CLI application",
-  args: {
-    file: {
-      type: z.string().describe("input file"),
-      positional: true,
-    },
-    verbose: {
-      type: z.boolean().default(false),
-      short: "v",
-    },
-  },
-});
-
-const result = cli.parse(Deno.args);
-runCommand(result, (data) => {
-  console.log(`Processing ${data.file}, verbose: ${data.verbose}`);
-});
+# 特定のファイルの内容を表示
+go-pkg-summary read github.com/stretchr/testify/assert/assertions.go
 ```
 
 ### アダプターパターン実装例
 
-TypeScriptでのAdapterパターンは、外部依存を抽象化し、テスト可能なコードを実現するためのパターンです。
+Goでのアダプターパターンは、外部依存を抽象化し、テスト可能なコードを実現するためのパターンです。
 
 実装パターン:
 
 1. **関数ベース**: 内部状態を持たない単純な操作の場合
-2. **classベース**: 設定やキャッシュなどの内部状態を管理する必要がある場合
-3. **高階関数とコンストラクタインジェクション**:
-   外部APIとの通信など、モックが必要な場合
+2. **構造体ベース**: 設定やキャッシュなどの内部状態を管理する必要がある場合
+3. **依存性注入**: 外部APIとの通信など、モックが必要な場合
 
 ベストプラクティス:
 
 - インターフェースはシンプルに保つ
 - 基本的には関数ベースを優先する
-- 内部状態が必要な場合のみclassを使用する
-- エラー処理はResult型で表現し、例外を使わない
+- 内部状態が必要な場合のみ構造体を使用する
+- エラー処理はResult型で表現し、パニックを使わない
 
 ## 現在の状況
 
 | コンポーネント       | ステータス | 進捗率 | 優先度 |
 | -------------------- | ---------- | ------ | ------ |
 | ルールとモード定義   | 安定       | 90%    | 低     |
-| type-predictor       | 開発中     | 60%    | 高     |
-| zodcli               | 安定       | 100%   | 中     |
+| go-pkg-summary       | 安定       | 80%    | 中     |
 | アダプターパターン例 | 安定       | 80%    | 中     |
 | テストインフラ       | 安定       | 70%    | 中     |
 | CI/CD パイプライン   | 開発中     | 50%    | 中     |
@@ -161,22 +110,17 @@ TypeScriptでのAdapterパターンは、外部依存を抽象化し、テスト
 
 ### 次のマイルストーン
 
-1. **type-predictor の基本機能完成（現在）**
-   - 基本的な型検出と予測
-   - 基本的な zod スキーマ生成
+1. **go-pkg-summary の機能拡張（現在）**
+   - パッケージ依存関係の可視化
+   - インターフェース実装の検索
    - 基本的なテストケース
 
-2. **type-predictor の拡張機能（次のフェーズ）**
-   - Record 型、列挙型、ユニオン型の検出
-   - エッジケースのテスト追加
-   - パフォーマンスの最適化
-
-3. **実装例の充実（将来）**
+2. **実装例の充実（次のフェーズ）**
    - 新しい設計パターンの実装例
    - モジュールモードの詳細な実装例
    - ユースケースの例の追加
 
-4. **完全なドキュメントとテスト（最終フェーズ）**
+3. **完全なドキュメントとテスト（最終フェーズ）**
    - API ドキュメントの完成
    - テストカバレッジ目標の達成
    - チュートリアルとガイドラインの完成
@@ -184,8 +128,7 @@ TypeScriptでのAdapterパターンは、外部依存を抽象化し、テスト
 
 ## .cline ディレクトリの説明
 
-このリポジトリの `.cline` ディレクトリは、Deno
-プロジェクトにおけるコーディングルールとモードを定義するための設定ファイルを管理しています。
+このリポジトリの `.cline` ディレクトリは、Goプロジェクトにおけるコーディングルールとモードを定義するための設定ファイルを管理しています。
 
 ### ディレクトリ構造
 
@@ -193,78 +136,59 @@ TypeScriptでのAdapterパターンは、外部依存を抽象化し、テスト
 .cline/
 ├── build.go        - プロンプトファイルを結合して .clinerules と .roomodes を生成するスクリプト
 ├── rules/          - コーディングルールを定義するマークダウンファイル
-│   ├── 01_basic.md       - 基本的なルールと AI Coding with Deno の概要
-│   ├── deno_rules.md     - Deno に関するルール（テスト、モジュール依存関係など）
+│   ├── 01_basic.md       - 基本的なルールと AI Coding with Go の概要
+│   ├── go_rules.md       - Go に関するルール（テスト、モジュール依存関係など）
 │   ├── git_workflow.md   - Git ワークフローに関するルール
-│   └── ts_bestpractice.md - TypeScript のコーディングベストプラクティス
+│   └── go_bestpractice.md - Go のコーディングベストプラクティス
 └── roomodes/       - 実装モードを定義するマークダウンファイル
-    ├── deno-script.md    - スクリプトモードの定義
-    ├── deno-module.md    - モジュールモードの定義
-    └── deno-tdd.md       - テストファーストモードの定義
+    ├── go-script.md      - スクリプトモードの定義
+    ├── go-module.md      - モジュールモードの定義
+    ├── go-tdd.md         - テストファーストモードの定義
+    └── go-refactor.md    - リファクターモードの定義
 ```
 
 ### 生成されるファイル
 
 `.cline/build.go` スクリプトを実行すると、以下のファイルが生成されます：
 
-1. `.clinerules` - `rules`
-   ディレクトリ内のマークダウンファイルを結合したファイル
-2. `.roomodes` - `roomodes` ディレクトリ内のマークダウンファイルから生成された
-   JSON ファイル
+1. `.clinerules` - `rules` ディレクトリ内のマークダウンファイルを結合したファイル
+2. `.roomodes` - `roomodes` ディレクトリ内のマークダウンファイルから生成された JSON ファイル
 
 ### 使用方法
 
-1. `.cline/rules`
-   ディレクトリにコーディングルールを定義するマークダウンファイルを追加または編集します。
-2. `.cline/roomodes`
-   ディレクトリに実装モードを定義するマークダウンファイルを追加または編集します。
-3. `.cline/build.ts` スクリプトを実行して、`.clinerules` と `.roomodes`
-   ファイルを生成します。
->>>>>>> e31a38be10818df060cf73cb96ba4048a1044c8d
-=======
 1. `.cline/rules` ディレクトリにコーディングルールを定義するマークダウンファイルを追加または編集します。
 2. `.cline/roomodes` ディレクトリに実装モードを定義するマークダウンファイルを追加または編集します。
 3. `.cline/build.go` スクリプトを実行して、`.clinerules` と `.roomodes` ファイルを生成します。
-=======
-1. `.cline/rules`
-   ディレクトリにコーディングルールを定義するマークダウンファイルを追加または編集します。
-2. `.cline/roomodes`
-   ディレクトリに実装モードを定義するマークダウンファイルを追加または編集します。
-3. `.cline/build.ts` スクリプトを実行して、`.clinerules` と `.roomodes`
-   ファイルを生成します。
->>>>>>> e31a38be10818df060cf73cb96ba4048a1044c8d
 
 ```bash
-deno run --allow-read --allow-write .cline/build.go
+go run .cline/build.go
 ```
 
-4. 生成された `.clinerules` と `.roomodes` ファイルは、AI
-   コーディングアシスタント（CLINE/Roo
-   など）によって読み込まれ、プロジェクトのルールとモードが適用されます。
+4. 生成された `.clinerules` と `.roomodes` ファイルは、AI コーディングアシスタント（CLINE/Roo など）によって読み込まれ、プロジェクトのルールとモードが適用されます。
 
 ### モードの切り替え方法
 
 プロジェクトで定義されているモードは以下の通りです：
 
-- `deno-script` (Deno:ScriptMode) - スクリプトモード
-- `deno-module` (Deno:Module) - モジュールモード
-- `deno-tdd` (Deno:TestFirstMode) - テストファーストモード
+- `go-script` (Go:ScriptMode) - スクリプトモード
+- `go-module` (Go:Module) - モジュールモード
+- `go-tdd` (Go:TestFirstMode) - テストファーストモード
+- `go-refactor` (Go:RefactorMode) - リファクターモード
 
-モードを切り替えるには、AI
-コーディングアシスタントに対して以下のように指示します：
+モードを切り替えるには、AI コーディングアシスタントに対して以下のように指示します：
 
 ```
-モードを deno-script に切り替えてください。
+モードを go-script に切り替えてください。
 ```
 
 または、ファイルの冒頭に特定のマーカーを含めることでモードを指定することもできます：
 
-- スクリプトモード: `@script`
-- テストファーストモード: `@tdd`
+- スクリプトモード: `// @script`
+- テストファーストモード: `// @tdd`
 
 例：
 
-```ts
+```go
 // @script @tdd
 // このファイルはスクリプトモードとテストファーストモードの両方で実装されます
 ```
@@ -273,25 +197,29 @@ deno run --allow-read --allow-write .cline/build.go
 
 ### 必要なツール
 
-1. **Deno のインストール**
+1. **Go のインストール**
    ```bash
-   # Unix (macOS, Linux)
-   curl -fsSL https://deno.land/x/install/install.sh | sh
+   # macOS (Homebrew)
+   brew install go
 
-   # Windows (PowerShell)
-   iwr https://deno.land/x/install/install.ps1 -useb | iex
+   # Linux
+   wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
+   sudo tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz
+   export PATH=$PATH:/usr/local/go/bin
+
+   # Windows
+   # https://go.dev/dl/ からインストーラーをダウンロード
    ```
 
 2. **エディタ設定**
-   - VSCode + Deno 拡張機能
+   - VSCode + Go 拡張機能
    - 設定例:
      ```json
      {
-       "deno.enable": true,
-       "deno.lint": true,
-       "deno.unstable": false,
-       "editor.formatOnSave": true,
-       "editor.defaultFormatter": "denoland.vscode-deno"
+       "go.useLanguageServer": true,
+       "go.lintTool": "golangci-lint",
+       "go.formatTool": "goimports",
+       "editor.formatOnSave": true
      }
      ```
 
@@ -301,11 +229,11 @@ deno run --allow-read --allow-write .cline/build.go
    git clone <repository-url>
    cd <repository-directory>
 
-   # 依存関係のキャッシュ
-   deno cache --reload deps.ts
+   # 依存関係のインストール
+   go mod download
 
    # ルールとモードの生成
-   deno run --allow-read --allow-write .cline/build.go
+   go run .cline/build.go
    ```
 
 ### 開発ワークフロー
@@ -313,34 +241,36 @@ deno run --allow-read --allow-write .cline/build.go
 1. **新しいスクリプトの作成**
    ```bash
    # スクリプトモードでの開発
-   touch scripts/new-script.ts
-   # ファイル冒頭に `@script` を追加
+   touch scripts/cmd/new-script/main.go
+   # ファイル冒頭に `// @script` を追加
    ```
 
 2. **テストの実行**
    ```bash
-   # 単一ファイルのテスト
-   deno test scripts/new-script.ts
+   # 単一パッケージのテスト
+   go test ./scripts/cmd/new-script
 
    # すべてのテストの実行
-   deno test
+   go test ./...
 
    # カバレッジの計測
-   deno test --coverage=coverage && deno coverage coverage
+   go test -coverprofile=coverage.out ./...
+   go tool cover -html=coverage.out -o coverage.html
    ```
 
 3. **リントとフォーマット**
    ```bash
    # リント
-   deno lint
+   golangci-lint run
 
    # フォーマット
-   deno fmt
+   gofmt -w .
    ```
 
 4. **依存関係の検証**
    ```bash
-   deno task check:deps
+   go mod tidy
+   go mod verify
    ```
 
 ## ライセンス

@@ -3,5 +3,5 @@
 # プロジェクトのルートディレクトリを取得
 ROOT_DIR=$(git rev-parse --show-toplevel)
 
-# Goスクリプトを実行
-go run "$ROOT_DIR/.hooks/scripts/pre-commit-check.go"
+# Goスクリプトを実行（go.workファイルを使用）
+cd "$ROOT_DIR" && go run "$ROOT_DIR/.hooks/scripts/pre-commit-check.go"

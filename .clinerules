@@ -972,14 +972,9 @@ Go環境におけるTDDの詳細な実践方法、例、各種ツールの活用
 このファイルにはテストファーストモードの詳細な手順、テストの命名規約、リファクタリングのベストプラクティスなどが含まれています。
 
 このプロジェクトには以下のモードが定義されています:
-- deno-module Deno:Module at .cline/roomodes/deno-module.md
-- deno-refactor Deno:Refactor at .cline/roomodes/deno-refactor.md
-- deno-script Deno:ScriptMode at .cline/roomodes/deno-script.md
-- deno-tdd Deno:TDD at .cline/roomodes/deno-tdd.md
 - go-module Go:Module at .cline/roomodes/go-module.md
 - go-refactor Go:RefactorMode at .cline/roomodes/go-refactor.md
 - go-script Go:ScriptMode at .cline/roomodes/go-script.md
 - go-tdd Go:TestFirstMode at .cline/roomodes/go-tdd.md
 - kazuki-writer kazuki:writer at .cline/roomodes/kazuki-writer.md
-- libarary-searcher LibraryResearcher at .cline/roomodes/libarary-searcher.md
 - library-searcher LibraryResearcher at .cline/roomodes/library-searcher.md

@@ -82,7 +82,8 @@ func main() {
 		goDirs := getGoDirs(goFiles)
 		for _, dir := range goDirs {
 			fmt.Printf("Formatting Go files in %s\n", dir)
-			if err := runCommand("go", "fmt", dir); err != nil {
+			// gofmt コマンドを使用してフォーマット
+			if err := runCommand("gofmt", "-w", dir); err != nil {
 				fmt.Println("❌ Format check failed")
 				os.Exit(1)
 			}
@@ -98,9 +99,18 @@ func main() {
 		goDirs := getGoDirs(goFiles)
 		for _, dir := range goDirs {
 			fmt.Printf("Vetting Go files in %s\n", dir)
-			if err := runCommand("go", "vet", dir); err != nil {
-				fmt.Println("❌ Vet check failed")
-				os.Exit(1)
+			// go.workファイルが存在する場合は、-mod=readonly オプションを追加
+			if _, err := os.Stat("go.work"); err == nil {
+				if err := runCommand("go", "vet", "-mod=readonly", dir); err != nil {
+					fmt.Println("❌ Vet check failed")
+					os.Exit(1)
+				}
+			} else {
+				// go.workファイルがない場合は、従来通り go vet を使用
+				if err := runCommand("go", "vet", dir); err != nil {
+					fmt.Println("❌ Vet check failed")
+					os.Exit(1)
+				}
 			}
 		}
 		fmt.Println("✅ Vet check passed")
@@ -150,11 +160,22 @@ func main() {
 			fmt.Printf("\n🧪 Running tests for %s...\n", path)
 
 			testPath := "./" + path + "/..."
-			if err := runCommand("go", "test", "-v", testPath); err != nil {
-				fmt.Printf("❌ Tests failed for %s\n", path)
-				os.Exit(1)
+			// go.workファイルが存在する場合は、-mod=readonly オプションを追加
+			if _, err := os.Stat("go.work"); err == nil {
+				if err := runCommand("go", "test", "-mod=readonly", "-v", testPath); err != nil {
+					fmt.Printf("❌ Tests failed for %s\n", path)
+					os.Exit(1)
+				} else {
+					fmt.Printf("✅ Tests passed for %s\n", path)
+				}
 			} else {
-				fmt.Printf("✅ Tests passed for %s\n", path)
+				// go.workファイルがない場合は、従来通り go test を使用
+				if err := runCommand("go", "test", "-v", testPath); err != nil {
+					fmt.Printf("❌ Tests failed for %s\n", path)
+					os.Exit(1)
+				} else {
+					fmt.Printf("✅ Tests passed for %s\n", path)
+				}
 			}
 		}
 	} else {
@@ -165,8 +186,31 @@ func main() {
 	for _, arg := range os.Args[1:] {
 		if arg == "--check-deps" {
 			fmt.Println("\n📦 Running dependency check...")
-			// go.modファイルが存在するか確認
-			if _, err := os.Stat("go.mod"); err == nil {
+			// go.workファイルが存在するか確認
+			if _, err := os.Stat("go.work"); err == nil {
+				if err := runCommand("go", "work", "sync"); err != nil {
+					fmt.Println("❌ Workspace sync failed")
+					os.Exit(1)
+				}
+
+				// 各ワークスペースの依存関係を検証
+				workspaces, err := getWorkspaces()
+				if err != nil {
+					fmt.Printf("警告: ワークスペース情報の取得に失敗しました: %v\n", err)
+				} else {
+					for _, workspace := range workspaces {
+						if _, err := os.Stat(workspace + "/go.mod"); err == nil {
+							fmt.Printf("Verifying dependencies for %s\n", workspace)
+							if err := runCommand("go", "mod", "verify", "-C", workspace); err != nil {
+								fmt.Printf("❌ Dependency check failed for %s\n", workspace)
+								os.Exit(1)
+							}
+						}
+					}
+				}
+				fmt.Println("✅ Dependency check passed")
+			} else if _, err := os.Stat("go.mod"); err == nil {
+				// go.modファイルが存在する場合
 				if err := runCommand("go", "mod", "verify"); err != nil {
 					fmt.Println("❌ Dependency check failed")
 					os.Exit(1)
@@ -174,7 +218,7 @@ func main() {
 					fmt.Println("✅ Dependency check passed")
 				}
 			} else {
-				fmt.Println("⚠️ No go.mod file found, skipping dependency check")
+				fmt.Println("⚠️ No go.mod or go.work file found, skipping dependency check")
 			}
 			break
 		}
@@ -183,40 +227,75 @@ func main() {
 	fmt.Println("\n✅ All checks passed successfully!")
 }
 
-// getWorkspaces はgo.modファイルからモジュール名を取得し、ワークスペースを推測します
+// getWorkspaces はgo.workファイルからワークスペース情報を取得します
 func getWorkspaces() ([]string, error) {
-	// go.modファイルを読み込む
-	content, err := ioutil.ReadFile("go.mod")
+	// go.workファイルを読み込む
+	content, err := ioutil.ReadFile("go.work")
 	if err != nil {
 		return nil, err
 	}
 
-	// モジュール名を取得
+	var workspaces []string
 	scanner := bufio.NewScanner(bytes.NewReader(content))
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "module ") {
-			// ここでは簡易的に、プロジェクト内のディレクトリをワークスペースとして扱います
-			// 実際のプロジェクト構造に合わせて調整してください
-			entries, err := ioutil.ReadDir(".")
-			if err != nil {
-				return nil, err
-			}
+	inUseBlock := false
 
-			var workspaces []string
-			for _, entry := range entries {
-				if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") && !strings.HasPrefix(entry.Name(), "_") {
-					// 一般的なGoプロジェクトのディレクトリ構造をチェック
-					if entry.Name() == "cmd" || entry.Name() == "pkg" || entry.Name() == "internal" {
-						workspaces = append(workspaces, entry.Name())
-					}
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+
+		// use ブロックの開始を検出
+		if line == "use (" {
+			inUseBlock = true
+			continue
+		}
+
+		// use ブロックの終了を検出
+		if inUseBlock && line == ")" {
+			inUseBlock = false
+			continue
+		}
+
+		// use ブロック内のパスを処理
+		if inUseBlock && line != "" {
+			// 先頭の "./" を削除
+			path := strings.TrimPrefix(line, "./")
+			path = strings.TrimSpace(path)
+			if path != "" && path != "." {
+				workspaces = append(workspaces, path)
+			}
+		}
+
+		// 単一行の use 文を処理 (例: use ./path)
+		if strings.HasPrefix(line, "use ") && !inUseBlock {
+			parts := strings.Fields(line)
+			if len(parts) > 1 {
+				path := strings.TrimPrefix(parts[1], "./")
+				path = strings.TrimSpace(path)
+				if path != "" && path != "." {
+					workspaces = append(workspaces, path)
 				}
 			}
-			return workspaces, nil
 		}
 	}
 
-	return []string{}, nil
+	// go.workファイルにワークスペースが指定されていない場合は、
+	// プロジェクト内のディレクトリを検索
+	if len(workspaces) == 0 {
+		entries, err := ioutil.ReadDir(".")
+		if err != nil {
+			return nil, err
+		}
+
+		for _, entry := range entries {
+			if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") && !strings.HasPrefix(entry.Name(), "_") {
+				// 一般的なGoプロジェクトのディレクトリ構造をチェック
+				if entry.Name() == "cmd" || entry.Name() == "pkg" || entry.Name() == "internal" {
+					workspaces = append(workspaces, entry.Name())
+				}
+			}
+		}
+	}
+
+	return workspaces, nil
 }
 
 // getGitStagedFiles はGitでステージングされたファイル一覧を取得します
@@ -261,7 +340,7 @@ func findGoFiles() ([]string, error) {
 			goFiles = append(goFiles, file)
 		}
 	}
-	
+
 	fmt.Println("検索結果:")
 	if len(goFiles) == 0 {
 		fmt.Println("  Goファイルが見つかりませんでした")
@@ -270,13 +349,13 @@ func findGoFiles() ([]string, error) {
 			fmt.Printf("  %s\n", file)
 		}
 	}
-	
+
 	// カレントディレクトリも表示
 	pwd, err := os.Getwd()
 	if err == nil {
 		fmt.Printf("カレントディレクトリ: %s\n", pwd)
 	}
-	
+
 	return goFiles, nil
 }
 

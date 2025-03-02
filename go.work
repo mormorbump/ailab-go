@@ -1,0 +1,12 @@
+go 1.24.0
+
+use (
+	./go-pkg-summary
+	./scripts/cmd/check-ci
+	./scripts/cmd/duckdb-vss
+	./scripts/cmd/gh-search
+	./scripts/cmd/git-push-with-ci
+	./scripts/cmd/lsp-client
+	./scripts/cmd/search-files
+	./scripts/cmd/search-gopkg
+)
