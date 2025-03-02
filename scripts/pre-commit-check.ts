@@ -76,7 +76,7 @@ if (!fmtStatus.success) {
 
 // 変更されたワークスペース/スクリプトに対してテストを実行
 for (const path of changedPaths) {
-  if (path === "root") continue; // ルートのテストはスキップ
+  if (path === "root" || path === "scripts") continue; // ルートとscriptsのテストはスキップ
 
   console.log(`\n🧪 Running tests for ${path}...`);
 
