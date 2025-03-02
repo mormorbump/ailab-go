@@ -1,4 +1,7 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/hook.sh"
 
-deno task pre-commit
+# プロジェクトのルートディレクトリを取得
+ROOT_DIR=$(git rev-parse --show-toplevel)
+
+# Goスクリプトを実行
+go run "$ROOT_DIR/.hooks/scripts/pre-commit-check.go"
