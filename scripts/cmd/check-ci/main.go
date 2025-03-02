@@ -43,11 +43,11 @@ func CheckLatestCI() error {
 	// CI 実行の詳細を表示
 	runID := runs[0].DatabaseID
 	viewCmd := exec.Command("gh", "run", "view", fmt.Sprintf("%d", runID), "--exit-status")
-	
+
 	// コマンドの標準出力と標準エラー出力を現在のプロセスにリダイレクト
 	viewCmd.Stdout = os.Stdout
 	viewCmd.Stderr = os.Stderr
-	
+
 	// コマンドを実行
 	err = viewCmd.Run()
 	if err != nil {

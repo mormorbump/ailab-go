@@ -2,8 +2,8 @@
 package main
 
 import (
+	"com.github/kazukimatsumoto/ailab-go/go-pkg-summary/internal"
 	"fmt"
-	"github.com/kazuki/go-pkg-summary/internal"
 	"os"
 	"strings"
 

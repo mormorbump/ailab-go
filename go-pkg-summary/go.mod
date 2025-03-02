@@ -1,4 +1,4 @@
-module github.com/kazuki/go-pkg-summary
+module com.github/kazukimatsumoto/ailab-go/go-pkg-summary
 
 go 1.24.0
 

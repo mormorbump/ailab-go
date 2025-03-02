@@ -1,6 +1,6 @@
 # AI + Go コード生成の実験場
 
-このプロジェクトは、[mizchi](https://github.com/mizchi)の[ailab](https://github.com/mizchi/ailab/)を元に作成された、AI（特にコーディングエージェント）とGoを組み合わせたコード生成の実験場です。Goプロジェクトにおけるコーディングルールとモードを定義するための設定ファイルを管理し、AIによるコード生成の品質と効率を向上させることを目的としています。
+このプロジェクトは、[mizchi氏](https://github.com/mizchi)の[ailab](https://github.com/mizchi/ailab/)を元に作成された、AI（特にコーディングエージェント）とGoを組み合わせたコード生成の実験場です。Goプロジェクトにおけるコーディングルールとモードを定義するための設定ファイルを管理し、AIによるコード生成の品質と効率を向上させることを目的としています。
 
 `.clinerules` と `.roomodes` が主な生成物です。
 
