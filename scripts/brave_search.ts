@@ -4,7 +4,9 @@ import { z } from "npm:zod";
 
 const API_KEY = Deno.env.get("BRAVE_SEARCH_KEY");
 if (!API_KEY) {
-  throw new Error("Please set BRAVE_SEARCH_KEY environment variable");
+  console.error("Please set BRAVE_SEARCH_KEY environment variable");
+  Deno.exit(0);
+  // throw new Error("Please set BRAVE_SEARCH_KEY environment variable");
 }
 
 const cliSchema = {

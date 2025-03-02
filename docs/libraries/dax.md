@@ -1,482 +1,352 @@
-# dax - クロスプラットフォームシェルツール for Deno & Node.js
+# dax チートシート
 
-## 基本情報
+## 概要
 
-- **パッケージ名**: `@david/dax` (JSR), `dax-sh` (npm)
-- **作者**: David Sherret
-- **GitHubリポジトリ**: [dsherret/dax](https://github.com/dsherret/dax)
-- **インスピレーション**: [zx](https://github.com/google/zx)
-- **特徴**: クロスプラットフォーム（Windows対応を重視）、最小限のグローバル設定、アプリケーションコードでも使用可能
-
-## インストール
+Deno および Node.js 向けのクロスプラットフォームシェルツール。コマンド実行、HTTP リクエスト、ファイル操作、プロンプト機能などを提供。
 
 ```ts
 // Deno
-deno add jsr:@david/dax
-
-// または直接インポート
 import $ from "jsr:@david/dax";
 
 // Node.js
-// npm install dax-sh
 // import $ from "dax-sh";
 ```
 
-## 主な機能
+## コマンド実行
 
-### 1. コマンド実行
+### 基本実行
 
 ```ts
-// 基本的なコマンド実行
-await $`echo 5`; // outputs: 5
+// 基本実行
+await $`echo Hello, world`;
 
-// 出力取得
-const text = await $`echo 1`.text(); // 1
-const json = await $`echo '{ "prop": 5 }'`.json(); // { prop: 5 }
+// 出力の取得
+const text = await $`echo Hello`.text(); // "Hello"
+const json = await $`echo '{"key":"value"}'`.json(); // { key: "value" }
 const lines = await $`echo 1 && echo 2`.lines(); // ["1", "2"]
-const bytes = await $`gzip < file.txt`.bytes(); // Uint8Array
+const bytes = await $`cat binary.dat`.bytes(); // Uint8Array
 
-// stderr取得
-const stderrText = await $`deno eval "console.error(1)"`.text("stderr");
-
-// 詳細情報取得
-const result = await $`deno eval 'console.log(1); console.error(2);'`
+// 詳細な結果
+const result = await $`deno eval 'console.log("out"); console.error("err");'`
   .stdout("piped")
   .stderr("piped");
-console.log(result.code); // 0
-console.log(result.stdout); // 1\n
-console.log(result.stderr); // 2\n
+console.log(result.code); // 終了コード (0)
+console.log(result.stdout); // 標準出力 ("out\n")
+console.log(result.stderr); // 標準エラー出力 ("err\n")
 
-// 複合出力取得
-const combinedText = await $`deno eval 'console.log(1); console.error(2);'`
-  .text("combined"); // 1\n2\n
+// 非同期実行
+const child = $`sleep 10 && echo done`.spawn();
+// 後で child.kill() でキャンセル可能
 ```
 
-### 2. パイプとリダイレクト
+### パラメータと変数
 
 ```ts
-// stdoutのリダイレクト
-await $`echo 1`.stdout(Deno.stderr);
+// 変数埋め込み（自動エスケープ）
+const dir = "My Dir";
+await $`mkdir ${dir}`; // mkdir 'My Dir'
 
-// WritableStreamへのリダイレクト
-await $`echo 1`.stdout(someWritableStream, { preventClose: true });
-// または
-await $`echo 1 > ${someWritableStream}`;
+// 配列の展開
+const dirs = ["dir1", "dir with space"];
+await $`mkdir ${dirs}`; // mkdir dir1 'dir with space'
 
-// ファイルへのリダイレクト
-await $`echo 1`.stdout($.path("data.txt"));
-// または
-await $`echo 1 > data.txt`;
+// エスケープなし
+await $.raw`echo $HOME`;
 
-// コマンド間のパイプ
-const output = await $`echo foo && echo bar`
-  .pipe($`grep foo`)
-  .text();
-// または
-const output2 = await $`(echo foo && echo bar) | grep foo`.text();
-```
-
-### 3. 引数渡し
-
-```ts
-// テンプレートリテラルでの引数渡し（自動エスケープ）
-const dirName = "Dir with spaces";
-await $`mkdir ${dirName}`; // executes as: mkdir 'Dir with spaces'
-
-// 配列での引数渡し
-const dirNames = ["some_dir", "other dir"];
-await $`mkdir ${dirNames}`; // executes as: mkdir some_dir 'other dir'
-
-// エスケープなしで引数渡し
-const args = "arg1   arg2   arg3";
-await $.raw`echo ${args}`; // executes as: echo arg1   arg2   arg3
-```
-
-### 4. stdinの制御
-
-```ts
-// stdinの設定
-await $`command`.stdin("inherit"); // デフォルト
-await $`command`.stdin("null");
-await $`command`.stdin(new Uint8Array([1, 2, 3, 4]));
-await $`command`.stdinText("some value");
-
-// リダイレクト
-await $`command < ${$.path("data.json")}`;
-```
-
-### 5. 環境変数設定
-
-```ts
 // 環境変数の設定
-await $`echo $var1 $var2 $var3 $var4`
-  .env("var1", "1")
-  .env("var2", "2")
-  .env({
-    var3: "3",
-    var4: "4",
-  });
+await $`echo $VAR1 $VAR2`
+  .env("VAR1", "value1")
+  .env({ VAR2: "value2" });
 ```
 
-### 6. 作業ディレクトリ設定
+### パイプとリダイレクト
 
 ```ts
-// コマンド実行時の作業ディレクトリ設定
-await $`deno eval 'console.log(Deno.cwd());'`.cwd("./someDir");
+// パイプ（メソッドチェーン）
+const result = await $`echo foo && echo bar`
+  .pipe($`grep foo`)
+  .text(); // "foo"
+
+// パイプ（シェル構文）
+await $`echo foo | grep foo`;
+
+// ファイル出力リダイレクト
+await $`echo hello > output.txt`;
+// または
+await $`echo hello`.stdout($.path("output.txt"));
+
+// ファイル入力リダイレクト
+await $`cat < input.txt`;
+// または
+await $`cat`.stdin($.path("input.txt"));
 ```
 
-### 7. コマンド出力の制御
+### 実行制御
 
 ```ts
-// コマンド出力の抑制
-await $`echo 5`.quiet();
-await $`echo 5`.quiet("stdout"); // stdoutのみ抑制
-await $`echo 5`.quiet("stderr"); // stderrのみ抑制
+// 作業ディレクトリ
+await $`pwd`.cwd("./someDir");
 
-// コマンド実行前に表示
-await $`echo ${text}`.printCommand();
+// タイムアウト
+await $`sleep 100`.timeout("5s");
 
-// グローバル設定
-$.setPrintCommand(true);
+// 終了コードを無視
+await $`exit 1`.noThrow();
+
+// 出力を非表示
+await $`echo secret`.quiet();
+await $`echo visible && echo secret`.quiet("stderr"); // stderrのみ非表示
+
+// コマンド表示
+await $`echo ${secret}`.printCommand();
 ```
 
-### 8. タイムアウト設定とアボート
+## ファイル操作
+
+### パスAPI
 
 ```ts
-// タイムアウト設定
-await $`echo 1 && sleep 100 && echo 2`.timeout("1s");
+// パスオブジェクト作成
+const path = $.path("dir/file.txt");
 
-// コマンドのアボート
-const child = $`echo 1 && sleep 100 && echo 2`.spawn();
-// 後で
-child.kill(); // デフォルトは"SIGTERM"
+// ファイル操作
+await path.exists(); // ファイル存在確認
+await path.isFile();
+await path.isDir();
+await path.stat(); // ファイル情報取得
+
+// ファイル読み書き
+await path.writeText("content");
+const content = await path.readText();
+await path.writeJson({ key: "value" });
+const data = await path.readJson();
+await path.writeBytes(new Uint8Array([1, 2, 3]));
+const bytes = await path.readBytes();
+
+// ディレクトリ操作
+await $.path("newDir").mkdir({ recursive: true });
+await $.path("oldDir").remove({ recursive: true });
+
+// パス情報と操作
+path.basename; // "file.txt"
+path.dirname;  // "dir"
+path.extname;  // ".txt"
+path.isAbsolute(); // 絶対パスか
+path.resolve(); // 絶対パスに変換
+path.join("subdir", "other.txt"); // 'dir/file.txt/subdir/other.txt'
 ```
 
-### 9. シェル環境のエクスポート
+### クロスプラットフォームコマンド
 
 ```ts
-// シェル環境を現在のプロセスにエクスポート
-await $`cd src && export MY_VALUE=5`.exportEnv();
-```
+// ファイル操作
+await $`cp source.txt target.txt`; // コピー
+await $`mv old.txt new.txt`;      // 移動
+await $`rm file.txt`;             // 削除
+await $`cat file.txt`;            // 内容表示
+await $`touch newfile.txt`;       // ファイル作成/更新
 
-## ログ関連機能
-
-```ts
-// 通常ログ
-$.log("Hello!");
-
-// 強調ログ
-$.logStep("Fetching data from server...");
-$.logStep("Setting up", "local directory..."); // 複数の単語をハイライト
-
-// エラーログ（赤色）
-$.logError("Error Some error message.");
-
-// 警告ログ（黄色）
-$.logWarn("Warning Some warning message.");
-
-// 重要度低いログ（グレー）
-$.logLight("Some unimportant message.");
-
-// インデントグループ
-await $.logGroup(async () => {
-  $.log("This will be indented.");
-  await $.logGroup(async () => {
-    $.log("This will indented even more.");
-  });
-});
-
-// ロガーの変更
-$.setInfoLogger(console.log);
-$.setWarnLogger(console.log);
-$.setErrorLogger(console.log);
-```
-
-## プロンプトと選択
-
-```ts
-// テキスト入力
-const name = await $.prompt("What's your name?");
-
-// オプション付き
-const nameWithDefault = await $.prompt({
-  message: "What's your name?",
-  default: "Dax",
-  noClear: true, // 結果表示後にテキストを消去しない
-});
-
-// マスク付き入力（パスワードなど）
-const password = await $.prompt("What's your password?", {
-  mask: true,
-});
-
-// Yes/No確認
-const result = await $.confirm("Would you like to continue?");
-
-// 単一選択
-const index = await $.select({
-  message: "What's your favourite colour?",
-  options: ["Red", "Green", "Blue"],
-});
-
-// 複数選択
-const indexes = await $.multiSelect({
-  message: "Which of the following are days of the week?",
-  options: [
-    "Monday",
-    {
-      text: "Wednesday",
-      selected: true, // デフォルトで選択
-    },
-    "Blue",
-  ],
-});
-```
-
-## 進捗表示
-
-```ts
-// 不確定進捗
-const pb = $.progress("Updating Database");
-await pb.with(async () => {
-  // 処理
-});
-
-// 確定進捗
-const items = [/* ... */];
-const pb = $.progress("Processing Items", {
-  length: items.length,
-});
-await pb.with(async () => {
-  for (const item of items) {
-    await doWork(item);
-    pb.increment(); // または pb.position(val)
-  }
-});
-
-// 同期処理での強制更新
-pb.with(() => {
-  for (const item of items) {
-    doWork(item);
-    pb.increment();
-    pb.forceRender(); // 強制的に進捗バーを更新
-  }
-});
-```
-
-## パスAPI
-
-```ts
-// Pathオブジェクト作成
-let srcDir = $.path("src");
-
-// パス情報取得
-srcDir.isDirSync(); // false
-
-// アクション実行
-await srcDir.mkdir();
-srcDir.isDirSync(); // true
-
-// パス解決
-srcDir.isRelative(); // true
-srcDir = srcDir.resolve(); // 絶対パスに解決
-srcDir.isAbsolute(); // true
-
-// パスの結合と操作
-const textFile = srcDir.join("subDir").join("file.txt");
-textFile.writeTextSync("some text");
-console.log(textFile.readTextSync()); // "some text"
-
-// JSON操作
-const jsonFile = srcDir.join("otherDir", "file.json");
-jsonFile.writeJsonSync({
-  someValue: 5,
-});
-console.log(jsonFile.readJsonSync().someValue); // 5
-```
-
-## その他のヘルパー機能
-
-```ts
-// 作業ディレクトリ変更
-$.cd("someDir");
-$.cd(import.meta); // 現在のスクリプトディレクトリへ
-
-// スリープ
-await $.sleep(100); // ms
-await $.sleep("1.5s");
-await $.sleep("1m30s");
-
-// 実行可能ファイルのパス取得
-console.log(await $.which("deno"));
-
-// コマンド存在確認
-console.log(await $.commandExists("deno"));
-console.log($.commandExistsSync("deno"));
-
-// リトライ機能
-await $.withRetries({
-  count: 5,
-  delay: "5s",
-  action: async () => {
-    await $`cargo publish`;
-  },
-});
-
-// インデント除去
-console.log($.dedent`
-    This line will appear without any indentation.
-      * This list will appear with 2 spaces more than previous line.
-`);
-
-// ANSI制御文字除去
-$.stripAnsi("\u001B[4mHello World\u001B[0m"); // 'Hello World'
+// ディレクトリ操作
+await $`mkdir -p new/sub/dir`;    // ディレクトリ作成
+await $`cd dir && pwd`;           // ディレクトリ移動と表示
+await $`rm -rf dir`;              // ディレクトリ削除
 ```
 
 ## HTTPリクエスト
 
 ```ts
-// JSONファイルのダウンロード
-const data = await $.request("https://plugins.dprint.dev/info.json").json();
-
-// テキストファイルのダウンロード
+// 基本リクエスト
 const text = await $.request("https://example.com").text();
+const json = await $.request("https://api.example.com/data").json();
 
-// 詳細レスポンス
-const response = await $.request("https://plugins.dprint.dev/info.json");
-console.log(response.code);
-console.log(await response.json());
+// リクエスト詳細オプション
+const response = await $.request("https://api.example.com/data")
+  .method("POST")
+  .header("Content-Type", "application/json")
+  .body(JSON.stringify({ key: "value" }))
+  .timeout("10s");
 
-// リクエストをコマンドにパイプ
-const request = $.request("https://plugins.dprint.dev/info.json");
-await $`deno run main.ts`.stdin(request);
-
-// リダイレクト構文
-await $`sleep 5 && deno run main.ts < ${request}`;
+// 結果取得
+console.log(response.status); // ステータスコード
+console.log(await response.json()); // レスポンスボディ (JSON)
 
 // 進捗表示付きダウンロード
-const url = "https://dl.deno.land/release/v1.29.1/deno-x86_64-unknown-linux-gnu.zip";
-const downloadPath = await $.request(url)
+const filePath = await $.request("https://example.com/large-file.zip")
   .showProgress()
-  .pipeToPath();
+  .pipeToPath(); // 一時ファイルに保存
+
+// リクエストをコマンドにパイプ
+const request = $.request("https://example.com/data.json");
+await $`jq . < ${request}`; // リクエスト結果をjqに渡す
 ```
 
-## シェル機能
+## UI関連機能
+
+### ログ出力
 
 ```ts
-// 連続コマンド実行（;）
-const result = await $`cd someDir ; deno eval 'console.log(Deno.cwd())'`;
+// 基本ログ
+$.log("通常のログメッセージ");
+$.logLight("薄い色のログ");
+$.logStep("処理ステップを強調");
+$.logWarn("警告メッセージ");
+$.logError("エラーメッセージ");
 
-// 論理リスト（&& と ||）
-await $`echo 1 && echo 2`; // 1\n2\n
-await $`echo 1 || echo 2`; // 1\n
+// インデントグループ
+await $.logGroup(async () => {
+  $.log("インデントされたログ");
+  await $.logGroup(async () => {
+    $.log("さらにインデントされたログ");
+  });
+});
 
-// パイプ
-await $`echo 1 | deno run main.ts`;
-
-// リダイレクト
-await $`echo 1 > output.txt`;
-const gzippedBytes = await $`gzip < input.txt`.bytes();
-
-// サブシェル
-await $`(echo 1 && echo 2) > output.txt`;
-
-// シェル変数（エクスポートされない）
-await $`test=123 && deno eval 'console.log(Deno.env.get("test"))' && echo $test`;
-
-// 環境変数（エクスポートされる）
-await $`export test=123 && deno eval 'console.log(Deno.env.get("test"))' && echo $test`;
+// インデント除去
+$.dedent`
+  インデントを保持したまま
+  複数行テキストを出力
+    インデントの差分は維持
+`;
 ```
 
-## カスタムクロスプラットフォームシェルコマンド
-
-daxには以下のクロスプラットフォームコマンドが実装されています：
-
-- `cd` - ディレクトリ変更
-- `echo` - テキスト出力
-- `exit` - 終了
-- `cp` - ファイルコピー
-- `mv` - ファイル移動
-- `rm` - ファイル/ディレクトリ削除
-- `mkdir` - ディレクトリ作成
-- `pwd` - 現在のディレクトリ表示
-- `sleep` - 一時停止
-- `test` - テスト
-- `touch` - ファイル作成
-- `unset` - 環境変数削除
-- `cat` - ファイル内容表示
-- `printenv` - 環境変数表示
-- `which` - 実行可能ファイルのパス解決
-
-## ビルダーAPI
-
-daxはイミュータブルなビルダーAPIを提供します。これらは内部的に使用されるものですが、特定の設定を再利用するのに便利です。
-
-### CommandBuilder
+### プロンプトと選択
 
 ```ts
-import { CommandBuilder } from "@david/dax";
+// テキスト入力
+const name = await $.prompt("名前を入力:");
+const pass = await $.prompt("パスワード:", { mask: true });
 
-const commandBuilder = new CommandBuilder()
-  .cwd("./subDir")
-  .stdout("inheritPiped")
-  .noThrow();
+// デフォルト値
+const value = await $.prompt({
+  message: "値を入力:",
+  default: "デフォルト値",
+});
 
-const result = await commandBuilder
-  .command("deno run my_script.ts")
-  .spawn();
+// Yes/No確認
+if (await $.confirm("続行しますか?")) {
+  // 処理続行
+}
+
+// 単一選択
+const selected = await $.select({
+  message: "色を選択:",
+  options: ["赤", "緑", "青"],
+});
+
+// 複数選択
+const selections = await $.multiSelect({
+  message: "項目を選択:",
+  options: [
+    "項目1",
+    { text: "項目2", selected: true }, // デフォルト選択
+    "項目3",
+  ],
+});
 ```
 
-### RequestBuilder
+### 進捗表示
 
 ```ts
-import { RequestBuilder } from "@david/dax";
+// 不確定進捗
+const progress = $.progress("処理中...");
+await progress.with(async () => {
+  // 長時間処理
+  await $.sleep("2s");
+});
 
-const requestBuilder = new RequestBuilder()
-  .header("SOME_VALUE", "some value to send in a header");
+// 確定進捗
+const items = [1, 2, 3, 4, 5];
+const pb = $.progress("アイテム処理中", {
+  length: items.length,
+});
 
-const result = await requestBuilder
-  .url("https://example.com")
-  .timeout("10s")
-  .text();
+await pb.with(async () => {
+  for (const item of items) {
+    await processItem(item);
+    pb.increment(); // 進捗を+1
+  }
+});
+
+// 進捗位置を直接設定
+pb.position(3); // 3/5
 ```
 
-### カスタム$
+## ユーティリティ
 
 ```ts
-import { build$, CommandBuilder, RequestBuilder } from "@david/dax";
+// スリープ
+await $.sleep(1000); // ミリ秒
+await $.sleep("1.5s"); // 文字列表記
+await $.sleep("1m30s"); // 複合表記
 
-// カスタム$の作成
-const $ = build$({
-  commandBuilder: new CommandBuilder()
-    .cwd("./subDir")
-    .env("HTTPS_PROXY", "some_value"),
-  requestBuilder: new RequestBuilder()
-    .header("SOME_NAME", "some value"),
-  extras: {
-    add(a: number, b: number) {
-      return a + b;
-    },
+// 作業ディレクトリ変更
+$.cd("subdir");
+$.cd(import.meta); // 現在のスクリプトの場所へ移動
+
+// コマンド存在確認
+if (await $.commandExists("git")) {
+  // gitコマンドを使用
+}
+
+// 実行パス解決
+const denoPath = await $.which("deno");
+
+// リトライ処理
+await $.withRetries({
+  count: 3,
+  delay: "2s",
+  action: async () => {
+    await $`curl https://flaky-api.example.com`;
   },
 });
 
-// カスタム関数の使用
-console.log($.add(1, 2)); // 3
+// ANSI制御文字除去
+const cleanText = $.stripAnsi("\u001B[31mエラー\u001B[0m"); // "エラー"
 ```
 
-## zxとの違い
+## カスタム設定
 
-1. クロスプラットフォームシェル
-   - Windowsでより多くのコードが動作
-   - シェル環境を現在のプロセスにエクスポート可能
-   - deno_task_shellのパーサーを使用
-   - 共通コマンドが組み込みでWindowsサポートが向上
+```ts
+// ビルダーAPIの使用
+import { CommandBuilder, RequestBuilder, build$ } from "jsr:@david/dax";
 
-2. グローバル設定の最小化
-   - デフォルトの$インスタンスのみ（使用は任意）
+// カスタム$の作成
+const myEnv = { API_KEY: "secret" };
+const custom$ = build$({
+  commandBuilder: new CommandBuilder()
+    .cwd("./app")
+    .env(myEnv)
+    .printCommand()
+    .timeout("30s"),
+    
+  requestBuilder: new RequestBuilder()
+    .header("Authorization", `Bearer ${myEnv.API_KEY}`)
+    .timeout("10s"),
+    
+  extras: {
+    // カスタム関数の追加
+    greet(name: string) {
+      return `Hello, ${name}!`;
+    }
+  },
+});
 
-3. 独自CLIなし
+// 使用例
+await custom$`echo "Working in app directory"`;
+console.log(custom$.greet("World")); // "Hello, World!"
+```
 
-4. シェルスクリプトの代替だけでなくアプリケーションコードにも適している
+## 主要なライブラリ違い
 
-5. 作者の猫にちなんで命名
+| 機能 | dax | zx |
+|------|-----|-----|
+| プラットフォーム | クロスプラットフォーム（Windows対応強化） | 主にUNIX系 |
+| シェル | カスタム実装（deno_task_shell） | JavaScriptを拡張したシェル |
+| グローバル設定 | 最小限（デフォルト$インスタンスのみ） | グローバルな環境設定 |
+| 使用シーン | シェルスクリプト代替とアプリコード両方 | 主にシェルスクリプト代替 |
+| 主な特徴 | パスAPI、プロンプト、進捗表示 | シェルに近い記法 |
+
+## 参考リンク
+
+- [GitHub](https://github.com/dsherret/dax)
+- [JSR パッケージ](https://jsr.io/@david/dax)
+- [npm パッケージ](https://www.npmjs.com/package/dax-sh)

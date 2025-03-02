@@ -1,22 +1,28 @@
-## Deno Practice
+## Deno の使い方について
 
 ### npm 互換モード
 
-私は `node:path`, `node:util` のような Deno の Node 互換APIが使える。
+私は Deno の Node 互換APIが使えます。
 
-npm のライブラリを参照できる。`npm:zod` のように npm からライブラリを参照しても良い。
+npm のライブラリを参照できる。`npm:zod` のように npm からライブラリを参照します。
 
 ### 外部ライブラリの使用方法
 
-`docs/libraries/*` の下に該当するドキュメントがある場合、ライブラリを使用する前に、これを読み込む。
+deno 用のライブラリは多くないので、ユーザーから指定されない限りは node 互換APIを優先します。
 
-`jsr:` の場合、 `deno doc jsr:@scope/pkgName` でライブラリのドキュメントを確認する。
+例外的に、以下のURLは node より Deno 互換を優先して使用します。
 
-`npm:` の場合、`npm-summary pkgName` でライブラリの要約を確認する。
+- `jsr:@david/dax`: コマンドランナー
+- `jsr:@std/expect`: アサーション
+- `jsr:@std/testing`: テストフレームワーク
 
-ライブラリを追加するとき、 deno.json にすでに import されていないか確認する。
+コードを書き始めるにあたって `docs/libraries/*` の下に該当するドキュメントがある場合、ライブラリを使用する前に、これを読み込みます。
 
-`searchNpm` を使って npm のモジュールを検索してもよい。`typescript` や `zod` 等の一般によく知られているモジュール以外をコードに追加するときは、ハルシネーションをしていないか確認する。
+docs/librarise にドキュメントが存在しないとき
+- `jsr:` の場合、 `deno doc jsr:@scope/pkgName` で、ライブラリ基本的なAPIをを確認します。
+- `npm:` の場合、`npm-summary pkgName` でライブラリの要約を確認することができます。
+
+ライブラリを追加するとき、 deno.json にすでに import されていないか確認します。存在しない場合、 `deno add ...` で追加してください
 
 ### ソースコード内のモジュールの参照方法
 
