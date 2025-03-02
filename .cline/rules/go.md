@@ -464,3 +464,7 @@ func main() {
    - 単一責任の原則に従う
    - 適切な粒度でモジュール化
    - 循環参照を避ける
+
+5. ディレクトリ構造
+   - 無闇にpackage名でディレクトリを切らない
+   - 例えばinternal/package_name/package_name.goではなく、internal/filename.goで良い
