@@ -32,7 +32,7 @@ source: "project"
 
 - MCP: searchWeb でインターネットを検索する
 - MCP: searchNpm で npm ライブラリを検索する
-- コマンド `npm-summary pkg` コマンド
+- コマンド `deno run -A jsr:@mizchi/npm-summary/cli pkgname`
 
 npm-summary pkg の使い方。
 
