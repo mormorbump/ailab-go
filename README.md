@@ -177,7 +177,7 @@ TypeScriptでのAdapterパターンは、外部依存を抽象化し、テスト
 
 ```
 .cline/
-├── build.ts        - プロンプトファイルを結合して .clinerules と .roomodes を生成するスクリプト
+├── build.go        - プロンプトファイルを結合して .clinerules と .roomodes を生成するスクリプト
 ├── rules/          - コーディングルールを定義するマークダウンファイル
 │   ├── 01_basic.md       - 基本的なルールと AI Coding with Deno の概要
 │   ├── deno_rules.md     - Deno に関するルール（テスト、モジュール依存関係など）
@@ -191,7 +191,7 @@ TypeScriptでのAdapterパターンは、外部依存を抽象化し、テスト
 
 ### 生成されるファイル
 
-`.cline/build.ts` スクリプトを実行すると、以下のファイルが生成されます：
+`.cline/build.go` スクリプトを実行すると、以下のファイルが生成されます：
 
 1. `.clinerules` - `rules` ディレクトリ内のマークダウンファイルを結合したファイル
 2. `.roomodes` - `roomodes` ディレクトリ内のマークダウンファイルから生成された JSON ファイル
@@ -200,10 +200,10 @@ TypeScriptでのAdapterパターンは、外部依存を抽象化し、テスト
 
 1. `.cline/rules` ディレクトリにコーディングルールを定義するマークダウンファイルを追加または編集します。
 2. `.cline/roomodes` ディレクトリに実装モードを定義するマークダウンファイルを追加または編集します。
-3. `.cline/build.ts` スクリプトを実行して、`.clinerules` と `.roomodes` ファイルを生成します。
+3. `.cline/build.go` スクリプトを実行して、`.clinerules` と `.roomodes` ファイルを生成します。
 
 ```bash
-deno run --allow-read --allow-write .cline/build.ts
+deno run --allow-read --allow-write .cline/build.go
 ```
 
 4. 生成された `.clinerules` と `.roomodes` ファイルは、AI コーディングアシスタント（CLINE/Roo など）によって読み込まれ、プロジェクトのルールとモードが適用されます。
@@ -269,7 +269,7 @@ deno run --allow-read --allow-write .cline/build.ts
    deno cache --reload deps.ts
 
    # ルールとモードの生成
-   deno run --allow-read --allow-write .cline/build.ts
+   deno run --allow-read --allow-write .cline/build.go
    ```
 
 ### 開発ワークフロー

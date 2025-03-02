@@ -1086,9 +1086,9 @@ func main() {
 記事を読んで本文を取得する。
 「～について調べて」と言われたとき、知らないときはユーザーにURLを要求してもいい。
 このプロジェクトには以下のモードが定義されています:
-- go-module Go:Module at .cline/roomodes/go-module.md
-- go-refactor Go:RefactorMode at .cline/roomodes/go-refactor.md
-- go-script Go:ScriptMode at .cline/roomodes/go-script.md
-- go-tdd Go:TestFirstMode at .cline/roomodes/go-tdd.md
-- kazuki-writer kazuki:writer at .cline/roomodes/kazuki-writer.md
-- libarary-searcher LibraryResearcher at .cline/roomodes/libarary-searcher.md
+- deno-refactor  at roomodes/deno-refactor.md
+- deno-script Deno:ScriptMode at roomodes/deno-script.md
+- deno-tdd Deno:TestFirstMode at roomodes/deno-tdd.md
+- go-module Go:Module at roomodes/go-module.md
+- kazuki-writer kazuki:writer at roomodes/kazuki-writer.md
+- libarary-searcher  at roomodes/libarary-searcher.md
