@@ -2458,6 +2458,19 @@
           "npm:zod@^3.24.2"
         ]
       },
+      "ddd-sample": {
+        "dependencies": [
+          "jsr:@std/expect@^1.0.13",
+          "jsr:@std/testing@^1.0.9",
+          "npm:neverthrow@^8.2.0"
+        ]
+      },
+      "ddd-sample-light": {
+        "dependencies": [
+          "jsr:@std/expect@^1.0.13",
+          "jsr:@std/testing@^1.0.9"
+        ]
+      },
       "npm-summary": {
         "dependencies": [
           "jsr:@std/expect@^1.0.13",

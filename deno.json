@@ -12,7 +12,14 @@
     },
     "include": ["scripts/*.ts"]
   },
-  "workspace": ["./zodcli", "./__deprecated/todo-cli", "todo2", "npm-summary"],
+  "workspace": [
+    "./zodcli",
+    "./__deprecated/todo-cli",
+    "todo2",
+    "npm-summary",
+    "./ddd-sample",
+    "./ddd-sample-light"
+  ],
   "tasks": {
     "build-prompt": "deno run -A .cline/build.ts",
     "test": "deno test -A .",
