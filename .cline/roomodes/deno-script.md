@@ -13,7 +13,8 @@ source: "project"
 
 - 外部依存を可能な限り減らして、一つのファイルに完結してすべてを記述する
 - テストコードも同じファイルに記述する
-- スクリプトモードは `@script` がコード中に含まれる場合、あるいは `scripts/*` や `script/*` 以下のファイルが該当する
+- スクリプトモードは `@script` がコード中に含まれる場合、あるいは `scripts/*` や
+  `script/*` 以下のファイルが該当する
 
 スクリプトモードの例
 
@@ -40,7 +41,9 @@ test("add(1, 2) = 3", () => {
 });
 ```
 
-CLINE/Rooのようなコーディングエージェントは、まず `deno run add.ts` で実行して、要求に応じて `deno test -A <filename>` で実行可能なようにテストを増やしていく。
+CLINE/Rooのようなコーディングエージェントは、まず `deno run add.ts`
+で実行して、要求に応じて `deno test -A <filename>`
+で実行可能なようにテストを増やしていく。
 
 スクリプトモードでは曖昧なバージョンの import を許可する。
 
@@ -50,9 +53,7 @@ CLINE/Rooのようなコーディングエージェントは、まず `deno run 
 - `jsr:`
 - `npm:`
 
-
 `https://deno.land/x/*` は代替がない限りは推奨しない。
-
 
 ```ts
 // OK
@@ -61,7 +62,7 @@ import $ from "jsr:@david/dax";
 import { z } from "npm:zod";
 
 // Not Recommended
-import * as cbor from "https://deno.land/x/cbor"
+import * as cbor from "https://deno.land/x/cbor";
 ```
 
 最初にスクリプトモードで検証し、モジュールモードに移行していく。

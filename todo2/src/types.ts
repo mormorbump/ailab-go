@@ -1,5 +1,5 @@
 import { z } from "npm:zod";
-import { todos, chatHistory } from "../db/schema.ts";
+import type { chatHistory, todos } from "../db/schema.ts";
 import type { InferSelectModel } from "drizzle-orm";
 
 /**
@@ -104,7 +104,7 @@ export function drizzleTodoToTodo(todo: DrizzleTodo): Todo {
  * DrizzleとZodの型を変換するヘルパー関数（ChatHistory用）
  */
 export function drizzleChatHistoryToChatHistory(
-  history: DrizzleChatHistory
+  history: DrizzleChatHistory,
 ): ChatHistory {
   return {
     id: history.id,

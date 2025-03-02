@@ -14,11 +14,11 @@ const decoder = new TextDecoder();
  */
 export async function ask(
   question: string,
-  defaultValue = ""
+  defaultValue = "",
 ): Promise<string> {
   // プロンプトを表示
   Deno.stdout.write(
-    encoder.encode(`${question}${defaultValue ? ` (${defaultValue})` : ""}: `)
+    encoder.encode(`${question}${defaultValue ? ` (${defaultValue})` : ""}: `),
   );
 
   // 入力を読み込む
@@ -44,7 +44,7 @@ export async function ask(
  */
 export async function confirm(
   question: string,
-  defaultIsYes = true
+  defaultIsYes = true,
 ): Promise<boolean> {
   const defaultText = defaultIsYes ? "Y/n" : "y/N";
   const defaultValue = defaultIsYes ? "y" : "n";
@@ -82,7 +82,7 @@ export async function confirm(
 export async function select<T extends string>(
   question: string,
   choices: readonly T[],
-  defaultIndex = 0
+  defaultIndex = 0,
 ): Promise<T> {
   if (choices.length === 0) {
     throw new Error("選択肢がありません");
@@ -98,7 +98,9 @@ export async function select<T extends string>(
   // プロンプトを表示
   const defaultValue = String(defaultIndex + 1);
   Deno.stdout.write(
-    encoder.encode(`選択してください (1-${choices.length}) [${defaultValue}]: `)
+    encoder.encode(
+      `選択してください (1-${choices.length}) [${defaultValue}]: `,
+    ),
   );
 
   // 入力を読み込む
@@ -127,7 +129,7 @@ export async function select<T extends string>(
     selectedIndex >= choices.length
   ) {
     console.log(
-      `無効な選択です。デフォルトの ${defaultIndex + 1} を使用します。`
+      `無効な選択です。デフォルトの ${defaultIndex + 1} を使用します。`,
     );
     return choices[defaultIndex];
   }

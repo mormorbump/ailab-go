@@ -10,10 +10,10 @@
    ```bash
    # 未追跡ファイルと変更の確認
    git status
-   
+
    # 変更内容の詳細確認
    git diff
-   
+
    # コミットメッセージのスタイル確認
    git log
    ```
@@ -57,13 +57,13 @@
    ```bash
    # 未コミットの変更確認
    git status
-   
+
    # 変更内容の確認
    git diff
-   
+
    # mainからの差分確認
    git diff main...HEAD
-   
+
    # コミット履歴の確認
    git log
    ```
@@ -163,3 +163,4 @@ TypeScriptのエラー処理をより型安全にするため、Result型を導�
 - Result型の使用方法が適切か
 - エラーケースの網羅性
 - テストの十分性
+```

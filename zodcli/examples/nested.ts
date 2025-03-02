@@ -4,10 +4,10 @@
  */
 import {
   createNestedParser,
-  isHelp,
   type InferArgs,
-  type InferParser,
   type InferNestedParser,
+  type InferParser,
+  isHelp,
 } from "../mod.ts";
 import { z } from "npm:zod";
 
@@ -125,7 +125,7 @@ if (import.meta.main) {
     console.log(gitParser.help());
     console.log("-".repeat(50));
     console.log(
-      "プログラムを終了します (isHelpデモのため実際には終了しません)"
+      "プログラムを終了します (isHelpデモのため実際には終了しません)",
     );
     // 実際のアプリケーションではここでDeno.exit(0)を呼び出します
   } else {
@@ -145,7 +145,7 @@ if (import.meta.main) {
     // 型安全な分岐処理
     if (command === "add") {
       console.log(
-        `  ファイル: ${data.files.join(", ")}, 全ファイル追加: ${data.all}`
+        `  ファイル: ${data.files.join(", ")}, 全ファイル追加: ${data.all}`,
       );
     } else if (command === "commit") {
       console.log(`  メッセージ: ${data.message}, アメンド: ${data.amend}`);
@@ -153,7 +153,7 @@ if (import.meta.main) {
   } catch (error) {
     console.error(
       "  パースエラー:",
-      error instanceof Error ? error.message : String(error)
+      error instanceof Error ? error.message : String(error),
     );
   }
 
@@ -164,7 +164,7 @@ if (import.meta.main) {
     const mockDefaultArgs = ["file1.txt", "file2.txt", "--all"];
     console.log(`  引数: ${mockDefaultArgs.join(" ")}`);
     console.log(
-      `  (サブコマンドなしで実行。デフォルトは '${gitParser.defaultCommand}')`
+      `  (サブコマンドなしで実行。デフォルトは '${gitParser.defaultCommand}')`,
     );
 
     // 引数のパース - サブコマンドが省略されているがデフォルトが使用される
@@ -174,13 +174,13 @@ if (import.meta.main) {
     // データの表示
     if (command === "add") {
       console.log(
-        `  ファイル: ${data.files.join(", ")}, 全ファイル追加: ${data.all}`
+        `  ファイル: ${data.files.join(", ")}, 全ファイル追加: ${data.all}`,
       );
     }
   } catch (error) {
     console.error(
       "  パースエラー:",
-      error instanceof Error ? error.message : String(error)
+      error instanceof Error ? error.message : String(error),
     );
   }
 
@@ -215,7 +215,7 @@ if (import.meta.main) {
     } else {
       console.error(
         "  予期しないエラー:",
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
     }
   }

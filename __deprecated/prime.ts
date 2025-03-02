@@ -97,7 +97,7 @@ import { test } from "@std/testing/bdd";
 test("sieveOfEratosthenes handles edge cases", () => {
   expect(
     sieveOfEratosthenes(-1),
-    "negative number returns empty array"
+    "negative number returns empty array",
   ).toEqual([]);
   expect(sieveOfEratosthenes(0), "zero returns empty array").toEqual([]);
   expect(sieveOfEratosthenes(1), "one returns empty array").toEqual([]);
@@ -114,7 +114,14 @@ test("sieveOfEratosthenes(10) returns first primes", () => {
 
 test("sieveOfEratosthenes(20) returns correct primes", () => {
   expect(sieveOfEratosthenes(20), "primes up to 20").toEqual([
-    2, 3, 5, 7, 11, 13, 17, 19,
+    2,
+    3,
+    5,
+    7,
+    11,
+    13,
+    17,
+    19,
   ]);
 });
 
@@ -123,7 +130,7 @@ test("sieveOfEratosthenes returns more primes for larger numbers", () => {
   const primes100 = sieveOfEratosthenes(100);
   expect(
     primes100.length > primes50.length,
-    "more primes in larger range"
+    "more primes in larger range",
   ).toBe(true);
   expect(primes100[primes100.length - 1], "largest prime under 100").toBe(97);
 });

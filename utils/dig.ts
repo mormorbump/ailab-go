@@ -30,16 +30,14 @@ type Split<S extends string> = S extends `${infer T}.${infer U}`
   ? [T, ...Split<U>]
   : [S];
 
-type DeepValue<T, P extends readonly string[]> = P extends []
-  ? T
+type DeepValue<T, P extends readonly string[]> = P extends [] ? T
   : P extends readonly [infer First, ...infer Rest]
-  ? First extends "*"
-    ? Rest extends readonly string[]
-      ? { [K in keyof T]: DeepValue<T[K], Rest> }
+    ? First extends "*"
+      ? Rest extends readonly string[]
+        ? { [K in keyof T]: DeepValue<T[K], Rest> }
       : never
     : First extends keyof T
-    ? Rest extends readonly string[]
-      ? DeepValue<T[First], Rest>
+      ? Rest extends readonly string[] ? DeepValue<T[First], Rest>
       : never
     : never
   : never;
@@ -49,10 +47,8 @@ export type StringQuery = string;
 export type ArrayQuery = readonly string[];
 export type Query = StringQuery | ArrayQuery;
 
-type QueryToArray<Q> = Q extends StringQuery
-  ? Split<Q>
-  : Q extends ArrayQuery
-  ? Q
+type QueryToArray<Q> = Q extends StringQuery ? Split<Q>
+  : Q extends ArrayQuery ? Q
   : never;
 
 /**
@@ -60,7 +56,7 @@ type QueryToArray<Q> = Q extends StringQuery
  */
 export function dig<T, Q extends Query>(
   obj: T,
-  query: Q
+  query: Q,
 ): DeepValue<T, QueryToArray<Q>> {
   return digUntyped(obj, query) as DeepValue<T, QueryToArray<Q>>;
 }
@@ -76,7 +72,7 @@ type UntypedQuery = StringQuery | UntypedArrayQuery;
  * 特殊クエリのパース
  */
 function parseSpecialQuery(
-  query: string
+  query: string,
 ): { type: string; args: string[] } | null {
   const match = query.match(/^\$(\w+)\{([^}]*)\}$/);
   if (!match) return null;
@@ -366,7 +362,7 @@ test("digUntyped - object query", () => {
       {
         user1: (v: any) => v.id,
       },
-    ])
+    ]),
   ).toEqual({
     user1: "id1",
   });
@@ -379,7 +375,7 @@ test("digUntyped - object query", () => {
         user1: (v: any) => ({ id: v.id, name: v.name }),
         user2: (v: any) => v.id,
       },
-    ])
+    ]),
   ).toEqual({
     user1: { id: "id1", name: "Alice" },
     user2: "id2",
@@ -403,7 +399,7 @@ test("digUntyped - object query", () => {
         user1: { profile: (v: any) => v.id },
         user2: { profile: (v: any) => v.name },
       },
-    ])
+    ]),
   ).toEqual({
     user1: { profile: "id1" },
     user2: { profile: "Bob" },

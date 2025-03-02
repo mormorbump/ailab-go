@@ -1,13 +1,13 @@
 import { z } from "npm:zod";
 import type {
-  QueryBase,
   NestedCommandMap,
   NestedCommandResult,
+  QueryBase,
 } from "./types.ts";
 
 // Zodの型からparseArgsの型に変換
 export function zodTypeToParseArgsType(
-  zodType: z.ZodTypeAny
+  zodType: z.ZodTypeAny,
 ): "string" | "boolean" {
   if (zodType instanceof z.ZodBoolean) {
     return "boolean";
@@ -19,7 +19,7 @@ export function zodTypeToParseArgsType(
 // 値の型変換
 export function convertValue(
   value: string | boolean | string[] | undefined,
-  zodType: z.ZodTypeAny
+  zodType: z.ZodTypeAny,
 ): any {
   if (value === undefined) {
     return undefined;
@@ -105,7 +105,7 @@ export function generateHelp<T extends Record<string, QueryBase<any>>>(
   commandName: string,
   description: string,
   queryDef: T,
-  subCommands?: NestedCommandMap
+  subCommands?: NestedCommandMap,
 ): string {
   let help = `${commandName}\n> ${description}\n\n`;
 
@@ -120,7 +120,7 @@ export function generateHelp<T extends Record<string, QueryBase<any>>>(
 
   // 位置引数の説明
   const positionals = Object.entries(queryDef).filter(
-    ([_, def]) => def.positional != null && def.positional !== "..."
+    ([_, def]) => def.positional != null && def.positional !== "...",
   );
   if (positionals.length > 0) {
     help += "ARGUMENTS:\n";
@@ -132,7 +132,7 @@ export function generateHelp<T extends Record<string, QueryBase<any>>>(
     help += "\n";
   }
   const positionalRest = Object.entries(queryDef).find(
-    ([_, def]) => def.positional === "..."
+    ([_, def]) => def.positional === "...",
   );
   if (positionalRest) {
     const [key, def] = positionalRest;
@@ -143,7 +143,7 @@ export function generateHelp<T extends Record<string, QueryBase<any>>>(
 
   // オプションの説明
   const options = Object.entries(queryDef).filter(
-    ([_, def]) => !def.positional
+    ([_, def]) => !def.positional,
   );
   if (options.length > 0) {
     help += "OPTIONS:\n";
@@ -151,14 +151,14 @@ export function generateHelp<T extends Record<string, QueryBase<any>>>(
       const typeStr = getTypeDisplayString(def.type);
       const shortOption = def.short ? `-${def.short}` : "";
       const desc = def.type.description || def.description || "";
-      const defaultValue =
-        def.type instanceof z.ZodDefault
-          ? ` (default: ${JSON.stringify(def.type._def.defaultValue())})`
-          : "";
+      const defaultValue = def.type instanceof z.ZodDefault
+        ? ` (default: ${JSON.stringify(def.type._def.defaultValue())})`
+        : "";
 
       // boolean型の場合は <type> を表示しない
-      const typeDisplay =
-        def.type instanceof z.ZodBoolean ? "" : ` <${typeStr}>`;
+      const typeDisplay = def.type instanceof z.ZodBoolean
+        ? ""
+        : ` <${typeStr}>`;
       help += `  --${key}${
         shortOption ? ", " + shortOption : ""
       }${typeDisplay} - ${desc}${defaultValue}\n`;
@@ -175,7 +175,7 @@ export function generateHelp<T extends Record<string, QueryBase<any>>>(
 
 // Zodスキーマから型推論した結果と整合する型変換ヘルパー
 export function createTypeFromZod<T extends z.ZodTypeAny>(
-  schema: T
+  schema: T,
 ): z.infer<T> {
   // 単に型推論のためのヘルパー関数
   // 実際の実行時には何もしない（型情報のみ）

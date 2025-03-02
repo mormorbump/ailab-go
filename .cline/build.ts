@@ -86,18 +86,20 @@ async function main() {
       // console.log(roomodes.customModes);
       for (const mode of roomodes.customModes) {
         // const def = roomodes.customModes.find((m) => m.name === mode)!;
-        result += `\n- ${mode.slug} ${mode.name} at ${path.relative(
-          Deno.cwd(),
-          mode.__filename
-        )}`;
+        result += `\n- ${mode.slug} ${mode.name} at ${
+          path.relative(
+            Deno.cwd(),
+            mode.__filename,
+          )
+        }`;
       }
     }
     await Deno.writeTextFile(
       path.join(Deno.cwd(), ".roomodes"),
-      JSON.stringify(roomodes, null, 2)
+      JSON.stringify(roomodes, null, 2),
     );
     console.log(
-      `Generated .roomodes from ${roomodes.customModes.length} mode files`
+      `Generated .roomodes from ${roomodes.customModes.length} mode files`,
     );
 
     await Deno.writeTextFile(OUTPUT_FILE, result);

@@ -156,7 +156,7 @@
    // deps.ts の例
    export { expect } from "@std/expect";
    export { test } from "@std/testing/bdd";
-   export { Result, ok, err } from "npm:neverthrow";
+   export { err, ok, Result } from "npm:neverthrow";
    export { z } from "npm:zod";
    ```
 

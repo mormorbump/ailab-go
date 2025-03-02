@@ -94,7 +94,7 @@ function copySegmentsWithoutArrayInfo(segments: PathSegment[]): PathSegment[] {
 export function flattenJson(
   json: unknown,
   currentPath: PathSegment[] = [],
-  result: PathInfo[] = []
+  result: PathInfo[] = [],
 ): PathInfo[] {
   const type = getValueType(json);
   const isNullable = json === null;
@@ -130,8 +130,7 @@ export function flattenJson(
       };
       flattenJson(value, [...currentPath, segment], result);
     }
-  }
-  // 配列の場合は要素を展開
+  } // 配列の場合は要素を展開
   else if (type === "array" && Array.isArray(json)) {
     // 各要素を展開
     json.forEach((item, index) => {
@@ -159,7 +158,7 @@ function debugPathInfo(info: PathInfo): string {
       segments: info.segments,
     },
     null,
-    2
+    2,
   );
 }
 
@@ -279,7 +278,7 @@ test("flattenJson - arrays", () => {
 
   // scores配列のパス情報
   const scoresPath = result.find(
-    (p) => p.segments.length === 1 && p.segments[0].value === "scores"
+    (p) => p.segments.length === 1 && p.segments[0].value === "scores",
   );
   expect(scoresPath?.type).toBe("array");
   expect(scoresPath?.segments[0].arrayAccess).toBe(true);
@@ -287,7 +286,7 @@ test("flattenJson - arrays", () => {
 
   // mixed配列のパス情報
   const mixedPath = result.find(
-    (p) => p.segments.length === 1 && p.segments[0].value === "mixed"
+    (p) => p.segments.length === 1 && p.segments[0].value === "mixed",
   );
   expect(mixedPath?.type).toBe("array");
   expect(mixedPath?.segments[0].arrayAccess).toBe(true);
@@ -324,7 +323,7 @@ test("flattenJson - complex nested structure", () => {
 
   // users配列のパス情報
   const usersPath = result.find(
-    (p) => p.segments.length === 1 && p.segments[0].value === "users"
+    (p) => p.segments.length === 1 && p.segments[0].value === "users",
   );
   expect(usersPath?.type).toBe("array");
   expect(usersPath?.segments[0].arrayAccess).toBe(true);

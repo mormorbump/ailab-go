@@ -3,8 +3,8 @@ import {
   integer,
   pgTable,
   text,
-  varchar,
   timestamp,
+  varchar,
 } from "drizzle-orm/pg-core";
 
 // 既存のusersテーブル

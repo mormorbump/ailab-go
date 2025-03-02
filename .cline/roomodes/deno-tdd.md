@@ -27,18 +27,19 @@ $ deno test -A <module> --report=pretty
 
 テストコードは以下の順序で実装する：
 
-1.  期待する結果（アサーション）を最初に書く
-2.  アサーションの妥当性をユーザーに確認
-3.  確認が取れたら、操作（Act）のコードを書く
-4.  最後に、準備（Arrange）のコードを書く
+1. 期待する結果（アサーション）を最初に書く
+2. アサーションの妥当性をユーザーに確認
+3. 確認が取れたら、操作（Act）のコードを書く
+4. 最後に、準備（Arrange）のコードを書く
 
-これは実行順序（Arrange → Act → Assert）とは異なる。実装を結果から始めることで、目的を明確にしてから実装を進められる。
+これは実行順序（Arrange → Act →
+Assert）とは異なる。実装を結果から始めることで、目的を明確にしてから実装を進められる。
 
 実装例：
 
 ```ts
 // @script @tdd
-import { Result, ok, err } from "npm:neverthrow";
+import { err, ok, Result } from "npm:neverthrow";
 
 // 型定義
 export interface User {
@@ -46,12 +47,15 @@ export interface User {
   name: string;
 }
 
-export type ApiError = 
+export type ApiError =
   | { type: "unauthorized"; message: string }
   | { type: "network"; message: string };
 
 // インターフェース定義
-declare function getUser(token: string, id: string): Promise<Result<User, ApiError>>;
+declare function getUser(
+  token: string,
+  id: string,
+): Promise<Result<User, ApiError>>;
 
 import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
@@ -60,7 +64,7 @@ test("有効なトークンの場合にユーザー情報を取得すると成�
   // 1. まず期待する結果を書く
   const expectedUser: User = {
     id: "1",
-    name: "Test User"
+    name: "Test User",
   };
 
   // 2. ここでユーザーに結果の妥当性を確認
@@ -72,7 +76,7 @@ test("有効なトークンの場合にユーザー情報を取得すると成�
 
   // アサーション
   expect(result.isOk()).toBe(true);
-  result.map(user => {
+  result.map((user) => {
     expect(user).toEqual(expectedUser);
   });
 });
@@ -81,7 +85,7 @@ test("無効なトークンの場合にユーザー情報を取得するとエ�
   // 1. まず期待する結果を書く
   const expectedError: ApiError = {
     type: "unauthorized",
-    message: "Invalid token"
+    message: "Invalid token",
   };
 
   // 2. ユーザーに結果の妥当性を確認
@@ -91,7 +95,7 @@ test("無効なトークンの場合にユーザー情報を取得するとエ�
 
   // アサーション
   expect(result.isErr()).toBe(true);
-  result.mapErr(error => {
+  result.mapErr((error) => {
     expect(error).toEqual(expectedError);
   });
 });
@@ -106,15 +110,18 @@ test("無効なトークンの場合にユーザー情報を取得するとエ�
 ```
 
 例：
+
 - 「有効なトークンの場合にユーザー情報を取得すると成功すること」
 - 「無効なトークンの場合にユーザー情報を取得するとエラーになること」
-
 
 ### 開発手順の詳細
 
 1. 型シグネチャの定義
    ```ts
-   declare function getUser(token: string, id: string): Promise<Result<User, ApiError>>;
+   declare function getUser(
+     token: string,
+     id: string,
+   ): Promise<Result<User, ApiError>>;
    ```
 
    ライブラリの時は export をつける
@@ -125,7 +132,7 @@ test("無効なトークンの場合にユーザー情報を取得するとエ�
    ```ts
    const expectedUser: User = {
      id: "1",
-     name: "Test User"
+     name: "Test User",
    };
    ```
 
@@ -162,19 +169,28 @@ tdd-example/
 
 ### 実際にTDDを行う手順 (Steps)
 
-1.  **テストを書く**: コードの期待される動作を定義するテストケースを `mod.test.ts` に記述します。
-2.  **テストの失敗を確認する**: 実装がないため、テストが失敗することを確認します。
-3.  **コードを実装する**: テストケースを満たすコードを `lib.ts` に実装します。
-4.  **テストの成功を確認する**: テストが成功することを確認します。
+1. **テストを書く**: コードの期待される動作を定義するテストケースを
+   `mod.test.ts` に記述します。
+2. **テストの失敗を確認する**:
+   実装がないため、テストが失敗することを確認します。
+3. **コードを実装する**: テストケースを満たすコードを `lib.ts` に実装します。
+4. **テストの成功を確認する**: テストが成功することを確認します。
 
 ### 落ちるテストを追加するときの手順
 
-1.  **テストが通ることを確認**: `deno test -A . --reporter=dot` でテストを実行し、すべてのテストが通ることを確認します。
-2.  **落ちるテストを追加**: 新しいテストケースを `mod.test.ts` に追加します。このテストは、まだ実装がないため失敗するはずです。
-3.  **テストが落ちることを確認**: `deno test -A tdd-example --reporter=dot` でテストを実行し、追加したテストが失敗することを確認します。
-4.  **落ちたテストだけを再実行**: `deno test -A tdd-example --reporter=dot --filter <テスト名>` で、落ちたテストだけを再実行します。`<テスト名>` は、失敗したテストの名前で置き換えてください。
-5.  **型を通す**: `lib.ts` に関数を定義し、`mod.ts` で re-export します。実装は `throw new Error("wip")` とします。
-6.  **実装**: `lib.ts` にテストが通る実装を記述します。
+1. **テストが通ることを確認**: `deno test -A . --reporter=dot`
+   でテストを実行し、すべてのテストが通ることを確認します。
+2. **落ちるテストを追加**: 新しいテストケースを `mod.test.ts`
+   に追加します。このテストは、まだ実装がないため失敗するはずです。
+3. **テストが落ちることを確認**: `deno test -A tdd-example --reporter=dot`
+   でテストを実行し、追加したテストが失敗することを確認します。
+4. **落ちたテストだけを再実行**:
+   `deno test -A tdd-example --reporter=dot --filter <テスト名>`
+   で、落ちたテストだけを再実行します。`<テスト名>`
+   は、失敗したテストの名前で置き換えてください。
+5. **型を通す**: `lib.ts` に関数を定義し、`mod.ts` で re-export します。実装は
+   `throw new Error("wip")` とします。
+6. **実装**: `lib.ts` にテストが通る実装を記述します。
 
 ### リファクターフェーズ
 
@@ -215,7 +231,8 @@ tdd-example/
 
 #### デッドコード削除のためのTSRの活用
 
-テストが通った段階で、TSR（TypeScript Remove）を使ってデッドコード（未使用コード）を検出することも推奨します。
+テストが通った段階で、TSR（TypeScript
+Remove）を使ってデッドコード（未使用コード）を検出することも推奨します。
 
 1. まずデッドコードの検出：
    ```bash

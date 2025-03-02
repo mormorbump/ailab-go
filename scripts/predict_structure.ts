@@ -60,7 +60,7 @@ function getLastKey(path: string): string {
  * パスの親子関係を抽出
  */
 function extractPathRelations(
-  samples: Map<string, { sampleValues: unknown[] }>
+  samples: Map<string, { sampleValues: unknown[] }>,
 ): Map<string, PathRelation> {
   const relations = new Map<string, PathRelation>();
 
@@ -161,7 +161,7 @@ function isArrayPath(relation: PathRelation): boolean {
 function detectRecordPattern(
   children: Set<string>,
   relations: Map<string, PathRelation>,
-  path: string
+  path: string,
 ): { isRecord: boolean; keyPattern?: string; valueType?: string } {
   if (children.size < 2) return { isRecord: false };
 
@@ -193,7 +193,7 @@ function detectRecordPattern(
   // 型の互換性をチェック
   const compatibleTypes = new Set(["string", "number", "boolean"]);
   const hasCompatibleTypes = Array.from(childTypes).every(
-    (type) => type === "null" || compatibleTypes.has(type)
+    (type) => type === "null" || compatibleTypes.has(type),
   );
 
   // Record型として判定する条件
@@ -227,7 +227,7 @@ function detectRecordPattern(
  */
 function predictStructure(
   path: string,
-  relations: Map<string, PathRelation>
+  relations: Map<string, PathRelation>,
 ): StructurePrediction {
   const relation = relations.get(path);
   if (!relation) {
@@ -251,7 +251,7 @@ function predictStructure(
         Array.from(relation.children).map((childPath) => [
           getLastKey(childPath),
           predictStructure(childPath, relations),
-        ])
+        ]),
       ),
     };
   }
@@ -284,7 +284,7 @@ function predictStructure(
  * 構造を予測して出力
  */
 function predictAndPrintStructure(
-  samples: Map<string, { sampleValues: unknown[] }>
+  samples: Map<string, { sampleValues: unknown[] }>,
 ): void {
   const relations = extractPathRelations(samples);
 
@@ -462,7 +462,7 @@ test("isArrayPath - array detection", () => {
       key: "scores",
       children: new Set(),
       samples: [[1, 2, 3]],
-    })
+    }),
   ).toBe(true);
 
   // 配列要素のパス
@@ -472,7 +472,7 @@ test("isArrayPath - array detection", () => {
       key: "$",
       children: new Set(),
       samples: [1],
-    })
+    }),
   ).toBe(true);
 
   // 通常のオブジェクト
@@ -482,6 +482,6 @@ test("isArrayPath - array detection", () => {
       key: "name",
       children: new Set(),
       samples: ["John"],
-    })
+    }),
   ).toBe(false);
 });

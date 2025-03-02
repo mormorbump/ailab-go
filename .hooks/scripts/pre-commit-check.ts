@@ -1,7 +1,12 @@
 #!/usr/bin/env -S deno run -A
 
 // ワークスペース一覧
-const workspaces = ["npm-summary", "zodcli", "todo-cli", "todo2"];
+// const workspaces = ["npm-summary", "zodcli", "todo-cli", "todo2"];
+import path from "node:path";
+const rootConfig = Deno.readTextFileSync(
+  path.join(Deno.cwd(), "deno.json"),
+);
+const workspaces = JSON.parse(rootConfig).workspace;
 const rootLevelScripts = ["scripts"];
 
 // Git でステージングされたファイル一覧を取得
@@ -49,7 +54,7 @@ console.log("Changed paths:", [...changedPaths]);
 // フォーマットチェック（全体）
 console.log("\n📝 Running format check...");
 const fmtProcess = new Deno.Command("deno", {
-  args: ["fmt", "--check"],
+  args: ["fmt"],
 }).spawn();
 
 const fmtStatus = await fmtProcess.status;
@@ -61,18 +66,18 @@ if (!fmtStatus.success) {
 }
 
 // リントチェックは除外（既存のエラーが多いため）
-// console.log("\n🔍 Running lint check...");
-// const lintProcess = new Deno.Command("deno", {
-//   args: ["lint"],
-// }).spawn();
-//
-// const lintStatus = await lintProcess.status;
-// if (!lintStatus.success) {
-//   console.error("❌ Lint check failed");
-//   Deno.exit(1);
-// } else {
-//   console.log("✅ Lint check passed");
-// }
+console.log("\n🔍 Running lint check...");
+const lintProcess = new Deno.Command("deno", {
+  args: ["lint"],
+}).spawn();
+
+const lintStatus = await lintProcess.status;
+if (!lintStatus.success) {
+  console.error("❌ Lint check failed");
+  Deno.exit(1);
+} else {
+  console.log("✅ Lint check passed");
+}
 
 // 変更されたワークスペース/スクリプトに対してテストを実行
 for (const path of changedPaths) {
@@ -82,7 +87,7 @@ for (const path of changedPaths) {
 
   try {
     const testProcess = new Deno.Command("deno", {
-      args: ["test", path],
+      args: ["test", "-A", path],
     }).spawn();
 
     const testStatus = await testProcess.status;

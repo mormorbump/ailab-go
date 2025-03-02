@@ -16,23 +16,23 @@ interface PathSegment {
   arrayAccess?: boolean;
   // 配列アクセスの場合の追加情報
   arrayInfo?: {
-    isTuple: boolean;      // タプルかどうか
+    isTuple: boolean; // タプルかどうか
     itemTypes: PathInfo[]; // 要素の型情報
   };
 }
 
 interface PathInfo {
-  segments: PathSegment[];  // パスセグメントの配列
+  segments: PathSegment[]; // パスセグメントの配列
   value: unknown;
   type: "string" | "number" | "boolean" | "null" | "object" | "array";
   isNullable: boolean;
   metadata?: {
     // 型予測のための追加メタデータ
-    occurrences: number;    // 出現回数
-    patterns?: string[];    // 文字列パターン（enumの予測用）
-    recordPattern?: {       // Record<string, T>の予測用
-      keyPattern: string;   // キーのパターン
-      valueType: PathInfo;  // 値の型情報
+    occurrences: number; // 出現回数
+    patterns?: string[]; // 文字列パターン（enumの予測用）
+    recordPattern?: { // Record<string, T>の予測用
+      keyPattern: string; // キーのパターン
+      valueType: PathInfo; // 値の型情報
     };
   };
 }
@@ -96,13 +96,13 @@ export class TypePredictor {
   predict(json: unknown): z.ZodSchema {
     // 1. フラット展開
     const paths = flattenJson(json);
-    
+
     // 2. パス解析
     const analyses = paths.map(analyzePath);
-    
+
     // 3. 型予測
     const predictions = predictType(paths);
-    
+
     // 4. スキーマ構築
     return buildSchema(predictions);
   }

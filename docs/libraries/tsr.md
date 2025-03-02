@@ -1,6 +1,7 @@
 # TSR (TypeScript Remove)
 
-TypeScript Remove (tsr) は、TypeScriptプロジェクト内の未使用コード（デッドコード）を検出し、削除するためのユーティリティです。ツリーシェイキングのような機能をソースファイルレベルで提供します。
+TypeScript Remove (tsr)
+は、TypeScriptプロジェクト内の未使用コード（デッドコード）を検出し、削除するためのユーティリティです。ツリーシェイキングのような機能をソースファイルレベルで提供します。
 
 ## インストール
 
@@ -44,22 +45,22 @@ npx tsr --include-d-ts 'src/main\.ts$'
 ### JavaScript API
 
 ```typescript
-import { tsr } from 'tsr';
+import { tsr } from "tsr";
 
 // 基本的な使用方法
 await tsr({
   entrypoints: [/src\/main\.ts$/],
-  mode: 'check' // 'check' または 'write'
+  mode: "check", // 'check' または 'write'
 });
 
 // 詳細なオプションを指定
 await tsr({
   entrypoints: [/src\/main\.ts$/],
-  mode: 'write',
-  configFile: 'tsconfig.app.json',
-  projectRoot: '/path/to/project',
+  mode: "write",
+  configFile: "tsconfig.app.json",
+  projectRoot: "/path/to/project",
   recursive: true,
-  includeDts: true
+  includeDts: true,
 });
 ```
 
@@ -69,24 +70,24 @@ await tsr({
 interface Config {
   // 必須: エントリーポイントのファイルパターン (正規表現の配列)
   entrypoints: RegExp[];
-  
+
   // 'check'(デフォルト) または 'write'
   // 'check': 変更を表示するだけ
   // 'write': ファイルを実際に修正
-  mode?: 'check' | 'write';
-  
+  mode?: "check" | "write";
+
   // プロジェクトのルートパス (デフォルト: 現在の作業ディレクトリ)
   projectRoot?: string;
-  
+
   // tsconfig.jsonのパス (デフォルト: projectRoot/tsconfig.json)
   configFile?: string;
-  
+
   // mode: 'write'と同じ
   write?: boolean;
-  
+
   // 変更後に新たに未使用になったコードを再帰的に検出
   recursive?: boolean;
-  
+
   // .d.tsファイルも対象に含める
   includeDts?: boolean;
 }
@@ -98,7 +99,7 @@ interface Config {
 
 ```typescript
 // tsr-skip
-export const keepThisExport = 'important';
+export const keepThisExport = "important";
 ```
 
 ## tsrが行う変更例
@@ -152,9 +153,12 @@ export const keepThisExport = 'important';
 
 ## tsrと他のツールの比較
 
-- **TypeScript** - TSの`noUnusedLocals`は、エクスポートされた未使用コードは検出しません
-- **ESLint** - 未使用のインポートは検出できますが、未使用のエクスポートは検出できません
-- **Knip** - 同様のツールですが、tsrは自動編集に特化し、ゼロコンフィグで高速に動作します
+- **TypeScript** -
+  TSの`noUnusedLocals`は、エクスポートされた未使用コードは検出しません
+- **ESLint** -
+  未使用のインポートは検出できますが、未使用のエクスポートは検出できません
+- **Knip** -
+  同様のツールですが、tsrは自動編集に特化し、ゼロコンフィグで高速に動作します
 
 ## 実際のプロジェクトでの使用例
 

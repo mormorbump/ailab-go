@@ -2,13 +2,13 @@
 import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
 import {
+  type CommandDef,
   createCliCommand,
   createSubCommandMap,
-  zodToJsonSchema,
   parseArgsToValues,
   type QueryBase,
-  type CommandDef,
   type SubCommandMap,
+  zodToJsonSchema,
 } from "./clizod.ts";
 import { z } from "npm:zod";
 
@@ -121,7 +121,7 @@ test("JSONスキーマの生成", () => {
     expect.objectContaining({
       type: "string",
       description: "input file path",
-    })
+    }),
   );
 
   // required が正しいか確認（オプショナルな項目は含まれない）
@@ -132,7 +132,7 @@ test("JSONスキーマの生成", () => {
     expect.objectContaining({
       default: "sync",
       enum: ["sync", "async", "stream"],
-    })
+    }),
   );
 });
 

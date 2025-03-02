@@ -16,12 +16,15 @@ TypeScriptでのAdapterパターンは、外部依存を抽象化し、テスト
 ```ts
 // fs.ts
 
-import { Result, ok, err } from "npm:neverthrow";
+import { err, ok, Result } from "npm:neverthrow";
 
 // インターフェース定義
 export interface FileSystem {
   readFile(path: string): Promise<Result<string, FileSystemError>>;
-  writeFile(path: string, content: string): Promise<Result<void, FileSystemError>>;
+  writeFile(
+    path: string,
+    content: string,
+  ): Promise<Result<void, FileSystemError>>;
   exists(path: string): Promise<Result<boolean, FileSystemError>>;
 }
 
@@ -46,7 +49,10 @@ export function createFileSystem(): FileSystem {
       }
     },
 
-    async writeFile(path: string, content: string): Promise<Result<void, FileSystemError>> {
+    async writeFile(
+      path: string,
+      content: string,
+    ): Promise<Result<void, FileSystemError>> {
       try {
         const encoder = new TextEncoder();
         await Deno.writeFile(path, encoder.encode(content));
@@ -69,7 +75,7 @@ export function createFileSystem(): FileSystem {
         }
         return err({ type: "unknown", message: error.message });
       }
-    }
+    },
   };
 }
 ```
@@ -97,13 +103,16 @@ export class CachedFileSystem implements FileSystem {
     if (cached) return ok(cached);
 
     const result = await this.baseFs.readFile(path);
-    result.map(content => {
+    result.map((content) => {
       this.cache.set(path, content);
     });
     return result;
   }
 
-  async writeFile(path: string, content: string): Promise<Result<void, FileSystemError>> {
+  async writeFile(
+    path: string,
+    content: string,
+  ): Promise<Result<void, FileSystemError>> {
     const result = await this.baseFs.writeFile(path, content);
     result.map(() => {
       this.cache.set(path, content);
@@ -128,7 +137,7 @@ export class CachedFileSystem implements FileSystem {
 ```ts
 // api-client.ts
 
-import { Result, ok, err } from "npm:neverthrow";
+import { err, ok, Result } from "npm:neverthrow";
 
 // 型定義
 export interface User {
@@ -137,7 +146,7 @@ export interface User {
   email: string;
 }
 
-export type ApiError = 
+export type ApiError =
   | { type: "network"; message: string }
   | { type: "notFound"; message: string }
   | { type: "unauthorized"; message: string };
@@ -149,7 +158,7 @@ export type Fetcher = <T>(path: string) => Promise<Result<T, ApiError>>;
 export class UserApiClient {
   constructor(
     private readonly getData: Fetcher,
-    private readonly baseUrl: string
+    private readonly baseUrl: string,
   ) {}
 
   async getUser(id: string): Promise<Result<User, ApiError>> {
@@ -166,22 +175,31 @@ export function createFetcher(headers: Record<string, string> = {}): Fetcher {
   return async <T>(path: string): Promise<Result<T, ApiError>> => {
     try {
       const response = await fetch(path, { headers });
-      
+
       if (!response.ok) {
         switch (response.status) {
           case 404:
             return err({ type: "notFound", message: "Resource not found" });
           case 401:
-            return err({ type: "unauthorized", message: "Unauthorized access" });
+            return err({
+              type: "unauthorized",
+              message: "Unauthorized access",
+            });
           default:
-            return err({ type: "network", message: `HTTP error: ${response.status}` });
+            return err({
+              type: "network",
+              message: `HTTP error: ${response.status}`,
+            });
         }
       }
 
       const data = await response.json();
       return ok(data as T);
     } catch (error) {
-      return err({ type: "network", message: error instanceof Error ? error.message : "Unknown error" });
+      return err({
+        type: "network",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   };
 }
@@ -194,19 +212,21 @@ export function createFetcher(headers: Record<string, string> = {}): Fetcher {
 
 import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
-import { ok, err } from "npm:neverthrow";
-import { User, ApiError, Fetcher, UserApiClient } from "./api-client.ts";
+import { err, ok } from "npm:neverthrow";
+import { ApiError, Fetcher, User, UserApiClient } from "./api-client.ts";
 
 test("ユーザー情報を取得できること", async () => {
   // モックデータ
   const mockUser: User = {
     id: "1",
     name: "Test User",
-    email: "test@example.com"
+    email: "test@example.com",
   };
 
   // モックのFetcher実装
-  const mockFetcher: Fetcher = async <T>(path: string): Promise<Result<T, ApiError>> => {
+  const mockFetcher: Fetcher = async <T>(
+    path: string,
+  ): Promise<Result<T, ApiError>> => {
     if (path.endsWith("/users/1")) {
       return ok(mockUser as T);
     }
@@ -219,14 +239,16 @@ test("ユーザー情報を取得できること", async () => {
   // テスト実行
   const result = await api.getUser("1");
   expect(result.isOk()).toBe(true);
-  result.map(user => {
+  result.map((user) => {
     expect(user).toEqual(mockUser);
   });
 });
 
 test("認証エラーが適切に処理されること", async () => {
   // モックのFetcher実装
-  const mockFetcher: Fetcher = async <T>(_path: string): Promise<Result<T, ApiError>> => {
+  const mockFetcher: Fetcher = async <T>(
+    _path: string,
+  ): Promise<Result<T, ApiError>> => {
     return err({ type: "unauthorized", message: "Invalid token" });
   };
 
@@ -236,7 +258,7 @@ test("認証エラーが適切に処理されること", async () => {
   // テスト実行
   const result = await api.getUser("1");
   expect(result.isErr()).toBe(true);
-  result.mapErr(error => {
+  result.mapErr((error) => {
     expect(error.type).toBe("unauthorized");
     expect(error.message).toBe("Invalid token");
   });

@@ -90,7 +90,7 @@ function predictTypeFromSamples(samples: unknown[], depth = 0): TypePrediction {
       arrayDepth = Math.max(arrayDepth, maxDepth + 1);
       const elementPrediction = predictTypeFromSamples(
         elementSamples,
-        depth + 1
+        depth + 1,
       );
 
       if (!arrayElementType) {
@@ -99,7 +99,7 @@ function predictTypeFromSamples(samples: unknown[], depth = 0): TypePrediction {
         // 既存の型予測とマージ
         arrayElementType = mergeTypePredictions(
           arrayElementType,
-          elementPrediction
+          elementPrediction,
         );
       }
 
@@ -204,7 +204,7 @@ function flattenArray(arr: unknown[]): unknown[] {
  */
 function mergeTypePredictions(
   a: TypePrediction,
-  b: TypePrediction
+  b: TypePrediction,
 ): TypePrediction {
   const types = new Set<string>();
   if (a.type.includes("|")) {
@@ -253,8 +253,7 @@ function detectEnumPattern(patterns: string[]): string[] | undefined {
   if (patterns.length < 2) return undefined;
 
   // パターンの特徴を分析
-  const allPatternsSameCase =
-    patterns.every((p) => /^[a-z]+$/.test(p)) || // すべて小文字
+  const allPatternsSameCase = patterns.every((p) => /^[a-z]+$/.test(p)) || // すべて小文字
     patterns.every((p) => /^[A-Z]+$/.test(p)) || // すべて大文字
     patterns.every((p) => /^[A-Z][a-z]+$/.test(p)); // すべてパスカルケース
 

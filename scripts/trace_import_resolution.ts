@@ -1,6 +1,6 @@
 /* @script */
 import * as ts from "npm:typescript";
-import { join, dirname } from "jsr:@std/path";
+import { type dirname, join } from "jsr:@std/path";
 
 /**
  * TypeScript の import 解決プロセスをトレースするスクリプト
@@ -31,7 +31,7 @@ async function readDenoJson(): Promise<DenoResolveConfig> {
 }
 
 function createCustomCompilerHost(
-  options: ts.CompilerOptions
+  options: ts.CompilerOptions,
 ): ts.CompilerHost {
   const defaultHost = ts.createCompilerHost(options);
   const denoCachePath = getDenoCachePath();
@@ -43,7 +43,7 @@ function createCustomCompilerHost(
       containingFile: string,
       _reusedNames: string[] | undefined,
       redirectedReference: ts.ResolvedProjectReference | undefined,
-      options: ts.CompilerOptions
+      options: ts.CompilerOptions,
     ) => {
       return moduleNames.map((moduleName) => {
         console.log("\n=== Module Resolution ===");
@@ -54,10 +54,9 @@ function createCustomCompilerHost(
         if (moduleName.startsWith("npm:") || moduleName.startsWith("jsr:")) {
           const [protocol, ...rest] = moduleName.split(":");
           const packagePath = rest.join(":");
-          const cachePath =
-            protocol === "npm"
-              ? join(denoCachePath, "npm/registry.npmjs.org", packagePath)
-              : join(denoCachePath, "jsr", packagePath);
+          const cachePath = protocol === "npm"
+            ? join(denoCachePath, "npm/registry.npmjs.org", packagePath)
+            : join(denoCachePath, "jsr", packagePath);
 
           console.log(`Resolving ${protocol} module from cache: ${cachePath}`);
 
@@ -100,12 +99,12 @@ function createCustomCompilerHost(
           },
           trace: (s: string) => console.log(`  Trace: ${s}`),
           directoryExists: (directoryName: string): boolean => {
-            const exists =
-              defaultHost.directoryExists?.(directoryName) ?? false;
+            const exists = defaultHost.directoryExists?.(directoryName) ??
+              false;
             console.log(
               `  Directory ${
                 exists ? "exists" : "does not exist"
-              }: ${directoryName}`
+              }: ${directoryName}`,
             );
             return exists;
           },
@@ -119,7 +118,7 @@ function createCustomCompilerHost(
           moduleName,
           containingFile,
           options,
-          moduleResolutionHost
+          moduleResolutionHost,
         );
 
         if (resolved.resolvedModule) {
@@ -141,14 +140,14 @@ function createCustomCompilerHost(
       fileName: string,
       languageVersion: ts.ScriptTarget,
       onError?: (message: string) => void,
-      shouldCreateNewSourceFile?: boolean
+      shouldCreateNewSourceFile?: boolean,
     ) => {
       console.log(`\nReading source file: ${fileName}`);
       return defaultHost.getSourceFile(
         fileName,
         languageVersion,
         onError,
-        shouldCreateNewSourceFile
+        shouldCreateNewSourceFile,
       );
     },
   };
@@ -189,20 +188,20 @@ async function analyzeImports(filePath: string) {
       if (diagnostic.file) {
         const { line, character } = ts.getLineAndCharacterOfPosition(
           diagnostic.file,
-          diagnostic.start!
+          diagnostic.start!,
         );
         const message = ts.flattenDiagnosticMessageText(
           diagnostic.messageText,
-          "\n"
+          "\n",
         );
         console.log(
           `${diagnostic.file.fileName} (${line + 1},${
             character + 1
-          }): ${message}`
+          }): ${message}`,
         );
       } else {
         console.log(
-          ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")
+          ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
         );
       }
     });
@@ -215,7 +214,7 @@ if (import.meta.main) {
   const args = Deno.args;
   if (args.length !== 1) {
     console.error(
-      "Usage: deno run -A scripts/trace_import_resolution.ts <target_file>"
+      "Usage: deno run -A scripts/trace_import_resolution.ts <target_file>",
     );
     Deno.exit(1);
   }

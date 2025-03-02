@@ -14,7 +14,7 @@
  *   deno run -A scripts/git-shallow-search.ts mizchi/monorepo "import" --files  # ファイル名のみ表示
  */
 
-import { join, resolve, dirname } from "jsr:@std/path";
+import { dirname, join, resolve } from "jsr:@std/path";
 import $ from "jsr:@david/dax";
 import { createNestedParser, type InferNestedParser } from "jsr:@mizchi/zodcli";
 import { z } from "npm:zod";
@@ -142,7 +142,7 @@ const subCommands = {
           .boolean()
           .default(false)
           .describe(
-            "Clean up repositories that haven't been accessed in 3 days"
+            "Clean up repositories that haven't been accessed in 3 days",
           ),
         short: "v",
       },
@@ -184,7 +184,7 @@ const subCommands = {
           .boolean()
           .default(false)
           .describe(
-            "Smart case search (case-insensitive if pattern is all lowercase)"
+            "Smart case search (case-insensitive if pattern is all lowercase)",
           ),
         short: "S",
       },
@@ -290,7 +290,7 @@ async function loadReferences(): Promise<Record<string, RepoReference>> {
 
 // リポジトリの参照情報を保存する
 async function saveReferences(
-  references: Record<string, RepoReference>
+  references: Record<string, RepoReference>,
 ): Promise<void> {
   const path = getReferencesFilePath();
   await ensureDir(dirname(path));
@@ -300,7 +300,7 @@ async function saveReferences(
 // リポジトリの参照情報を更新する
 async function updateReferences(
   repoKey: string,
-  cloneDir: string
+  cloneDir: string,
 ): Promise<void> {
   const references = await loadReferences();
   references[repoKey] = {
@@ -327,7 +327,7 @@ async function vacuumOldRepositories(): Promise<void> {
         if (await exists(reference.path)) {
           await Deno.remove(reference.path, { recursive: true });
           logSuccess(
-            `古いリポジトリを削除しました: ${repoKey} (最終アクセス: ${lastAccessed.toLocaleString()})`
+            `古いリポジトリを削除しました: ${repoKey} (最終アクセス: ${lastAccessed.toLocaleString()})`,
           );
           removedCount++;
         }
@@ -347,7 +347,7 @@ function parseArgs() {
   try {
     // 後方互換性のため --list-files オプションを特別処理
     const hasListFilesOption = Deno.args.some(
-      (arg) => arg === "--list-files" || arg === "-l"
+      (arg) => arg === "--list-files" || arg === "-l",
     );
     // コマンドが明示されていない場合にsearchとみなす
     const args = [...Deno.args];
@@ -386,7 +386,7 @@ function parseArgs() {
 async function prepareRepository(
   repoUrl: string,
   branch?: string,
-  temp = false
+  temp = false,
 ): Promise<{
   cloneDir: string;
   searchDir: string;
@@ -430,14 +430,16 @@ async function prepareRepository(
         // 1時間以内にアクセスがあれば、fetchをスキップ
         if (ageInMs < oneHourInMs) {
           logSuccess(
-            `最近（${Math.floor(
-              ageInMs / 60000
-            )}分前）にアクセスしたリポジトリです。fetchをスキップします。`
+            `最近（${
+              Math.floor(
+                ageInMs / 60000,
+              )
+            }分前）にアクセスしたリポジトリです。fetchをスキップします。`,
           );
           skipFetch = true;
         } else {
           logInfo(
-            `既存のクローンを使用（最終アクセス: ${lastAccessed.toLocaleString()}）: ${cloneDir}`
+            `既存のクローンを使用（最終アクセス: ${lastAccessed.toLocaleString()}）: ${cloneDir}`,
           );
         }
       } else {
@@ -569,7 +571,8 @@ async function listFiles(searchDir: string, args: CommonRepoArgs) {
 
       // ファイルが存在するかチェック
       const checkResult =
-        await $`cd ${searchDir} && git ls-files | grep -q -E "${pattern}"`.noThrow();
+        await $`cd ${searchDir} && git ls-files | grep -q -E "${pattern}"`
+          .noThrow();
       hasFiles = checkResult.code === 0;
 
       if (hasFiles) {
@@ -577,7 +580,7 @@ async function listFiles(searchDir: string, args: CommonRepoArgs) {
         await $`cd ${searchDir} && git ls-files | grep -E "${pattern}"`;
       } else {
         logWarning(
-          `パターン "${args.glob}" に一致するファイルはありませんでした。`
+          `パターン "${args.glob}" に一致するファイルはありませんでした。`,
         );
       }
     } else {
@@ -602,7 +605,7 @@ async function listFiles(searchDir: string, args: CommonRepoArgs) {
 async function searchFiles(
   searchDir: string,
   hasRg: boolean,
-  args: SearchArgs
+  args: SearchArgs,
 ) {
   // 検索パターンがない場合は実行しない
   if (!args.pattern) {
@@ -618,7 +621,7 @@ async function searchFiles(
 
   if (filesOnlyMode && linesMode) {
     logInfo(
-      "ファイル名と行番号を表示モードを有効化しました（VSCodeジャンプフォーマット）"
+      "ファイル名と行番号を表示モードを有効化しました（VSCodeジャンプフォーマット）",
     );
   } else if (filesOnlyMode) {
     logInfo("ファイル名のみ表示モードを有効化しました");
@@ -711,9 +714,11 @@ async function searchFiles(
           }
         } else if (filesOnlyMode) {
           // ファイル名のみの場合、結果を取得して相対パスに変換
-          const output = await $`cd ${searchDir} && rg ${rgOptions.join(
-            " "
-          )} "${args.pattern}"`.text();
+          const output = await $`cd ${searchDir} && rg ${
+            rgOptions.join(
+              " ",
+            )
+          } "${args.pattern}"`.text();
           const files = output.trim().split("\n");
           const homeDir = Deno.env.get("HOME") || "~";
 
@@ -735,9 +740,9 @@ async function searchFiles(
           }
         } else {
           // 通常の検索の場合はそのまま表示
-          await $`cd ${searchDir} && rg ${rgOptions.join(" ")} "${
-            args.pattern
-          }"`;
+          await $`cd ${searchDir} && rg ${
+            rgOptions.join(" ")
+          } "${args.pattern}"`;
         }
       }
     } catch (error: unknown) {
@@ -777,14 +782,16 @@ async function searchFiles(
     try {
       // まず検索結果があるかチェック（-q = quiet）
       const checkResult =
-        await $`cd ${searchDir} && grep -q -r ${includePattern} "${args.pattern}" .`.noThrow();
+        await $`cd ${searchDir} && grep -q -r ${includePattern} "${args.pattern}" .`
+          .noThrow();
       hasResults = checkResult.code === 0;
 
       if (hasResults) {
         if (linesMode) {
           // 行番号付きの検索結果を取得
           const output =
-            await $`cd ${searchDir} && grep -n -r ${includePattern} "${args.pattern}" .`.text();
+            await $`cd ${searchDir} && grep -n -r ${includePattern} "${args.pattern}" .`
+              .text();
           const lines = output.trim().split("\n");
           const homeDir = Deno.env.get("HOME") || "~";
 
@@ -828,7 +835,8 @@ async function searchFiles(
         } else if (filesOnlyMode) {
           // ファイル名のみの場合、結果を取得して相対パスに変換
           const output =
-            await $`cd ${searchDir} && grep -l -r ${includePattern} "${args.pattern}" .`.text();
+            await $`cd ${searchDir} && grep -l -r ${includePattern} "${args.pattern}" .`
+              .text();
           const files = output.trim().split("\n");
           const homeDir = Deno.env.get("HOME") || "~";
 
@@ -854,9 +862,11 @@ async function searchFiles(
           }
         } else {
           // 通常の検索の場合はそのまま表示
-          await $`cd ${searchDir} && grep -r ${grepOptions.join(
-            " "
-          )} ${includePattern} "${args.pattern}" .`;
+          await $`cd ${searchDir} && grep -r ${
+            grepOptions.join(
+              " ",
+            )
+          } ${includePattern} "${args.pattern}" .`;
         }
       }
     } catch (error: unknown) {
@@ -868,7 +878,7 @@ async function searchFiles(
   // 検索結果がない場合はメッセージを表示
   if (!hasResults) {
     logWarning(
-      `パターン "${args.pattern}" に一致する結果は見つかりませんでした。`
+      `パターン "${args.pattern}" に一致する結果は見つかりませんでした。`,
     );
   }
 }

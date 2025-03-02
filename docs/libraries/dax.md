@@ -2,7 +2,8 @@
 
 ## 概要
 
-Deno および Node.js 向けのクロスプラットフォームシェルツール。コマンド実行、HTTP リクエスト、ファイル操作、プロンプト機能などを提供。
+Deno および Node.js 向けのクロスプラットフォームシェルツール。コマンド実行、HTTP
+リクエスト、ファイル操作、プロンプト機能などを提供。
 
 ```ts
 // Deno
@@ -129,8 +130,8 @@ await $.path("oldDir").remove({ recursive: true });
 
 // パス情報と操作
 path.basename; // "file.txt"
-path.dirname;  // "dir"
-path.extname;  // ".txt"
+path.dirname; // "dir"
+path.extname; // ".txt"
 path.isAbsolute(); // 絶対パスか
 path.resolve(); // 絶対パスに変換
 path.join("subdir", "other.txt"); // 'dir/file.txt/subdir/other.txt'
@@ -141,15 +142,15 @@ path.join("subdir", "other.txt"); // 'dir/file.txt/subdir/other.txt'
 ```ts
 // ファイル操作
 await $`cp source.txt target.txt`; // コピー
-await $`mv old.txt new.txt`;      // 移動
-await $`rm file.txt`;             // 削除
-await $`cat file.txt`;            // 内容表示
-await $`touch newfile.txt`;       // ファイル作成/更新
+await $`mv old.txt new.txt`; // 移動
+await $`rm file.txt`; // 削除
+await $`cat file.txt`; // 内容表示
+await $`touch newfile.txt`; // ファイル作成/更新
 
 // ディレクトリ操作
-await $`mkdir -p new/sub/dir`;    // ディレクトリ作成
-await $`cd dir && pwd`;           // ディレクトリ移動と表示
-await $`rm -rf dir`;              // ディレクトリ削除
+await $`mkdir -p new/sub/dir`; // ディレクトリ作成
+await $`cd dir && pwd`; // ディレクトリ移動と表示
+await $`rm -rf dir`; // ディレクトリ削除
 ```
 
 ## HTTPリクエスト
@@ -307,7 +308,7 @@ const cleanText = $.stripAnsi("\u001B[31mエラー\u001B[0m"); // "エラー"
 
 ```ts
 // ビルダーAPIの使用
-import { CommandBuilder, RequestBuilder, build$ } from "jsr:@david/dax";
+import { build$, CommandBuilder, RequestBuilder } from "jsr:@david/dax";
 
 // カスタム$の作成
 const myEnv = { API_KEY: "secret" };
@@ -317,16 +318,16 @@ const custom$ = build$({
     .env(myEnv)
     .printCommand()
     .timeout("30s"),
-    
+
   requestBuilder: new RequestBuilder()
     .header("Authorization", `Bearer ${myEnv.API_KEY}`)
     .timeout("10s"),
-    
+
   extras: {
     // カスタム関数の追加
     greet(name: string) {
       return `Hello, ${name}!`;
-    }
+    },
   },
 });
 
@@ -337,13 +338,13 @@ console.log(custom$.greet("World")); // "Hello, World!"
 
 ## 主要なライブラリ違い
 
-| 機能 | dax | zx |
-|------|-----|-----|
-| プラットフォーム | クロスプラットフォーム（Windows対応強化） | 主にUNIX系 |
-| シェル | カスタム実装（deno_task_shell） | JavaScriptを拡張したシェル |
-| グローバル設定 | 最小限（デフォルト$インスタンスのみ） | グローバルな環境設定 |
-| 使用シーン | シェルスクリプト代替とアプリコード両方 | 主にシェルスクリプト代替 |
-| 主な特徴 | パスAPI、プロンプト、進捗表示 | シェルに近い記法 |
+| 機能             | dax                                       | zx                         |
+| ---------------- | ----------------------------------------- | -------------------------- |
+| プラットフォーム | クロスプラットフォーム（Windows対応強化） | 主にUNIX系                 |
+| シェル           | カスタム実装（deno_task_shell）           | JavaScriptを拡張したシェル |
+| グローバル設定   | 最小限（デフォルト$インスタンスのみ）     | グローバルな環境設定       |
+| 使用シーン       | シェルスクリプト代替とアプリコード両方    | 主にシェルスクリプト代替   |
+| 主な特徴         | パスAPI、プロンプト、進捗表示             | シェルに近い記法           |
 
 ## 参考リンク
 

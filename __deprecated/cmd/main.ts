@@ -1,5 +1,5 @@
 // sub command host
-import { subcommands, run } from "npm:cmd-ts";
+import { run, subcommands } from "npm:cmd-ts";
 import fs from "node:fs";
 
 const currentDir = new URL(".", import.meta.url).pathname;

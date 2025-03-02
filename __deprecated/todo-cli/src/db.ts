@@ -1,7 +1,7 @@
-import { DatabaseSync, SupportedValueType } from "node:sqlite";
-import { ChatHistory, Todo, TodoUpdate } from "./types.ts";
-import { ensureDirSync, existsSync } from "@std/fs";
-import { dirname, join } from "@std/path";
+import { DatabaseSync, type SupportedValueType } from "node:sqlite";
+import type { ChatHistory, Todo, TodoUpdate } from "./types.ts";
+import { ensureDirSync, type existsSync } from "@std/fs";
+import { type dirname, join } from "@std/path";
 
 // TODOデータを保存するディレクトリとDBファイルのパス
 const HOME_DIR = Deno.env.get("HOME") || Deno.env.get("USERPROFILE") || "";
@@ -61,13 +61,13 @@ export function addTodo(text: string): Todo {
   };
 
   db.prepare(
-    "INSERT INTO todos (id, text, completed, created_at, updated_at) VALUES (?, ?, ?, ?, ?)"
+    "INSERT INTO todos (id, text, completed, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
   ).run(
     todo.id,
     todo.text,
     todo.completed ? 1 : 0,
     todo.createdAt,
-    todo.updatedAt
+    todo.updatedAt,
   );
 
   db.close();
@@ -88,7 +88,7 @@ export function toggleTodo(id: string): Todo | null {
   // 部分一致の場合はLIKE演算子を使う
   const row = db
     .prepare(
-      "SELECT id, text, completed, created_at as createdAt, updated_at as updatedAt FROM todos WHERE id = ? OR id LIKE ?"
+      "SELECT id, text, completed, created_at as createdAt, updated_at as updatedAt FROM todos WHERE id = ? OR id LIKE ?",
     )
     .get(id, `%${id}%`) as Todo | undefined;
 
@@ -104,7 +104,7 @@ export function toggleTodo(id: string): Todo | null {
   db.prepare("UPDATE todos SET completed = ?, updated_at = ? WHERE id = ?").run(
     newStatus ? 1 : 0,
     now,
-    todoId
+    todoId,
   );
 
   db.close();
@@ -130,7 +130,7 @@ export function updateTodo(id: string, update: TodoUpdate): Todo | null {
   // 現在のTODOを取得
   const row = db
     .prepare(
-      "SELECT id, text, completed, created_at as createdAt, updated_at as updatedAt FROM todos WHERE id = ?"
+      "SELECT id, text, completed, created_at as createdAt, updated_at as updatedAt FROM todos WHERE id = ?",
     )
     .get(id) as Todo | undefined;
 
@@ -164,7 +164,7 @@ export function updateTodo(id: string, update: TodoUpdate): Todo | null {
 
   // 更新クエリを実行
   db.prepare(`UPDATE todos SET ${fields.join(", ")} WHERE id = ?`).run(
-    ...params
+    ...params,
   );
 
   db.close();
@@ -236,7 +236,7 @@ export function getTodo(id: string): Todo | null {
 
   const row = db
     .prepare(
-      "SELECT id, text, completed, created_at as createdAt, updated_at as updatedAt FROM todos WHERE id = ?"
+      "SELECT id, text, completed, created_at as createdAt, updated_at as updatedAt FROM todos WHERE id = ?",
     )
     .get(id) as Todo | undefined;
 
@@ -336,7 +336,7 @@ export function removeCompletedTodos(): number {
  */
 export function addChatHistory(
   userPrompt: string,
-  aiResponse: string
+  aiResponse: string,
 ): ChatHistory {
   const db = initDb();
   const now = new Date().toISOString();
@@ -349,12 +349,12 @@ export function addChatHistory(
   };
 
   db.prepare(
-    "INSERT INTO chat_history (id, user_prompt, ai_response, timestamp) VALUES (?, ?, ?, ?)"
+    "INSERT INTO chat_history (id, user_prompt, ai_response, timestamp) VALUES (?, ?, ?, ?)",
   ).run(
     chatHistory.id,
     chatHistory.userPrompt,
     chatHistory.aiResponse,
-    chatHistory.timestamp
+    chatHistory.timestamp,
   );
 
   db.close();

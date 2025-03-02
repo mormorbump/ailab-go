@@ -1,12 +1,12 @@
-import { eq, like, and, desc } from "drizzle-orm";
+import { and, desc, eq, like } from "drizzle-orm";
 import { db } from "../db/client.ts";
-import { todos, chatHistory } from "../db/schema.ts";
+import { chatHistory, todos } from "../db/schema.ts";
 import {
-  Todo,
-  TodoUpdate,
-  ChatHistory,
-  drizzleTodoToTodo,
+  type ChatHistory,
   drizzleChatHistoryToChatHistory,
+  drizzleTodoToTodo,
+  type Todo,
+  type TodoUpdate,
 } from "./types.ts";
 import { ensureDirSync } from "jsr:@std/fs";
 import { join } from "jsr:@std/path";
@@ -53,7 +53,7 @@ export async function toggleTodo(id: string): Promise<Todo | null> {
     .where(
       id.length === 36
         ? eq(todos.id, id) // 完全一致
-        : like(todos.id, `%${id}%`) // 部分一致
+        : like(todos.id, `%${id}%`), // 部分一致
     );
 
   if (todoItems.length === 0) {
@@ -86,7 +86,7 @@ export async function toggleTodo(id: string): Promise<Todo | null> {
  */
 export async function updateTodo(
   id: string,
-  update: TodoUpdate
+  update: TodoUpdate,
 ): Promise<Todo | null> {
   // 現在のTODOを取得
   const todoItems = await db.select().from(todos).where(eq(todos.id, id));
@@ -177,7 +177,7 @@ export async function getTodo(id: string): Promise<Todo | null> {
     .where(
       id.length === 36
         ? eq(todos.id, id) // 完全一致
-        : like(todos.id, `%${id}%`) // 部分一致
+        : like(todos.id, `%${id}%`), // 部分一致
     );
 
   if (todoItems.length === 0) {
@@ -195,7 +195,7 @@ export async function getTodo(id: string): Promise<Todo | null> {
  */
 export async function searchTodos(
   searchText: string,
-  showCompleted = true
+  showCompleted = true,
 ): Promise<Todo[]> {
   const searchPattern = `%${searchText}%`;
   let result;
@@ -269,7 +269,7 @@ export async function removeCompletedTodos(): Promise<number> {
  */
 export async function addChatHistory(
   userPrompt: string,
-  aiResponse: string
+  aiResponse: string,
 ): Promise<ChatHistory> {
   const now = new Date();
   const chatId = crypto.randomUUID();

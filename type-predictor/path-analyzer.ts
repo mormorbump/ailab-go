@@ -91,7 +91,7 @@ function isArrayPath(relation: PathRelation): boolean {
 function detectRecordPattern(
   children: Set<string>,
   relations: Map<string, PathRelation>,
-  path: string
+  path: string,
 ): { isRecord: boolean; keyPattern?: string; valueType?: string } {
   if (children.size < 2) return { isRecord: false };
 
@@ -126,8 +126,8 @@ function detectRecordPattern(
 
   // すべての型が同じか、または互換性のある型のみか確認
   const uniqueTypes = new Set(types);
-  const hasCompatibleTypes =
-    uniqueTypes.size <= 1 || types.every((type) => compatibleTypes.has(type));
+  const hasCompatibleTypes = uniqueTypes.size <= 1 ||
+    types.every((type) => compatibleTypes.has(type));
 
   // Record型として判定する条件
   const isRecord =
@@ -168,7 +168,7 @@ function detectRecordPattern(
  * パスの親子関係を抽出
  */
 function extractPathRelations(
-  samples: Map<string, { sampleValues: unknown[] }>
+  samples: Map<string, { sampleValues: unknown[] }>,
 ): Map<string, PathRelation> {
   const relations = new Map<string, PathRelation>();
 
@@ -219,7 +219,7 @@ function extractPathRelations(
 function predictStructure(
   path: string,
   relations: Map<string, PathRelation>,
-  depth = 0
+  depth = 0,
 ): StructurePrediction {
   // 再帰の深さを制限
   if (depth > 100) {
@@ -315,7 +315,8 @@ function predictStructure(
   // オブジェクトの場合
   const children = new Map<string, StructurePrediction>();
   const validSamples = relation.samples.filter(
-    (s): s is object => s !== null && typeof s === "object" && !Array.isArray(s)
+    (s): s is object =>
+      s !== null && typeof s === "object" && !Array.isArray(s),
   );
 
   // 子要素の型を収集
@@ -325,7 +326,7 @@ function predictStructure(
 
     // 子要素のnullable状態を更新
     const isChildOptional = validSamples.some(
-      (sample) => !(childKey in sample)
+      (sample) => !(childKey in sample),
     );
     if (isChildOptional) {
       childStructure.isNullable = true;

@@ -1,7 +1,7 @@
 /* @script */
 import { z } from "npm:zod";
 import { parseArgs } from "node:util";
-import { Schema } from "npm:jsonschema";
+import type { Schema } from "npm:jsonschema";
 
 // 基本的なクエリ定義型
 export type QueryBase<ArgType extends z.ZodTypeAny> = {
@@ -63,7 +63,7 @@ function zodTypeToParseArgsType(zodType: z.ZodTypeAny): "string" | "boolean" {
 
 // クエリ定義からParseArgsConfigを生成
 function createParseArgsConfig<T extends Record<string, QueryBase<any>>>(
-  queryDef: T
+  queryDef: T,
 ): ParseArgsConfig {
   const options: Record<string, ParseArgsOptionConfig> = {};
 
@@ -103,7 +103,7 @@ function createParseArgsConfig<T extends Record<string, QueryBase<any>>>(
 // 値の型変換
 function convertValue(
   value: string | boolean | string[] | undefined,
-  zodType: z.ZodTypeAny
+  zodType: z.ZodTypeAny,
 ): any {
   if (value === undefined) {
     return undefined;
@@ -137,7 +137,7 @@ function convertValue(
 // parseArgsの結果をZodスキーマに基づいて変換
 function parseArgsToValues<T extends Record<string, QueryBase<any>>>(
   parseResult: { values: Record<string, any>; positionals: string[] },
-  queryDef: T
+  queryDef: T,
 ): InferQueryType<T> {
   const result: Record<string, any> = {};
 
@@ -205,7 +205,7 @@ function generateHelp<T extends Record<string, QueryBase<any>>>(
   commandName: string,
   description: string,
   queryDef: T,
-  subCommands?: SubCommandMap
+  subCommands?: SubCommandMap,
 ): string {
   let help = `${commandName}\n> ${description}\n\n`;
 
@@ -220,7 +220,7 @@ function generateHelp<T extends Record<string, QueryBase<any>>>(
 
   // 位置引数の説明
   const positionals = Object.entries(queryDef).filter(
-    ([_, def]) => def.positional
+    ([_, def]) => def.positional,
   );
   if (positionals.length > 0) {
     help += "ARGUMENTS:\n";
@@ -234,7 +234,7 @@ function generateHelp<T extends Record<string, QueryBase<any>>>(
 
   // オプションの説明
   const options = Object.entries(queryDef).filter(
-    ([_, def]) => !def.positional
+    ([_, def]) => !def.positional,
   );
   if (options.length > 0) {
     help += "OPTIONS:\n";
@@ -242,14 +242,14 @@ function generateHelp<T extends Record<string, QueryBase<any>>>(
       const typeStr = getTypeDisplayString(def.type);
       const shortOption = def.short ? `-${def.short}` : "";
       const desc = def.type.description || def.description || "";
-      const defaultValue =
-        def.type instanceof z.ZodDefault
-          ? ` (default: ${JSON.stringify(def.type._def.defaultValue())})`
-          : "";
+      const defaultValue = def.type instanceof z.ZodDefault
+        ? ` (default: ${JSON.stringify(def.type._def.defaultValue())})`
+        : "";
 
       // boolean型の場合は <type> を表示しない
-      const typeDisplay =
-        def.type instanceof z.ZodBoolean ? "" : ` <${typeStr}>`;
+      const typeDisplay = def.type instanceof z.ZodBoolean
+        ? ""
+        : ` <${typeStr}>`;
       help += `  --${key}${
         shortOption ? ", " + shortOption : ""
       }${typeDisplay} - ${desc}${defaultValue}\n`;
@@ -286,7 +286,7 @@ function getTypeDisplayString(zodType: z.ZodTypeAny): string {
 
 // クエリ定義からzodスキーマを生成
 function createZodSchema<T extends Record<string, QueryBase<any>>>(
-  queryDef: T
+  queryDef: T,
 ): z.ZodObject<any> {
   const schema: Record<string, z.ZodTypeAny> = {};
 
@@ -386,7 +386,7 @@ function zodToJsonSchema(schema: z.ZodTypeAny): Schema {
 
 // コマンド定義からCLIコマンドを生成する関数
 function createCliCommand<T extends Record<string, QueryBase<any>>>(
-  commandDef: CommandDef<T>
+  commandDef: CommandDef<T>,
 ) {
   const queryDef = commandDef.args;
   const parseArgsConfig = createParseArgsConfig(queryDef);
@@ -395,7 +395,7 @@ function createCliCommand<T extends Record<string, QueryBase<any>>>(
   const helpText = generateHelp(
     commandDef.name,
     commandDef.description,
-    queryDef
+    queryDef,
   );
 
   // parseArgsWrapper: boolean引数のための特別処理
@@ -507,7 +507,7 @@ function createSubCommandMap<T extends SubCommandMap>(subCommands: T) {
   function parse(
     argv: string[],
     rootName = "command",
-    rootDescription = "Command with subcommands"
+    rootDescription = "Command with subcommands",
   ): SubCommandResult {
     // ヘルプフラグのチェック
     if (argv.includes("-h") || argv.includes("--help") || argv.length === 0) {
@@ -556,7 +556,7 @@ function runCommand<T>(result: CommandResult<T>, runFn?: (data: T) => void) {
         "Error:",
         result.error instanceof z.ZodError
           ? result.error.message
-          : result.error.message
+          : result.error.message,
       );
       console.log("\n" + result.helpText);
       break;
@@ -637,7 +637,7 @@ if (import.meta.main) {
     const result = searchCommand.parse(Deno.args);
     runCommand(result, (data) => {
       console.log(
-        `Search query: ${data.query}, count: ${data.count}, format: ${data.format}`
+        `Search query: ${data.query}, count: ${data.count}, format: ${data.format}`,
       );
     });
   } else {
@@ -662,7 +662,7 @@ if (import.meta.main) {
     const addResult = gitSubCommands.parse(
       ["add", "file1.txt", "file2.txt", "--all"],
       "git",
-      "Git command line tool"
+      "Git command line tool",
     );
     console.log("\nサブコマンド解析結果:", JSON.stringify(addResult, null, 2));
   }
@@ -670,13 +670,13 @@ if (import.meta.main) {
 
 // テスト用エクスポート
 export {
+  convertValue,
   createCliCommand,
   createSubCommandMap,
   createZodSchema,
-  zodToJsonSchema,
-  parseArgsToValues,
-  convertValue,
   generateHelp,
+  parseArgsToValues,
   runCommand,
+  zodToJsonSchema,
   // 型情報はファイル先頭でexport済み
 };

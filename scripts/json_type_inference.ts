@@ -195,9 +195,11 @@ function typeHash(type: Type): string {
       return `Object(${fields})`;
     }
     case "FunctionType":
-      return `Function(${typeHash(type.paramType)}->${typeHash(
-        type.returnType
-      )})`;
+      return `Function(${typeHash(type.paramType)}->${
+        typeHash(
+          type.returnType,
+        )
+      })`;
   }
 }
 
@@ -384,9 +386,11 @@ function typeToString(type: Type): string {
       return `{ ${fields} }`;
     }
     case "FunctionType":
-      return `(${typeToString(type.paramType)}) => ${typeToString(
-        type.returnType
-      )}`;
+      return `(${typeToString(type.paramType)}) => ${
+        typeToString(
+          type.returnType,
+        )
+      }`;
     case "UnionType": {
       const types = Array.from(type.types).map(typeToString).sort(); // 一貫性のために型をソート
       return types.join(" | ");
@@ -469,10 +473,10 @@ test("配列型の推論", () => {
         expect(elementType.types.size).toBe(2);
         const types = Array.from(elementType.types);
         const hasNumber = types.some(
-          (t) => isPrimitiveType(t) && t.name === "number"
+          (t) => isPrimitiveType(t) && t.name === "number",
         );
         const hasString = types.some(
-          (t) => isPrimitiveType(t) && t.name === "string"
+          (t) => isPrimitiveType(t) && t.name === "string",
         );
         expect(hasNumber).toBe(true);
         expect(hasString).toBe(true);
@@ -498,7 +502,7 @@ test("ネストされたオブジェクトの推論", () => {
   const type = inferTypeFromJson(json, env);
   const typeStr = typeToString(type);
   expect(typeStr).toBe(
-    "{ user: { id: number, name: string, tags: string[] } }"
+    "{ user: { id: number, name: string, tags: string[] } }",
   );
 });
 

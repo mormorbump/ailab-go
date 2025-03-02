@@ -47,13 +47,13 @@ if (import.meta.main) {
 export { executeCommand } from "./src/commands.ts";
 export {
   addTodo,
-  listTodos,
-  toggleTodo,
-  removeTodo,
-  updateTodo,
   getTodo,
-  searchTodos,
   getTodoStats,
+  listTodos,
   removeCompletedTodos,
+  removeTodo,
+  searchTodos,
+  toggleTodo,
+  updateTodo,
 } from "./src/db.ts";
-export type { Todo, TodoList, TodoUpdate, NewTodo } from "./src/types.ts";
+export type { NewTodo, Todo, TodoList, TodoUpdate } from "./src/types.ts";

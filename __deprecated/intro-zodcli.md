@@ -4,14 +4,19 @@
 
 https://jsr.io/@mizchi/zodcli
 
-Deno でAI生成用のコマンドを作りまくっており、そのための CLI 引数パーサが必要で、大部分は AIに書かせて、自分でリファクタしました。
+Deno でAI生成用のコマンドを作りまくっており、そのための CLI
+引数パーサが必要で、大部分は AIに書かせて、自分でリファクタしました。
 
 ## モチベーション
 
-- `node:util` の parseArgs はどこでも使えて便利だが、 Optional の推論に弱く、デフォルトがない
-- `cmd-ts` の自動ヘルプ生成とサブコマンドの生成は便利だが、独自DSLがあんまりうれしくない
+- `node:util` の parseArgs はどこでも使えて便利だが、 Optional
+  の推論に弱く、デフォルトがない
+- `cmd-ts`
+  の自動ヘルプ生成とサブコマンドの生成は便利だが、独自DSLがあんまりうれしくない
 
-内部実装は `parseArgs`のまま、 zod の推論が効くインターフェースを当てました。気が向いたら node 用に作ります。入力はただの `string[]` なので。。。
+内部実装は `parseArgs`のまま、 zod
+の推論が効くインターフェースを当てました。気が向いたら node
+用に作ります。入力はただの `string[]` なので。。。
 
 ## 基本的な使い方
 
@@ -41,7 +46,7 @@ const searchParser = createParser({
     path: {
       type: z.string().default("./").describe("target directory"),
       short: "p", // shortname
-      default: "."
+      default: ".",
     },
     recursive: {
       type: z.boolean().default(false).describe("search recursively"),
@@ -53,7 +58,7 @@ const searchParser = createParser({
 // help の表示
 console.log(searchParser.help());
 /**
- * $ deno run -A zodcli/examples/usage.ts 
+ * $ deno run -A zodcli/examples/usage.ts
 search
 > Search files in directory
 

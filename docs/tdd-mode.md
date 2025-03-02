@@ -42,7 +42,8 @@ import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
 
 test("sieveOfEratosthenes handles edge cases", () => {
-  expect(sieveOfEratosthenes(-1), "negative number returns empty array").toEqual([]);
+  expect(sieveOfEratosthenes(-1), "negative number returns empty array")
+    .toEqual([]);
   expect(sieveOfEratosthenes(0), "zero returns empty array").toEqual([]);
   expect(sieveOfEratosthenes(1), "one returns empty array").toEqual([]);
   expect(sieveOfEratosthenes(2), "two returns [2]").toEqual([2]);
@@ -54,6 +55,7 @@ test("sieveOfEratosthenes(10) returns first primes", () => {
 ```
 
 この段階で:
+
 - `@script @tdd` でモードを指定
 - 関数の型定義と仕様をJSDocで記述
 - 基本的なテストケースを作成
@@ -72,7 +74,8 @@ test("sieveOfEratosthenes throws on non-integer input", () => {
 test("sieveOfEratosthenes returns more primes for larger numbers", () => {
   const primes50 = sieveOfEratosthenes(50);
   const primes100 = sieveOfEratosthenes(100);
-  expect(primes100.length > primes50.length, "more primes in larger range").toBe(true);
+  expect(primes100.length > primes50.length, "more primes in larger range")
+    .toBe(true);
 });
 
 // 境界値のテスト

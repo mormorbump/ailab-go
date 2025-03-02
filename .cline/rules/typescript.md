@@ -35,9 +35,9 @@ TypeScriptでのコーディングにおける一般的なベストプラクテ�
 
 1. Result型の使用
    ```ts
-   import { Result, ok, err } from "npm:neverthrow";
+   import { err, ok, Result } from "npm:neverthrow";
 
-   type ApiError = 
+   type ApiError =
      | { type: "network"; message: string }
      | { type: "notFound"; message: string }
      | { type: "unauthorized"; message: string };
@@ -52,12 +52,18 @@ TypeScriptでのコーディングにおける一般的なベストプラクテ�
            case 401:
              return err({ type: "unauthorized", message: "Unauthorized" });
            default:
-             return err({ type: "network", message: `HTTP error: ${response.status}` });
+             return err({
+               type: "network",
+               message: `HTTP error: ${response.status}`,
+             });
          }
        }
        return ok(await response.json());
      } catch (error) {
-       return err({ type: "network", message: error instanceof Error ? error.message : "Unknown error" });
+       return err({
+         type: "network",
+         message: error instanceof Error ? error.message : "Unknown error",
+       });
      }
    }
    ```
@@ -81,7 +87,7 @@ TypeScriptでのコーディングにおける一般的なベストプラクテ�
      return {
        log(message: string): void {
          console.log(`[${new Date().toISOString()}] ${message}`);
-       }
+       },
      };
    }
    ```
@@ -94,10 +100,10 @@ TypeScriptでのコーディングにおける一般的なベストプラクテ�
    }
 
    class TimeBasedCache<T> implements Cache<T> {
-     private items = new Map<string, { value: T; expireAt: number; }>();
-     
+     private items = new Map<string, { value: T; expireAt: number }>();
+
      constructor(private ttlMs: number) {}
-     
+
      get(key: string): T | undefined {
        const item = this.items.get(key);
        if (!item || Date.now() > item.expireAt) {
@@ -105,11 +111,11 @@ TypeScriptでのコーディングにおける一般的なベストプラクテ�
        }
        return item.value;
      }
-     
+
      set(key: string, value: T): void {
        this.items.set(key, {
          value,
-         expireAt: Date.now() + this.ttlMs
+         expireAt: Date.now() + this.ttlMs,
        });
      }
    }
@@ -126,11 +132,17 @@ TypeScriptでのコーディングにおける一般的なベストプラクテ�
        try {
          const response = await fetch(path, { headers });
          if (!response.ok) {
-           return err({ type: "network", message: `HTTP error: ${response.status}` });
+           return err({
+             type: "network",
+             message: `HTTP error: ${response.status}`,
+           });
          }
          return ok(await response.json());
        } catch (error) {
-         return err({ type: "network", message: error instanceof Error ? error.message : "Unknown error" });
+         return err({
+           type: "network",
+           message: error instanceof Error ? error.message : "Unknown error",
+         });
        }
      };
    }
@@ -139,7 +151,7 @@ TypeScriptでのコーディングにおける一般的なベストプラクテ�
    class ApiClient {
      constructor(
        private readonly getData: Fetcher,
-       private readonly baseUrl: string
+       private readonly baseUrl: string,
      ) {}
 
      async getUser(id: string): Promise<Result<User, ApiError>> {

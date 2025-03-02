@@ -1,15 +1,15 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { streamText, tool } from "ai";
 import {
-  listTodos,
-  addTodo,
-  toggleTodo,
-  removeTodo,
-  getTodoStats,
-  searchTodos,
-  updateTodo,
   addChatHistory,
+  addTodo,
   getRecentChatHistory,
+  getTodoStats,
+  listTodos,
+  removeTodo,
+  searchTodos,
+  toggleTodo,
+  updateTodo,
 } from "./db.ts";
 import { ask } from "./ask.ts";
 import type { Todo } from "./types.ts";
@@ -56,9 +56,9 @@ const todoTools = {
         success: true,
         id: newTodo.id,
         text: newTodo.text,
-        message: `✓ 新しいTODOを追加しました: ${
-          newTodo.text
-        } (ID: ${newTodo.id.substring(0, 8)})`,
+        message: `✓ 新しいTODOを追加しました: ${newTodo.text} (ID: ${
+          newTodo.id.substring(0, 8)
+        })`,
       };
     },
   }),
@@ -138,9 +138,10 @@ const todoTools = {
         id: updatedTodo.id,
         text: updatedTodo.text,
         completed: updatedTodo.completed,
-        message: `✓ TODOを${statusText}に変更しました: ${
-          updatedTodo.text
-        } (ID: ${updatedTodo.id.substring(0, 8)})`,
+        message:
+          `✓ TODOを${statusText}に変更しました: ${updatedTodo.text} (ID: ${
+            updatedTodo.id.substring(0, 8)
+          })`,
       };
     },
   }),
@@ -192,10 +193,12 @@ const todoTools = {
         id: todo.id,
         text: todo.text,
         completed: todo.completed,
-        message: `✓ TODOを更新しました: ${todo.text} (ID: ${todo.id.substring(
-          0,
-          8
-        )})`,
+        message: `✓ TODOを更新しました: ${todo.text} (ID: ${
+          todo.id.substring(
+            0,
+            8,
+          )
+        })`,
       };
     },
   }),
@@ -212,8 +215,9 @@ const todoTools = {
         total: stats.total,
         completed: stats.completed,
         active: stats.active,
-        completionRate:
-          stats.total > 0 ? (stats.completed / stats.total) * 100 : 0,
+        completionRate: stats.total > 0
+          ? (stats.completed / stats.total) * 100
+          : 0,
       };
     },
   }),
@@ -283,11 +287,9 @@ export async function processChatCommand(prompt: string): Promise<void> {
     if (recentHistory.length > 0) {
       historyContext = "\n\n直近の会話履歴:\n";
       recentHistory.forEach((chat, index) => {
-        historyContext += `${index + 1}. ユーザー: ${
-          chat.userPrompt
-        }\n   AI: ${chat.aiResponse.substring(0, 100)}${
-          chat.aiResponse.length > 100 ? "..." : ""
-        }\n\n`;
+        historyContext += `${index + 1}. ユーザー: ${chat.userPrompt}\n   AI: ${
+          chat.aiResponse.substring(0, 100)
+        }${chat.aiResponse.length > 100 ? "..." : ""}\n\n`;
       });
     }
 
@@ -343,12 +345,14 @@ ${historyContext}`,
         }
         case "tool-call": {
           console.log(
-            `\n%c[tool-call:${part.toolName}] ${JSON.stringify(
-              part.args,
-              null,
-              2
-            )}`,
-            "color: gray"
+            `\n%c[tool-call:${part.toolName}] ${
+              JSON.stringify(
+                part.args,
+                null,
+                2,
+              )
+            }`,
+            "color: gray",
           );
 
           break;
@@ -356,12 +360,14 @@ ${historyContext}`,
 
         case "tool-result": {
           console.log(
-            `\n%c[tool-result:${part.toolName}] ${JSON.stringify(
-              part.result,
-              null,
-              2
-            )}`,
-            "color: gray"
+            `\n%c[tool-result:${part.toolName}] ${
+              JSON.stringify(
+                part.result,
+                null,
+                2,
+              )
+            }`,
+            "color: gray",
           );
           break;
         }
@@ -380,7 +386,7 @@ ${historyContext}`,
     console.error(
       `AIとの通信中にエラーが発生しました: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 }

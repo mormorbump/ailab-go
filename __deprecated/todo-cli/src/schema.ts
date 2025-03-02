@@ -1,4 +1,4 @@
-import { text, integer, sqliteTable } from "drizzle-sqlite";
+import { integer, sqliteTable, text } from "drizzle-sqlite";
 import { z } from "zod";
 
 /**

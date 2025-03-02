@@ -1,9 +1,11 @@
 # A Philosophy of Software Design vs Clean Code
 
-> この文書は以下のGitHub上の対談内容の要約です：  
+> この文書は以下のGitHub上の対談内容の要約です：\
 > [https://github.com/johnousterhout/aposd-vs-clean-code/blob/main/README.md](https://github.com/johnousterhout/aposd-vs-clean-code/blob/main/README.md)
 
-John Ousterhout（「A Philosophy of Software Design」著者）とRobert "Uncle Bob" Martin（「Clean Code」著者）による、ソフトウェア設計に関する対談の要約です。この対談は2024年9月から2025年2月にかけて行われました。
+John Ousterhout（「A Philosophy of Software Design」著者）とRobert "Uncle Bob"
+Martin（「Clean
+Code」著者）による、ソフトウェア設計に関する対談の要約です。この対談は2024年9月から2025年2月にかけて行われました。
 
 ## はじめに
 
@@ -16,6 +18,7 @@ John Ousterhout（「A Philosophy of Software Design」著者）とRobert "Uncle
 ### 基本的な設計哲学
 
 **Ousterhout:**
+
 - ソフトウェア設計の根本的な目標は「システムを理解し修正しやすくすること」
 - 「複雑さ」とは、システムの理解や修正を難しくするもの
 - 複雑さの主な要因は情報に関連する
@@ -24,6 +27,7 @@ John Ousterhout（「A Philosophy of Software Design」著者）とRobert "Uncle
 - 複雑さを減らすことが良い設計の指標
 
 **Martin:**
+
 - 設計の主な目的は、コードを書く人ではなく読む人の作業を容易にすること
 - プログラマーはコードを書くよりも読む時間の方が圧倒的に長い
 - 「きれいなコード」とは、他の人が読んで理解しやすいコード
@@ -31,12 +35,14 @@ John Ousterhout（「A Philosophy of Software Design」著者）とRobert "Uncle
 ## 1. メソッドの長さ
 
 ### Martin（Clean Code）の立場:
+
 - メソッドは可能な限り小さくすべき
 - 関数は2〜4行程度の短さが望ましい
 - if文やwhile文のブロックは1行（通常は関数呼び出し）であるべき
 - 「One Thing」ルール：一つのメソッドは一つのことだけを行うべき
 
 ### Ousterhout（A Philosophy of Software Design）の立場:
+
 - コードを小さな単位に分割することは重要だが、行き過ぎると問題が発生する
 - 過度な分解は「浅いインターフェース」を生み出し、認知的な負荷軽減効果が薄れる
 - 過度な分解は「絡み合い」を引き起こす
@@ -46,9 +52,11 @@ John Ousterhout（「A Philosophy of Software Design」著者）とRobert "Uncle
 
 ### 具体例：PrimeGenerator
 
-対談では、「Clean Code」に掲載されている素数生成クラスの実装が議論されました。Martinのアプローチでは、コードが8つの小さなメソッドに分割されていましたが、Ousterhoutはこれが理解を難しくしていると指摘しました。
+対談では、「Clean
+Code」に掲載されている素数生成クラスの実装が議論されました。Martinのアプローチでは、コードが8つの小さなメソッドに分割されていましたが、Ousterhoutはこれが理解を難しくしていると指摘しました。
 
 **Martinの実装の例（Clean Code）:**
+
 ```java
 public class PrimeGenerator {
   private static int[] primes;
@@ -88,6 +96,7 @@ public class PrimeGenerator {
 ```
 
 **Ousterhoutのリライト案（より少ないメソッド分割とコメントの追加）:**
+
 ```java
 public class PrimeGenerator2 {
   /**
@@ -112,11 +121,14 @@ public class PrimeGenerator2 {
 ```
 
 ### 合意点:
+
 - モジュラー設計は良いもの
-- 過度な分解も可能であり、「Clean Code初版」はその認識の指針をあまり提供していない
+- 過度な分解も可能であり、「Clean
+  Code初版」はその認識の指針をあまり提供していない
 - 「PrimeGenerator」の内部分解には問題がある
 
 ### 相違点:
+
 - 分解をどこまで進めるべきかで意見が分かれる
 - MartinはOne Thingルール（各メソッドは「1つのこと」を行うべき）を支持
 - Ousterhoutはこのルールが適切な防護柵を欠いており、過度な分解を招くと批判
@@ -124,6 +136,7 @@ public class PrimeGenerator2 {
 ## 2. コメントの使用
 
 ### Martin（Clean Code）の立場:
+
 - コメントはコードで自己表現できない場合の「必要悪」
 - コメントは常に「失敗」を意味する
 - 長いメソッド名を使ってコメントを代用すべき
@@ -131,6 +144,7 @@ public class PrimeGenerator2 {
 - 実装の明白でない部分だけにコメントを限定すべき
 
 ### Ousterhout（A Philosophy of Software Design）の立場:
+
 - コメントは非常に重要で、大きな価値がある
 - コードでは表現できない重要な情報が多く存在する
 - インターフェースと抽象化はコメントなしには定義できない
@@ -140,6 +154,7 @@ public class PrimeGenerator2 {
 ### コメントの実践的例：
 
 **Martin風のアプローチ（最小限のコメント、説明的な名前）:**
+
 ```java
 private static boolean isLeastRelevantMultipleOfLargerPrimeFactor(int candidate) {
   int nextLargerPrimeFactor = primes[multiplesOfPrimeFactors.size()];
@@ -149,6 +164,7 @@ private static boolean isLeastRelevantMultipleOfLargerPrimeFactor(int candidate)
 ```
 
 **Ousterhout風のアプローチ（コメント付き、シンプルな名前）:**
+
 ```java
 /**
  * Returns true if candidate is a multiple of primes[n], false otherwise.
@@ -166,11 +182,13 @@ private static boolean isMultiple(int candidate, int n) {
 ```
 
 ### 合意点:
+
 - コメントがまったく不要というわけではない
 - 実装コードは非明白な場合のみコメントが必要
 - パブリックAPIは適切にドキュメント化すべき
 
 ### 相違点:
+
 - Martinはコメントの必要性を最小限に抑えることを強く推奨
 - Ousterhoutは同量のコードに対して5〜10倍多くのコメントを書くと主張
 - Martinはコードを読まずにコメントを信頼しない
@@ -179,6 +197,7 @@ private static boolean isMultiple(int candidate, int n) {
 ## 3. テスト駆動開発（TDD）
 
 ### Martin（Clean Code）の立場:
+
 - TDDは3つの法則に基づく:
   1. 失敗するテストを先に書かないと実装コードを書けない
   2. テストは失敗するのに十分な分だけしか書けない
@@ -191,6 +210,7 @@ private static boolean isMultiple(int candidate, int n) {
   - リファクタリングを恐れずに行える
 
 ### Ousterhout（A Philosophy of Software Design）の立場:
+
 - ユニットテストは不可欠だが、TDDには問題がある
 - TDDは開発者が戦術的に作業し過ぎることを強制する
 - 設計思考よりもテストを優先することで、良い設計が阻害される
@@ -202,23 +222,27 @@ private static boolean isMultiple(int candidate, int n) {
 ### TDDと代替アプローチの比較
 
 **TDDアプローチ:**
+
 1. テストを書く（赤）
 2. テストが通るように最小限のコードを書く（緑）
 3. コードをリファクタリングする（青）
 4. 繰り返す
 
 **Ousterhoutの「バンドリング」アプローチ:**
+
 1. 設計を検討し、全体像を考える
 2. クラスやメソッド単位でコードを書く
 3. 書いたコードのテストを書く
 4. 必要に応じてリファクタリングする
 
 ### 合意点:
+
 - ユニットテストはソフトウェア開発において必須の要素
 - TDDを使って良い設計のシステムを作ることは可能
 - リファクタリングは良いコードを維持するために重要
 
 ### 相違点:
+
 - OusterhoutはTDDが良い設計を阻害し悪いコードにつながると懸念
 - MartinはTDDが設計を阻害するとは考えておらず、リスクも少ないと主張
 - ベストケースでは同様の結果が得られるが、平均的・最悪のケースでは意見が分かれる
@@ -228,17 +252,20 @@ private static boolean isMultiple(int candidate, int n) {
 各アプローチの長所を組み合わせた実践的な適用方法を考えてみましょう：
 
 ### メソッドの長さについて
+
 - メソッドは単一の責任を持つべきだが、過度な分解は避ける
 - コードの理解しやすさを最優先し、メソッドの長さは絶対的な基準ではなく相対的に判断する
 - メソッド間の「絡み合い」が生じていないか定期的にチェックする
 
 ### コメントについて
+
 - インターフェースには常に明確なコメントを書く
 - 実装の意図や「なぜそうしたのか」を説明するコメントを適切に追加する
 - 明白なことを説明する冗長なコメントは避ける
 - メソッド名と変数名は説明的にしつつも、極端に長くならないようにバランスを取る
 
 ### テストについて
+
 - テストファーストの考え方を取り入れつつも、設計思考も大切にする
 - 複雑な問題に取り組む場合は、まず設計を考えてから実装とテストを進める
 - シンプルな機能の場合はTDDのサイクルで進めることも効果的
@@ -247,6 +274,7 @@ private static boolean isMultiple(int candidate, int n) {
 ## 結論
 
 ### Ousterhoutの最終的見解:
+
 - Clean Codeは本当に重要でないものに注力している
   - 小さなメソッドへの過度な分割
   - 英語で書かれたコメントの排除
@@ -256,12 +284,16 @@ private static boolean isMultiple(int candidate, int n) {
 - バランスの取れたアプローチではなく、極端な立場を取りすぎている
 
 ### Martinの最終的見解:
+
 - 議論は有益で、多くの価値観を共有している
 - 意見の相違はあるが、Ousterhoutの指摘を考慮し、Clean Codeの第2版に反映させる
 
 ## 考察
 
-この対談は、ソフトウェア設計における異なるアプローチと哲学を浮き彫りにしています。Martin氏の「Clean Code」はコードの読みやすさと小さな単位への分割を重視し、Ousterhout氏の「A Philosophy of Software Design」は全体的な設計とバランスを重視しています。どちらのアプローチにも長所と短所があり、状況や個人の好みによって適切な方法は異なるでしょう。
+この対談は、ソフトウェア設計における異なるアプローチと哲学を浮き彫りにしています。Martin氏の「Clean
+Code」はコードの読みやすさと小さな単位への分割を重視し、Ousterhout氏の「A
+Philosophy of Software
+Design」は全体的な設計とバランスを重視しています。どちらのアプローチにも長所と短所があり、状況や個人の好みによって適切な方法は異なるでしょう。
 
 特定のプロジェクトや状況に応じて両者のアプローチをバランス良く取り入れることが、最善の結果をもたらす可能性があります。例えば：
 
@@ -271,11 +303,12 @@ private static boolean isMultiple(int candidate, int n) {
 
 最終的には、良いソフトウェア設計とは、コードを理解しやすく、修正しやすくするという共通の目標に向かって、様々なテクニックやアプローチをバランス良く適用することにあるようです。ドグマ的な原則よりも、具体的な状況に応じた判断が重要であり、経験を積むにつれて、どのような状況でどのようなアプローチが効果的かを学んでいくことが大切です。
 
------
+---
 
 ## mizchi-emulator の感想
 
-この対談を読んで、非常に興味深いと思ったのは、私自身がキャリアの中でこの両極端の間を行き来してきた経験があるということだ。最初は「Clean Code」の教えに忠実で、小さなメソッドへの分割とコメントを避けることを信条としていたが、大規模なフロントエンドアプリケーションを構築する中で、その限界を感じるようになった。
+この対談を読んで、非常に興味深いと思ったのは、私自身がキャリアの中でこの両極端の間を行き来してきた経験があるということだ。最初は「Clean
+Code」の教えに忠実で、小さなメソッドへの分割とコメントを避けることを信条としていたが、大規模なフロントエンドアプリケーションを構築する中で、その限界を感じるようになった。
 
 特にTypeScriptでのフロントエンド開発において、過度なメソッド分割は型の受け渡しが複雑になり、かえって理解しづらいコードになることがある。Ousterhoutの言う「絡み合い」の問題は、React等のコンポーネントベースのシステムでも顕著に現れる。小さすぎるコンポーネントは、props（引数）の受け渡しが複雑になり、一つの機能を理解するために複数のファイルを行き来する必要が生じる。
 

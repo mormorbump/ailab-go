@@ -2449,6 +2449,15 @@
       "npm:zod@^3.24.2"
     ],
     "members": {
+      "__deprecated/todo-cli": {
+        "dependencies": [
+          "jsr:@std/fs@0.218.0",
+          "jsr:@std/path@0.218.0",
+          "npm:@ai-sdk/anthropic@^1.1.11",
+          "npm:ai@^4.1.46",
+          "npm:zod@^3.24.2"
+        ]
+      },
       "npm-summary": {
         "dependencies": [
           "jsr:@std/expect@^1.0.13",
@@ -2456,15 +2465,6 @@
           "jsr:@std/testing@^1.0.9",
           "npm:pako@^2.1.0",
           "npm:tinytar@0.1"
-        ]
-      },
-      "todo-cli": {
-        "dependencies": [
-          "jsr:@std/fs@0.218.0",
-          "jsr:@std/path@0.218.0",
-          "npm:@ai-sdk/anthropic@^1.1.11",
-          "npm:ai@^4.1.46",
-          "npm:zod@^3.24.2"
         ]
       },
       "todo2": {

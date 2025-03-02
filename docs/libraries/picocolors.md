@@ -2,7 +2,8 @@
 
 ## 概要
 
-最小かつ最速の端末出力フォーマッティングライブラリ。ANSI カラーを使用してターミナル出力に色と書式を追加。
+最小かつ最速の端末出力フォーマッティングライブラリ。ANSI
+カラーを使用してターミナル出力に色と書式を追加。
 
 ```ts
 // インストール
@@ -44,69 +45,69 @@ console.log(pc.bgYellow(pc.black("警告")));
 
 ### テキスト色
 
-| 関数 | 説明 | 例 |
-|------|------|------|
-| `black` | 黒色テキスト | `pc.black("テキスト")` |
-| `red` | 赤色テキスト | `pc.red("テキスト")` |
-| `green` | 緑色テキスト | `pc.green("テキスト")` |
-| `yellow` | 黄色テキスト | `pc.yellow("テキスト")` |
-| `blue` | 青色テキスト | `pc.blue("テキスト")` |
+| 関数      | 説明               | 例                       |
+| --------- | ------------------ | ------------------------ |
+| `black`   | 黒色テキスト       | `pc.black("テキスト")`   |
+| `red`     | 赤色テキスト       | `pc.red("テキスト")`     |
+| `green`   | 緑色テキスト       | `pc.green("テキスト")`   |
+| `yellow`  | 黄色テキスト       | `pc.yellow("テキスト")`  |
+| `blue`    | 青色テキスト       | `pc.blue("テキスト")`    |
 | `magenta` | マゼンタ色テキスト | `pc.magenta("テキスト")` |
-| `cyan` | シアン色テキスト | `pc.cyan("テキスト")` |
-| `white` | 白色テキスト | `pc.white("テキスト")` |
-| `gray` | グレー色テキスト | `pc.gray("テキスト")` |
+| `cyan`    | シアン色テキスト   | `pc.cyan("テキスト")`    |
+| `white`   | 白色テキスト       | `pc.white("テキスト")`   |
+| `gray`    | グレー色テキスト   | `pc.gray("テキスト")`    |
 
 ### 明るいテキスト色（Bright variants）
 
-| 関数 | 説明 | 例 |
-|------|------|------|
-| `blackBright` | 明るい黒色テキスト | `pc.blackBright("テキスト")` |
-| `redBright` | 明るい赤色テキスト | `pc.redBright("テキスト")` |
-| `greenBright` | 明るい緑色テキスト | `pc.greenBright("テキスト")` |
-| `yellowBright` | 明るい黄色テキスト | `pc.yellowBright("テキスト")` |
-| `blueBright` | 明るい青色テキスト | `pc.blueBright("テキスト")` |
+| 関数            | 説明                     | 例                             |
+| --------------- | ------------------------ | ------------------------------ |
+| `blackBright`   | 明るい黒色テキスト       | `pc.blackBright("テキスト")`   |
+| `redBright`     | 明るい赤色テキスト       | `pc.redBright("テキスト")`     |
+| `greenBright`   | 明るい緑色テキスト       | `pc.greenBright("テキスト")`   |
+| `yellowBright`  | 明るい黄色テキスト       | `pc.yellowBright("テキスト")`  |
+| `blueBright`    | 明るい青色テキスト       | `pc.blueBright("テキスト")`    |
 | `magentaBright` | 明るいマゼンタ色テキスト | `pc.magentaBright("テキスト")` |
-| `cyanBright` | 明るいシアン色テキスト | `pc.cyanBright("テキスト")` |
-| `whiteBright` | 明るい白色テキスト | `pc.whiteBright("テキスト")` |
+| `cyanBright`    | 明るいシアン色テキスト   | `pc.cyanBright("テキスト")`    |
+| `whiteBright`   | 明るい白色テキスト       | `pc.whiteBright("テキスト")`   |
 
 ### 背景色
 
-| 関数 | 説明 | 例 |
-|------|------|------|
-| `bgBlack` | 黒色背景 | `pc.bgBlack("テキスト")` |
-| `bgRed` | 赤色背景 | `pc.bgRed("テキスト")` |
-| `bgGreen` | 緑色背景 | `pc.bgGreen("テキスト")` |
-| `bgYellow` | 黄色背景 | `pc.bgYellow("テキスト")` |
-| `bgBlue` | 青色背景 | `pc.bgBlue("テキスト")` |
+| 関数        | 説明           | 例                         |
+| ----------- | -------------- | -------------------------- |
+| `bgBlack`   | 黒色背景       | `pc.bgBlack("テキスト")`   |
+| `bgRed`     | 赤色背景       | `pc.bgRed("テキスト")`     |
+| `bgGreen`   | 緑色背景       | `pc.bgGreen("テキスト")`   |
+| `bgYellow`  | 黄色背景       | `pc.bgYellow("テキスト")`  |
+| `bgBlue`    | 青色背景       | `pc.bgBlue("テキスト")`    |
 | `bgMagenta` | マゼンタ色背景 | `pc.bgMagenta("テキスト")` |
-| `bgCyan` | シアン色背景 | `pc.bgCyan("テキスト")` |
-| `bgWhite` | 白色背景 | `pc.bgWhite("テキスト")` |
+| `bgCyan`    | シアン色背景   | `pc.bgCyan("テキスト")`    |
+| `bgWhite`   | 白色背景       | `pc.bgWhite("テキスト")`   |
 
 ### 明るい背景色（Bright variants）
 
-| 関数 | 説明 | 例 |
-|------|------|------|
-| `bgBlackBright` | 明るい黒色背景 | `pc.bgBlackBright("テキスト")` |
-| `bgRedBright` | 明るい赤色背景 | `pc.bgRedBright("テキスト")` |
-| `bgGreenBright` | 明るい緑色背景 | `pc.bgGreenBright("テキスト")` |
-| `bgYellowBright` | 明るい黄色背景 | `pc.bgYellowBright("テキスト")` |
-| `bgBlueBright` | 明るい青色背景 | `pc.bgBlueBright("テキスト")` |
+| 関数              | 説明                 | 例                               |
+| ----------------- | -------------------- | -------------------------------- |
+| `bgBlackBright`   | 明るい黒色背景       | `pc.bgBlackBright("テキスト")`   |
+| `bgRedBright`     | 明るい赤色背景       | `pc.bgRedBright("テキスト")`     |
+| `bgGreenBright`   | 明るい緑色背景       | `pc.bgGreenBright("テキスト")`   |
+| `bgYellowBright`  | 明るい黄色背景       | `pc.bgYellowBright("テキスト")`  |
+| `bgBlueBright`    | 明るい青色背景       | `pc.bgBlueBright("テキスト")`    |
 | `bgMagentaBright` | 明るいマゼンタ色背景 | `pc.bgMagentaBright("テキスト")` |
-| `bgCyanBright` | 明るいシアン色背景 | `pc.bgCyanBright("テキスト")` |
-| `bgWhiteBright` | 明るい白色背景 | `pc.bgWhiteBright("テキスト")` |
+| `bgCyanBright`    | 明るいシアン色背景   | `pc.bgCyanBright("テキスト")`    |
+| `bgWhiteBright`   | 明るい白色背景       | `pc.bgWhiteBright("テキスト")`   |
 
 ### テキスト書式
 
-| 関数 | 説明 | 例 |
-|------|------|------|
-| `bold` | 太字 | `pc.bold("テキスト")` |
-| `dim` | 薄い文字 | `pc.dim("テキスト")` |
-| `italic` | イタリック体 | `pc.italic("テキスト")` |
-| `underline` | 下線 | `pc.underline("テキスト")` |
-| `inverse` | 反転（背景色とテキスト色を入れ替え） | `pc.inverse("テキスト")` |
-| `hidden` | 非表示 | `pc.hidden("テキスト")` |
-| `strikethrough` | 取り消し線 | `pc.strikethrough("テキスト")` |
-| `reset` | スタイルをリセット | `pc.reset("テキスト")` |
+| 関数            | 説明                                 | 例                             |
+| --------------- | ------------------------------------ | ------------------------------ |
+| `bold`          | 太字                                 | `pc.bold("テキスト")`          |
+| `dim`           | 薄い文字                             | `pc.dim("テキスト")`           |
+| `italic`        | イタリック体                         | `pc.italic("テキスト")`        |
+| `underline`     | 下線                                 | `pc.underline("テキスト")`     |
+| `inverse`       | 反転（背景色とテキスト色を入れ替え） | `pc.inverse("テキスト")`       |
+| `hidden`        | 非表示                               | `pc.hidden("テキスト")`        |
+| `strikethrough` | 取り消し線                           | `pc.strikethrough("テキスト")` |
+| `reset`         | スタイルをリセット                   | `pc.reset("テキスト")`         |
 
 ## ユーティリティ
 
@@ -150,7 +151,7 @@ import pc from "picocolors";
 function log(message, level = "info") {
   const timestamp = new Date().toISOString();
   const prefix = pc.dim(`[${timestamp}]`);
-  
+
   switch (level) {
     case "success":
       console.log(`${prefix} ${pc.green("✓")} ${message}`);
@@ -184,15 +185,14 @@ function showProgress(percent) {
   const width = 30;
   const completed = Math.floor(width * (percent / 100));
   const remaining = width - completed;
-  
-  const bar = 
-    pc.green("█".repeat(completed)) + 
+
+  const bar = pc.green("█".repeat(completed)) +
     pc.dim("░".repeat(remaining));
-  
+
   const percentText = percent.toFixed(1).padStart(5);
-  
+
   process.stdout.write(`\r${bar} ${pc.bold(percentText)}%`);
-  
+
   if (percent >= 100) {
     process.stdout.write("\n");
   }
@@ -203,7 +203,7 @@ let progress = 0;
 const interval = setInterval(() => {
   progress += 5;
   showProgress(progress);
-  
+
   if (progress >= 100) {
     clearInterval(interval);
     console.log(pc.green(pc.bold("✓") + " 完了しました"));
@@ -223,7 +223,9 @@ import pc from "picocolors";
 console.log(pc.red(pc.bold("Hello world")));
 ```
 
-より詳細な移行については [colorize-template](https://github.com/usmanyunusov/colorize-template) の使用を検討してください。
+より詳細な移行については
+[colorize-template](https://github.com/usmanyunusov/colorize-template)
+の使用を検討してください。
 
 ## 参考リンク
 
