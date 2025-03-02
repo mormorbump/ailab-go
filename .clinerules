@@ -189,13 +189,27 @@ flowchart TD
 
 ## Deno Practice
 
-### モジュールを追加する
+### npm 互換モード
 
-モジュールを追加するとき、 deno.json にすでに import されていないか確認する。
+私は `node:path`, `node:util` のような Deno の Node 互換APIが使える。
 
-`searchNpm` ツールが使える場合、これを使って npm のモジュールを検索してもよい。`typescript` や `zod` 等の一般によく知られているモジュール以外をコードに追加するときは、ハルシネーションをしていないか確認する。
+npm のライブラリを参照できる。`npm:zod` のように npm からライブラリを参照しても良い。
 
-モジュールが見つかった場合、 `deno add npm:<name>` で deno.json に追加して、deno の npm 互換モードで import して使う。
+### 外部ライブラリの使用方法
+
+`docs/libraries/*` の下に該当するドキュメントがある場合、ライブラリを使用する前に、これを読み込む。
+
+`jsr:` の場合、 `deno doc jsr:@scope/pkgName` でライブラリのドキュメントを確認する。
+
+`npm:` の場合、`npm-summary pkgName` でライブラリの要約を確認する。
+
+ライブラリを追加するとき、 deno.json にすでに import されていないか確認する。
+
+`searchNpm` を使って npm のモジュールを検索してもよい。`typescript` や `zod` 等の一般によく知られているモジュール以外をコードに追加するときは、ハルシネーションをしていないか確認する。
+
+### ソースコード内のモジュールの参照方法
+
+自分のディレクトリ以外のソースコードを確認する時は、 `deno doc ../foo/mod.ts` のように型定義だけを確認する。
 
 ### テストの書き方
 
@@ -258,10 +272,6 @@ mod-import リントルールが以下をチェックする：
 ```bash
 deno test --coverage=coverage && deno coverage coverage
 ```
-
-カバレッジの目標値：
-- 新規実装時は80%以上のカバレッジを目標とする
-- 重要なビジネスロジックは90%以上を目指す
 
 実行コードと純粋な関数を分離することで、高いカバレッジを維持する：
 - 実装（lib.ts）: ロジックを純粋な関数として実装
@@ -448,8 +458,12 @@ TypeScriptのエラー処理をより型安全にするため、Result型を導�
 
 ### `readUrl`
 
-記事を読んで本文を取得する。
-「～について調べて」と言われたとき、知らないときはユーザーにURLを要求してもいい。
+記事を読んで本文を取得する。「～について調べて」と言われたとき,
+
+### `searchNpm`
+
+npm にライブラリが存在するか。
+
 
 ## TypeScript
 
@@ -668,7 +682,8 @@ TypeScriptでのコーディングにおける一般的なベストプラクテ�
 なるほど、大変そうなのだ
 このプロジェクトには以下のモードが定義されています:
 - deno-script Deno:ScriptMode at .cline/roomodes/deno-script.md
+- library-searcher LibraryResearcher at .cline/roomodes/library-searcher.md
 - mizchi-writer mizchi:writer at .cline/roomodes/mizchi-writer.md
-- deno-refactor undefined at .cline/roomodes/deno-refactor.md
+- deno-refactor Deno:Refactor at .cline/roomodes/deno-refactor.md
 - deno-module Deno:Module at .cline/roomodes/deno-module.md
 - deno-tdd Deno:TestFirstMode at .cline/roomodes/deno-tdd.md

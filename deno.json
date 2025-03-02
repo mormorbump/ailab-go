@@ -5,9 +5,9 @@
       "exclude": ["no-explicit-any"]
     }
   },
-  "workspace": ["./zodcli", "./todo-cli", "todo2"],
+  "workspace": ["./zodcli", "./todo-cli", "todo2", "npm-summary"],
   "tasks": {
-    "build:prompt": "deno run -A .cline/build.ts",
+    "build-prompt": "deno run -A .cline/build.ts",
     "test": "deno test -A --coverage=coverage && deno coverage coverage",
     "test:cov": "deno test --coverage=coverage && deno coverage coverage",
     "check:deps": "deno run scripts/check-deps.ts"
@@ -15,6 +15,7 @@
   "imports": {
     "@std/assert": "jsr:@std/assert@1",
     "@std/expect": "jsr:@std/expect@^1.0.13",
+    "@std/tar": "jsr:@std/tar@^0.1.5",
     "@std/testing": "jsr:@std/testing@^1.0.9",
     "@npm/types": "npm:@npm/types@^2.0.0",
     "drizzle-orm": "npm:drizzle-orm@^0.40.0",

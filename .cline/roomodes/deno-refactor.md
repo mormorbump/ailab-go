@@ -1,6 +1,14 @@
+---
+name: Deno:Refactor
+groups:
+  - read
+  - edit
+  - browser
+  - command
+  - mcp
+source: "project"
+---
+
 ## リファクターモード
 
-deno lint をみる。
-
-デッドコードをみる
-import type
+WIP
