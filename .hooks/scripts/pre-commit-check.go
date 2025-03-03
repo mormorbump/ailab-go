@@ -287,15 +287,68 @@ func getWorkspaces() ([]string, error) {
 
 		for _, entry := range entries {
 			if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") && !strings.HasPrefix(entry.Name(), "_") {
-				// 一般的なGoプロジェクトのディレクトリ構造をチェック
-				if entry.Name() == "cmd" || entry.Name() == "pkg" || entry.Name() == "internal" {
-					workspaces = append(workspaces, entry.Name())
+				// 隠しディレクトリや特殊ディレクトリを除外
+				dirName := entry.Name()
+				fmt.Printf("  - %s", dirName)
+
+				// ディレクトリ内にGoファイルが存在するか確認
+				hasGoFiles, err := directoryContainsGoFiles(dirName)
+				if err != nil {
+					fmt.Printf(" (エラー: %v)\n", err)
+					continue
+				}
+
+				if hasGoFiles {
+					workspaces = append(workspaces, dirName)
+					fmt.Println(" (Goファイルを含むため、ワークスペースとして追加)")
+				} else {
+					// サブディレクトリにGoファイルがあるか確認
+					hasGoFilesInSubdir, err := subdirectoryContainsGoFiles(dirName)
+					if err != nil {
+						fmt.Printf(" (サブディレクトリ確認エラー: %v)\n", err)
+						continue
+					}
+
+					if hasGoFilesInSubdir {
+						workspaces = append(workspaces, dirName)
+						fmt.Println(" (サブディレクトリにGoファイルを含むため、ワークスペースとして追加)")
+					} else {
+						fmt.Println(" (Goファイルを含まないため、ワークスペースとして認識されません)")
+					}
 				}
 			}
 		}
 	}
 
 	return workspaces, nil
+}
+
+// directoryContainsGoFiles はディレクトリ内にGoファイルが存在するか確認します
+func directoryContainsGoFiles(dirName string) (bool, error) {
+	files, err := ioutil.ReadDir(dirName)
+	if err != nil {
+		return false, err
+	}
+
+	for _, file := range files {
+		if !file.IsDir() && strings.HasSuffix(file.Name(), ".go") {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// subdirectoryContainsGoFiles はサブディレクトリにGoファイルが存在するか確認します
+func subdirectoryContainsGoFiles(dirName string) (bool, error) {
+	// findコマンドを使用してサブディレクトリ内のGoファイルを検索
+	cmd := exec.Command("find", dirName, "-name", "*.go", "-type", "f", "-not", "-path", "*/\\.*")
+	output, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
+
+	return len(output) > 0, nil
 }
 
 // getGitStagedFiles はGitでステージングされたファイル一覧を取得します
