@@ -13,6 +13,7 @@ pre-commitフックは、コミット前に自動的に実行され、コード�
    `.hooks/scripts/pre-commit-check.go` ファイルを作成し、以下のような内容を記述します：
 
    ```go
+   
    package main
 
    import (

@@ -1,0 +1,174 @@
+# 汎用的なgolangci-lint設定ファイル
+# ベストプラクティスに基づいて作成
+
+# 実行設定
+run:
+  # デフォルトの並列実行数（CPUコア数）
+  concurrency: 4
+  
+  # タイムアウト設定（デフォルト: 1m）
+  timeout: 5m
+  
+  # 解析対象から除外するディレクトリ
+  skip-dirs:
+    - vendor
+    - third_party
+    - testdata
+    - examples
+    - Godeps
+    - builtin
+  
+  # 解析対象から除外するファイル
+  skip-files:
+    - ".*\\.generated\\.go$"
+    - ".*\\_test\\.go$"
+  
+  # 高速モード（複数のlinterでASTを共有）
+  fast: true
+  
+  # モジュールのダウンロードモード（readonly: go.modファイルを変更しない）
+  modules-download-mode: readonly
+
+# 出力設定
+output:
+  # 出力形式（colored-line-number, line-number, json, tab, checkstyle, code-climate, junit-xml, github-actions）
+  format: colored-line-number
+  
+  # 詳細なエラー情報を表示
+  print-issued-lines: true
+  
+  # エラーが発生したコードの周辺行も表示
+  print-linter-name: true
+
+# linter設定
+linters:
+  # すべてのlinterを無効化（個別に有効化するため）
+  disable-all: true
+  
+  # 使用するlinterを明示的に指定
+  enable:
+    # コードの正確性に関するlinter
+    - errcheck      # エラー処理の漏れをチェック
+    - govet         # Go標準の静的解析ツール
+    - staticcheck   # 高度な静的解析
+    - gosec         # セキュリティの問題を検出
+    
+    # コードの品質に関するlinter
+    - gosimple      # コードの簡素化提案
+    - unused        # 未使用のコードを検出
+    - ineffassign   # 無効な代入を検出
+    - bodyclose     # HTTPレスポンスボディのクローズ漏れを検出
+    
+    # コードスタイルに関するlinter
+    - goimports     # importの整理とフォーマット
+    - gofmt         # 標準のコードフォーマッタ
+    - misspell      # スペルミスを検出
+    - whitespace    # 余分な空白を検出
+    
+    # コードの複雑さに関するlinter
+    - gocyclo       # 循環的複雑度を検出
+    - funlen        # 関数の長さをチェック
+    
+    # その他の有用なlinter
+    - godot         # コメントの末尾のピリオドをチェック
+    - nolintlint    # nolintコメントの使用方法をチェック
+
+# 個別のlinter設定
+linters-settings:
+  # errcheck設定
+  errcheck:
+    # 無視するエラーチェックパターン
+    check-type-assertions: true
+    check-blank: true
+  
+  # gocyclo設定（循環的複雑度）
+  gocyclo:
+    # 警告する複雑度の閾値（デフォルト: 30）
+    min-complexity: 15
+  
+  # funlen設定（関数の長さ）
+  funlen:
+    # 警告する行数の閾値
+    lines: 100
+    statements: 50
+  
+  # gosec設定（セキュリティチェック）
+  gosec:
+    # セキュリティ問題の重大度
+    severity: medium
+    confidence: medium
+  
+  # govet設定
+  govet:
+    # 特定のチェックを有効化
+    enable:
+      - shadow
+      - structtag
+      - unusedresult
+  
+  # staticcheck設定
+  staticcheck:
+    # Go1.18以降の新しいチェックも有効化
+    go: "1.18"
+  
+  # goimports設定
+  goimports:
+    # importのグループ化とソート
+    local-prefixes: "github.com/your-org"
+
+# 問題の報告設定
+issues:
+  # デフォルトの除外ルールを使用しない
+  exclude-use-default: false
+  
+  # 最大問題数の制限
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  
+  # 特定のパターンを除外
+  exclude-rules:
+    # テストファイルでの特定の警告を無視
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+    
+    # 生成されたファイルでの警告を無視
+    - path: \.generated\.go
+      linters:
+        - all
+    
+    # 特定のエラーメッセージを無視
+    - text: "comment on exported (function|method|type|const|var)"
+      linters:
+        - golint
+    
+    # モックファイルでの警告を無視
+    - path: mock_.*\.go
+      linters:
+        - all
+
+  # 新しいissueのみを報告
+  new: false
+  
+  # 修正可能なissueを優先
+  fix: true
+
+# 重大度の設定
+severity:
+  # デフォルトの重大度
+  default-severity: error
+  
+  # 特定のlinterの重大度を変更
+  rules:
+    - linters:
+        - gosimple
+        - govet
+      severity: warning
+
+# プリセット設定
+# 特定のカテゴリのlinterをまとめて有効化
+presets:
+  - bugs
+  - performance
+  - style
