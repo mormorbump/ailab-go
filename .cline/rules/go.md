@@ -464,7 +464,166 @@ func main() {
    - 単一責任の原則に従う
    - 適切な粒度でモジュール化
    - 循環参照を避ける
-
 5. ディレクトリ構造
    - 無闇にpackage名でディレクトリを切らない
+   - 例えばinternal/package_name/package_name.goではなく、internal/filename.goで良い
+
+### Context パッケージの使用
+
+1. **基本原則**
+   - Contextは関数の最初の引数として渡す
+   - 構造体にContextを格納しない
+   - nilのContextを渡さない
+   - キャンセル関数は必ず呼び出す（defer推奨）
+
+2. **Context の作成**
+   ```go
+   // トップレベルのContextとして使用
+   ctx := context.Background()
+   
+   // どのContextを使用するか不明な場合
+   ctx := context.TODO()
+   
+   // キャンセル可能なContext
+   ctx, cancel := context.WithCancel(parentCtx)
+   defer cancel() // 必ず呼び出す
+   
+   // タイムアウト付きContext
+   ctx, cancel := context.WithTimeout(parentCtx, 5*time.Second)
+   defer cancel()
+   
+   // デッドライン付きContext
+   ctx, cancel := context.WithDeadline(parentCtx, time.Now().Add(5*time.Minute))
+   defer cancel()
+   
+   // 値を持つContext（控えめに使用する）
+   ctx := context.WithValue(parentCtx, key, value)
+   ```
+
+3. **キャンセルの処理**
+   ```go
+   func processWithCancel(ctx context.Context) error {
+       // 定期的にキャンセルをチェック
+       select {
+       case <-ctx.Done():
+           return ctx.Err() // context.Canceled または context.DeadlineExceeded
+       default:
+           // 処理を続行
+       }
+       
+       // または長時間実行される処理の前にチェック
+       if ctx.Err() != nil {
+           return ctx.Err()
+       }
+       
+       // 外部APIコールなどでもContextを渡す
+       req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+       // ...
+   }
+   ```
+
+4. **Context.Value の適切な使用**
+   ```go
+   // キーには非公開の型を使用（衝突防止）
+   type contextKey string
+   const userIDKey contextKey = "userID"
+   
+   // 値の設定
+   ctx = context.WithValue(ctx, userIDKey, "user-123")
+   
+   // 値の取得（型アサーションを忘れずに）
+   if userID, ok := ctx.Value(userIDKey).(string); ok {
+       // userIDを使用
+   }
+   ```
+
+5. **注意点**
+   - Context.Valueは認証情報やリクエストIDなど、リクエストスコープの値のみに使用
+   - 関数のオプションパラメータとしてContext.Valueを使用しない
+   - ブロッキング操作はContextのキャンセルを尊重する必要がある
+   - ゴルーチンリークを防ぐためにキャンセルを適切に処理する
+
+### コード品質とLinter設定
+
+1. **golangci-lintの活用**
+   - 複数のlinterを一括で実行できるツール
+   - プロジェクトルートに`.golangci.yml`を配置
+
+   ```yaml
+   # 基本的な.golangci.yml設定
+   linters:
+     enable:
+       - errcheck      # エラー処理の漏れをチェック
+       - govet         # Go標準の静的解析ツール
+       - staticcheck   # 高度な静的解析
+       - gosimple      # コードの簡素化提案
+       - unused        # 未使用のコードを検出
+       - goimports     # importの整理とフォーマット
+   
+   linters-settings:
+     gocyclo:
+       min-complexity: 15  # 循環的複雑度の閾値
+   ```
+
+2. **主要なlinter**
+   - **errcheck**: エラー処理の漏れをチェック
+   - **govet**: Go標準の静的解析ツール
+   - **staticcheck**: 高度な静的解析（golintの後継）
+   - **gosimple**: コードの簡素化提案
+   - **unused**: 未使用のコードを検出
+   - **goimports**: importの整理とフォーマット
+   - **gosec**: セキュリティの問題を検出
+
+3. **効率的な使用方法**
+   ```bash
+   # 基本的な実行
+   golangci-lint run
+   
+   # 自動修正可能な問題を修正
+   golangci-lint run --fix
+   
+   # 高速モードで実行
+   golangci-lint run -fast
+   
+   # 特定のディレクトリのみ解析
+   golangci-lint run ./pkg/... ./cmd/...
+   ```
+
+4. **nolintコメントの適切な使用**
+   ```go
+   // 特定の警告を無視
+   var x int // nolint:unused
+   
+   // 複数の警告を無視
+   func f() { // nolint:unused,errcheck
+       // ...
+   }
+   
+   // ファイル全体で特定の警告を無視（ファイル先頭に配置）
+   //nolint:unused
+   ```
+
+5. **CIでの活用**
+   - GitHub Actionsなどで自動実行
+   - PRごとにコード品質をチェック
+   
+   ```yaml
+   # GitHub Actionsの例
+   name: golangci-lint
+   on: [push, pull_request]
+   jobs:
+     lint:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v3
+         - uses: actions/setup-go@v4
+           with:
+             go-version: '1.20'
+         - name: golangci-lint
+           uses: golangci/golangci-lint-action@v3
+   ```
+
+6. **プロジェクト固有のルール**
+   - go-ruleguardを使用して独自のルールを定義
+   - プロジェクト固有のコーディング規約を自動チェック
    - 例えばinternal/package_name/package_name.goではなく、internal/filename.goで良い
